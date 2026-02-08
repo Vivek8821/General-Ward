@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Ward Management</title>
+
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Syncing with server...</p>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1>🏥 General Ward</h1>
+            <p>Enter your PIN to continue</p>
+            <div class="pin-display" id="pinDisplay">••••</div>
+            <div class="pin-pad">
+                <button class="pin-btn" onclick="enterDigit('1')">1</button>
+                <button class="pin-btn" onclick="enterDigit('2')">2</button>
+                <button class="pin-btn" onclick="enterDigit('3')">3</button>
+                <button class="pin-btn" onclick="enterDigit('4')">4</button>
+                <button class="pin-btn" onclick="enterDigit('5')">5</button>
+                <button class="pin-btn" onclick="enterDigit('6')">6</button>
+                <button class="pin-btn" onclick="enterDigit('7')">7</button>
+                <button class="pin-btn" onclick="enterDigit('8')">8</button>
+                <button class="pin-btn" onclick="enterDigit('9')">9</button>
+                <button class="pin-btn" onclick="clearPin()">C</button>
+                <button class="pin-btn" onclick="enterDigit('0')">0</button>
+                <button class="pin-btn" onclick="checkPin()">→</button>
+            </div>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <h1>🏥 General Ward Management</h1>
+                <div class="user-info">
+                    <div class="connection-status connection-offline" id="connectionStatus">
+                        <span>●</span> <span id="connectionText">Offline</span>
+                    </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+                        <span id="themeIcon">🌙</span>
+                        <span id="themeText">Dark</span>
+                    </button>
+                    <span class="user-name" id="userName">User</span>
+                    <span class="user-role" id="userRole">Role</span>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="dashboardView">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Patients</h3>
+                        <div class="stat-value" id="totalPatients">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Beds</h3>
+                        <div class="stat-value" id="activeBeds">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Today's Vitals</h3>
+                        <div class="stat-value" id="todayVitals">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending Sync</h3>
+                        <div class="stat-value" id="pendingSync">0</div>
+                    </div>
+                </div>
+
+                <!-- Patient List -->
+                <div class="patient-list">
+                    <div class="list-header">
+                        <h2>Patients</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" class="search-box" placeholder="Search patients..."
+                                onkeyup="searchPatients(this.value)">
+                            <button class="btn btn-primary" onclick="showAddPatient()">+ Add Patient</button>
+                        </div>
+                    </div>
+                    <div id="patientListContainer"></div>
+                </div>
+            </div>
+
+            <!-- Patient Detail View -->
+            <div id="patientDetailView" class="hidden">
+                <button class="btn btn-secondary" onclick="showDashboard()">← Back to List</button>
+
+                <div class="patient-detail" style="margin-top: 20px;">
+                    <div class="patient-header">
+                        <div class="patient-title">
+                            <h2 id="detailName">Patient Name</h2>
+                            <div class="patient-tags">
+                                <span class="tag tag-bed" id="detailBed">Bed 1</span>
+                                <span class="tag tag-mrn" id="detailMRN">MRN: 12345</span>
+                                <span class="tag tag-allergy" id="detailAllergies">No Allergies</span>
+                            </div>
+                            <p style="margin-top: 10px; color: var(--text-secondary);" id="detailDiagnosis">Diagnosis
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('info', this)">Information</button>
+                        <button class="tab" onclick="switchTab('vitals', this)">Vitals History</button>
+                        <button class="tab" onclick="switchTab('medications', this)">Medications</button>
+                    </div>
+
+                    <!-- Info Tab -->
+                    <div id="tab-info" class="tab-content active">
+                        <h3>Patient Information</h3>
+                        <p><strong>Date of Birth:</strong> <span id="detailDOB">-</span></p>
+                        <p><strong>Admission Date:</strong> <span id="detailAdmission">-</span></p>
+                        <p><strong>Status:</strong> <span id="detailStatus">Active</span></p>
+                    </div>
+
+                    <!-- Vitals Tab -->
+                    <div id="tab-vitals" class="tab-content">
+                        <div class="section-header">
+                            <h3>Vitals History</h3>
+                            <button class="btn btn-primary" onclick="showAddVitals()">+ Record Vitals</button>
+                        </div>
+                        <div id="vitalsContainer"></div>
+                    </div>
+
+                    <!-- Medications Tab -->
+                    <div id="tab-medications" class="tab-content">
+                        <div class="section-header">
+                            <h3>Medications</h3>
+                            <button class="btn btn-primary doctor-only" onclick="showAddMedication()">+ Add
+                                Medication</button>
+                        </div>
+                        <div id="medicationsContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Patient Modal -->
+            <div id="addPatientModal" class="modal-overlay hidden" onclick="if(event.target === this) hideAddPatient()">
+                <div class="modal-content">
+                    <h2>Add New Patient</h2>
+                    <form onsubmit="savePatient(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Full Name *</label>
+                                <input type="text" id="newPatientName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Bed Number *</label>
+                                <input type="text" id="newPatientBed" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>MRN *</label>
+                                <input type="text" id="newPatientMRN" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth *</label>
+                                <input type="date" id="newPatientDOB" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Diagnosis *</label>
+                            <input type="text" id="newPatientDiagnosis" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Allergies</label>
+                            <input type="text" id="newPatientAllergies" placeholder="None">
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="hideAddPatient()">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Patient</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Vitals Modal -->
+            <div id="addVitalsModal" class="modal-overlay hidden" onclick="if(event.target === this) hideAddVitals()">
+                <div class="modal-content">
+                    <h2>Record Vitals</h2>
+                    <form onsubmit="saveVitals(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>BP Systolic (mmHg) *</label>
+                                <input type="number" id="vitalsBPsys" placeholder="120" required>
+                            </div>
+                            <div class="form-group">
+                                <label>BP Diastolic (mmHg) *</label>
+                                <input type="number" id="vitalsBPdia" placeholder="80" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Temperature (°F) *</label>
+                                <input type="number" step="0.1" id="vitalsTemp" placeholder="98.6" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Pulse (bpm) *</label>
+                                <input type="number" id="vitalsPulse" placeholder="72" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>SpO2 (%) *</label>
+                                <input type="number" id="vitalsSpO2" placeholder="98" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Pain Scale (0-10) *</label>
+                                <input type="number" id="vitalsPain" min="0" max="10" placeholder="0" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea id="vitalsNotes" rows="3" placeholder="Additional observations..."></textarea>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="hideAddVitals()">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Vitals</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Medication Modal -->
+            <div id="addMedicationModal" class="modal-overlay hidden"
+                onclick="if(event.target === this) hideAddMedication()">
+                <div class="modal-content">
+                    <h2>Add Medication</h2>
+                    <form onsubmit="saveMedication(event)">
+                        <div class="form-group">
+                            <label>Medication Name *</label>
+                            <input type="text" id="medName" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Dosage *</label>
+                                <input type="text" id="medDosage" placeholder="e.g., 500mg" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Route *</label>
+                                <select id="medRoute" required>
+                                    <option value="Oral">Oral</option>
+                                    <option value="IV">IV</option>
+                                    <option value="IM">IM</option>
+                                    <option value="Subcutaneous">Subcutaneous</option>
+                                    <option value="Topical">Topical</option>
+                                    <option value="Inhalation">Inhalation</option>
+                                    <option value="Rectal">Rectal</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Frequency *</label>
+                            <input type="text" id="medFrequency" placeholder="e.g., BID, TID, Q4H, Daily" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Scheduled Times</label>
+                            <input type="text" id="medTimes" placeholder="e.g., 08:00, 14:00, 20:00">
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="medPRN">
+                            <label for="medPRN">PRN (As Needed)</label>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary"
+                                onclick="hideAddMedication()">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Medication</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules (order matters for dependencies) -->
+    <script src="js/store.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/views.js"></script>
+    <script src="js/forms.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
