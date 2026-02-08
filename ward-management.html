@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Ward Management</title>
+    <style>
+        /* CSS Variables for Light/Dark Mode */
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --info: #3498db;
+            
+            /* Light Mode (default) */
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f8f9fa;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #e0e0e0;
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --hover-bg: #f8f9fa;
+            --input-bg: #ffffff;
+            --modal-overlay: rgba(0,0,0,0.5);
+        }
+
+        /* Dark Mode */
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #475569;
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --hover-bg: #334155;
+            --input-bg: #334155;
+            --modal-overlay: rgba(0,0,0,0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .login-box {
+            background: var(--bg-secondary);
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-box h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .login-box p {
+            color: var(--text-secondary);
+            margin-bottom: 35px;
+            font-size: 16px;
+        }
+
+        .pin-display {
+            font-size: 36px;
+            letter-spacing: 15px;
+            margin: 25px 0;
+            height: 60px;
+            color: var(--text-primary);
+            font-weight: bold;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--border-color);
+        }
+
+        .pin-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .pin-btn {
+            padding: 25px;
+            font-size: 24px;
+            border: none;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .pin-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .pin-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-msg {
+            color: var(--danger);
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            padding: 20px 30px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-radius: 16px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-name {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .user-role {
+            background: var(--primary);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .connection-online {
+            background: rgba(39, 174, 96, 0.2);
+            color: var(--success);
+        }
+
+        .connection-offline {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--danger);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+
+        .stat-card h3 {
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Patient List */
+        .patient-list {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+
+        .list-header {
+            padding: 25px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .list-header h2 {
+            color: var(--text-primary);
+            font-size: 22px;
+        }
+
+        .search-box {
+            padding: 12px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            width: 280px;
+            font-size: 15px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .patient-item {
+            padding: 25px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .patient-item:hover {
+            background: var(--hover-bg);
+            transform: translateX(5px);
+        }
+
+        .patient-item:last-child {
+            border-bottom: none;
+        }
+
+        .patient-info h3 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .patient-meta {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .bed-badge {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-active {
+            background: rgba(39, 174, 96, 0.15);
+            color: var(--success);
+        }
+
+        /* Patient Detail */
+        .patient-detail {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 35px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .patient-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 35px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .patient-title h2 {
+            font-size: 32px;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .patient-tags {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .tag {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .tag-bed {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tag-mrn {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .tag-allergy {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--danger);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 16px 28px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab:hover {
+            color: var(--primary);
+            background: var(--hover-bg);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        /* Vitals Table */
+        .vitals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .vitals-table th,
+        .vitals-table td {
+            padding: 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .vitals-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .vitals-table tr:hover {
+            background: var(--hover-bg);
+        }
+
+        .vitals-table td {
+            color: var(--text-primary);
+        }
+
+        /* Medication List */
+        .medication-item {
+            padding: 25px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s;
+        }
+
+        .medication-item:hover {
+            transform: translateX(5px);
+        }
+
+        .medication-item h4 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .medication-details {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--modal-overlay);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 550px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 25px;
+            color: var(--text-primary);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s, fadeOut 0.3s 2.7s;
+            min-width: 280px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--danger); }
+        .toast-warning { background: var(--warning); }
+        .toast-info { background: var(--info); }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--bg-tertiary);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--modal-overlay);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-overlay p {
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        /* API Config Panel */
+        .api-config {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 2px solid var(--border-color);
+        }
+
+        .api-config h4 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Section headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h3 {
+            color: var(--text-primary);
+            font-size: 20px;
+        }
+
+        /* Checkbox styling */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 15px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .list-header {
+                flex-direction: column;
+            }
+
+            .patient-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .tabs {
+                justify-content: center;
+            }
+
+            .tab {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Syncing with server...</p>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1>🏥 General Ward</h1>
+            <p>Enter your PIN to continue</p>
+            <div class="pin-display" id="pinDisplay">••••</div>
+            <div class="pin-pad">
+                <button class="pin-btn" onclick="enterDigit('1')">1</button>
+                <button class="pin-btn" onclick="enterDigit('2')">2</button>
+                <button class="pin-btn" onclick="enterDigit('3')">3</button>
+                <button class="pin-btn" onclick="enterDigit('4')">4</button>
+                <button class="pin-btn" onclick="enterDigit('5')">5</button>
+                <button class="pin-btn" onclick="enterDigit('6')">6</button>
+                <button class="pin-btn" onclick="enterDigit('7')">7</button>
+                <button class="pin-btn" onclick="enterDigit('8')">8</button>
+                <button class="pin-btn" onclick="enterDigit('9')">9</button>
+                <button class="pin-btn" onclick="clearPin()">C</button>
+                <button class="pin-btn" onclick="enterDigit('0')">0</button>
+                <button class="pin-btn" onclick="checkPin()">→</button>
+            </div>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <h1>🏥 General Ward Management</h1>
+                <div class="user-info">
+                    <div class="connection-status connection-offline" id="connectionStatus">
+                        <span>●</span> <span id="connectionText">Offline</span>
+                    </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+                        <span id="themeIcon">🌙</span>
+                        <span id="themeText">Dark</span>
+                    </button>
+                    <span class="user-name" id="userName">User</span>
+                    <span class="user-role" id="userRole">Role</span>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- API Configuration (Doctor Only) -->
+            <div id="apiConfigPanel" class="api-config hidden">
+                <h4>🔌 API Configuration</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Backend API URL</label>
+                        <input type="text" id="apiUrl" placeholder="https://your-hospital-api.com/api">
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <input type="password" id="apiKey" placeholder="Enter API key">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="saveApiConfig()">Save Config</button>
+                    <button class="btn btn-success" onclick="syncAllData()">🔄 Sync Now</button>
+                    <button class="btn btn-info" onclick="testConnection()">Test Connection</button>
+                </div>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="dashboardView">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Patients</h3>
+                        <div class="stat-value" id="totalPatients">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Beds</h3>
+                        <div class="stat-value" id="activeBeds">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Today's Vitals</h3>
+                        <div class="stat-value" id="todayVitals">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending Sync</h3>
+                        <div class="stat-value" id="pendingSync">0</div>
+                    </div>
+                </div>
+
+                <!-- Patient List -->
+                <div class="patient-list">
+                    <div class="list-header">
+                        <h2>Patients</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" class="search-box" placeholder="Search patients..." onkeyup="searchPatients(this.value)">
+                            <button class="btn btn-primary" onclick="showAddPatient()">+ Add Patient</button>
+                        </div>
+                    </div>
+                    <div id="patientListContainer"></div>
+                </div>
+            </div>
+
+            <!-- Patient Detail View -->
+            <div id="patientDetailView" class="hidden">
+                <button class="btn btn-secondary" onclick="showDashboard()">← Back to List</button>
+                
+                <div class="patient-detail" style="margin-top: 20px;">
+                    <div class="patient-header">
+                        <div class="patient-title">
+                            <h2 id="detailName">Patient Name</h2>
+                            <div class="patient-tags">
+                                <span class="tag tag-bed" id="detailBed">Bed 1</span>
+                                <span class="tag tag-mrn" id="detailMRN">MRN: 12345</span>
+                                <span class="tag tag-allergy" id="detailAllergies">No Allergies</span>
+                            </div>
+                            <p style="margin-top: 10px; color: var(--text-secondary);" id="detailDiagnosis">Diagnosis</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('info', this)">Information</button>
+                        <button class="tab" onclick="switchTab('vitals', this)">Vitals History</button>
+                        <button class="tab" onclick="switchTab('medications', this)">Medications</button>
+                    </div>
+
+                    <!-- Info Tab -->
+                    <div id="tab-info" class="tab-content active">
+                        <h3>Patient Information</h3>
+                        <p><strong>Date of Birth:</strong> <span id="detailDOB">-</span></p>
+                        <p><strong>Admission Date:</strong> <span id="detailAdmission">-</span></p>
+                        <p><strong>Status:</strong> <span id="detailStatus">Active</span></p>
+                    </div>
+
+                    <!-- Vitals Tab -->
+                    <div id="tab-vitals" class="tab-content">
+                        <div class="section-header">
+                            <h3>Vitals History</h3>
+                            <button class="btn btn-primary" onclick="showAddVitals()">+ Record Vitals</button>
+                        </div>
+                        <div id="vitalsContainer"></div>
+                    </div>
+
+                    <!-- Medications Tab -->
+                    <div id="tab-medications" class="tab-content">
+                        <div class="section-header">
+                            <h3>Medications</h3>
+                            <button class="btn btn-primary doctor-only" onclick="showAddMedication()">+ Add Medication</button>
+                        </div>
+                        <div id="medicationsContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Patient Modal -->
+            <div id="addPatientModal" class="modal-overlay hidden" onclick="if(event.target === this) hideAddPatient()">
+                <div class="modal-content">
+                    <h2>Add New Patient</h2>
+                    <form onsubmit="savePatient(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Full Name *</label>
+                                <input type="text" id="newPatientName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Bed Number *</label>
+                                <input type="text" id="newPatientBed" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>MRN *</label>
+                                <input type="text" id="newPatientMRN" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth *</label>
+                                <input type="date" id="newPatientDOB" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Diagnosis *</label>
+                            <input type="text" id="newPatientDiagnosis" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Allergies</label>
+                            <input type="text" id="newPatientAllergies" placeholder="None">
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="hideAddPatient()">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Patient</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Vitals Modal -->
+            <div id="addVitalsModal" class="modal-overlay hidden" onclick="if(event.target === this) hideAddVitals()">
+                <div class="modal-content">
+                    <h2>Record Vitals</h2>
+                    <form onsubmit="saveVitals(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>BP Systolic (mmHg) *</label>
+                                <input type="number" id="vitalsBPsys" placeholder="120" required>
+                            </div>
+                            <div class="form-group">
+                                <label>BP Diastolic (mmHg) *</label>
+                                <input type="number" id="vitalsBPdia" placeholder="80" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Temperature (°F) *</label>
+                                <input type="number" step="0.1" id="vitalsTemp" placeholder="98.6" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Pulse (bpm) *</label>
+                                <input type="number" id="vitalsPulse" placeholder="72" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>SpO2 (%) *</label>
+                                <input type="number" id="vitalsSpO2" placeholder="98" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Pain Scale (0-10) *</label>
+                                <input type="number" id="vitalsPain" min="0" max="10" placeholder="0" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea id="vitalsNotes" rows="3" placeholder="Additional observations..."></textarea>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="hideAddVitals()">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Vitals</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Medication Modal -->
+            <div id="addMedicationModal" class="modal-overlay hidden" onclick="if(event.target === this) hideAddMedication()">
+                <div class="modal-content">
+                    <h2>Add Medication</h2>
+                    <form onsubmit="saveMedication(event)">
+                        <div class="form-group">
+                            <label>Medication Name *</label>
+                            <input type="text" id="medName" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Dosage *</label>
+                                <input type="text" id="medDosage" placeholder="e.g., 500mg" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Route *</label>
+                                <select id="medRoute" required>
+                                    <option value="Oral">Oral</option>
+                                    <option value="IV">IV</option>
+                                    <option value="IM">IM</option>
+                                    <option value="Subcutaneous">Subcutaneous</option>
+                                    <option value="Topical">Topical</option>
+                                    <option value="Inhalation">Inhalation</option>
+                                    <option value="Rectal">Rectal</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Frequency *</label>
+                            <input type="text" id="medFrequency" placeholder="e.g., BID, TID, Q4H, Daily" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Scheduled Times</label>
+                            <input type="text" id="medTimes" placeholder="e.g., 08:00, 14:00, 20:00">
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="medPRN">
+                            <label for="medPRN">PRN (As Needed)</label>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" onclick="hideAddMedication()">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Medication</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const API_CONFIG = {
+            baseUrl: localStorage.getItem('api_baseUrl') || '',
+            apiKey: localStorage.getItem('api_apiKey') || '',
+            enabled: false
+        };
+
+        // ==========================================
+        // DATA STORE
+        // ==========================================
+        const users = [
+            { id: '1', name: 'Dr. Smith', role: 'doctor', pin: '1234' },
+            { id: '2', name: 'Nurse Johnson', role: 'nurse', pin: '5678' }
+        ];
+
+        let patients = JSON.parse(localStorage.getItem('ward_patients')) || [];
+        let vitals = JSON.parse(localStorage.getItem('ward_vitals')) || [];
+        let medications = JSON.parse(localStorage.getItem('ward_medications')) || [];
+        let pendingSync = JSON.parse(localStorage.getItem('ward_pendingSync')) || [];
+        let currentUser = null;
+        let currentPatient = null;
+        let enteredPin = '';
+        let isOnline = navigator.onLine;
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        
+        // Seed sample data if empty
+        if (patients.length === 0) {
+            patients = [
+                { id: '1', name: 'John Doe', mrn: 'MRN001', bedNumber: 'A1', dob: '1970-05-15', diagnosis: 'Pneumonia', allergies: 'Penicillin', status: 'active', admissionDate: new Date().toISOString().split('T')[0], synced: false },
+                { id: '2', name: 'Jane Smith', mrn: 'MRN002', bedNumber: 'A2', dob: '1965-12-20', diagnosis: 'Hypertension', allergies: 'None', status: 'active', admissionDate: new Date().toISOString().split('T')[0], synced: false },
+                { id: '3', name: 'Bob Johnson', mrn: 'MRN003', bedNumber: 'A3', dob: '1955-08-10', diagnosis: 'Diabetes Type 2', allergies: 'Sulfa drugs', status: 'active', admissionDate: new Date().toISOString().split('T')[0], synced: false }
+            ];
+            saveData();
+        }
+
+        // Load theme preference
+        const savedTheme = localStorage.getItem('ward_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeToggle();
+
+        // Online/Offline detection
+        window.addEventListener('online', () => {
+            isOnline = true;
+            updateConnectionStatus();
+            showToast('Connection restored', 'success');
+            if (API_CONFIG.enabled && pendingSync.length > 0) {
+                syncAllData();
+            }
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            updateConnectionStatus();
+            showToast('Working offline', 'warning');
+        });
+
+        // ==========================================
+        // THEME FUNCTIONS
+        // ==========================================
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('ward_theme', next);
+            updateThemeToggle();
+            showToast(`Switched to ${next} mode`, 'info');
+        }
+
+        function updateThemeToggle() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+            document.getElementById('themeText').textContent = isDark ? 'Light' : 'Dark';
+        }
+
+        // ==========================================
+        // CONNECTION STATUS
+        // ==========================================
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            const textEl = document.getElementById('connectionText');
+            
+            if (isOnline && API_CONFIG.enabled) {
+                statusEl.className = 'connection-status connection-online';
+                textEl.textContent = 'Online';
+            } else {
+                statusEl.className = 'connection-status connection-offline';
+                textEl.textContent = API_CONFIG.enabled ? 'Offline' : 'Local Only';
+            }
+        }
+
+        // ==========================================
+        // API FUNCTIONS
+        // ==========================================
+        async function testConnection() {
+            if (!API_CONFIG.baseUrl) {
+                showToast('Please configure API URL first', 'error');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_CONFIG.baseUrl}/health`, {
+                    headers: { 'Authorization': `Bearer ${API_CONFIG.apiKey}` }
+                });
+                
+                if (response.ok) {
+                    showToast('Connection successful!', 'success');
+                    isOnline = true;
+                    API_CONFIG.enabled = true;
+                } else {
+                    throw new Error('Health check failed');
+                }
+            } catch (error) {
+                showToast('Connection failed: ' + error.message, 'error');
+                isOnline = false;
+            } finally {
+                showLoading(false);
+                updateConnectionStatus();
+            }
+        }
+
+        async function syncAllData() {
+            if (!API_CONFIG.enabled || !isOnline) {
+                showToast('Cannot sync - offline or not configured', 'warning');
+                return;
+            }
+
+            showLoading(true);
+            let syncCount = 0;
+
+            try {
+                // Sync patients
+                const unsyncedPatients = patients.filter(p => !p.synced);
+                for (const patient of unsyncedPatients) {
+                    await syncPatient(patient);
+                    syncCount++;
+                }
+
+                // Sync vitals
+                const unsyncedVitals = vitals.filter(v => !v.synced);
+                for (const vital of unsyncedVitals) {
+                    await syncVital(vital);
+                    syncCount++;
+                }
+
+                // Sync medications
+                const unsyncedMeds = medications.filter(m => !m.synced);
+                for (const med of unsyncedMeds) {
+                    await syncMedication(med);
+                    syncCount++;
+                }
+
+                pendingSync = [];
+                saveData();
+                updateStats();
+                showToast(`Synced ${syncCount} items successfully`, 'success');
+            } catch (error) {
+                showToast('Sync error: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function syncPatient(patient) {
+            const response = await fetch(`${API_CONFIG.baseUrl}/patients`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_CONFIG.apiKey}`
+                },
+                body: JSON.stringify(patient)
+            });
+            
+            if (response.ok) {
+                patient.synced = true;
+            }
+        }
+
+        async function syncVital(vital) {
+            const response = await fetch(`${API_CONFIG.baseUrl}/vitals`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_CONFIG.apiKey}`
+                },
+                body: JSON.stringify(vital)
+            });
+            
+            if (response.ok) {
+                vital.synced = true;
+            }
+        }
+
+        async function syncMedication(med) {
+            const response = await fetch(`${API_CONFIG.baseUrl}/medications`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_CONFIG.apiKey}`
+                },
+                body: JSON.stringify(med)
+            });
+            
+            if (response.ok) {
+                med.synced = true;
+            }
+        }
+
+        async function fetchPatientsFromServer() {
+            if (!API_CONFIG.enabled || !isOnline) return;
+            
+            try {
+                const response = await fetch(`${API_CONFIG.baseUrl}/patients`, {
+                    headers: { 'Authorization': `Bearer ${API_CONFIG.apiKey}` }
+                });
+                
+                if (response.ok) {
+                    const serverPatients = await response.json();
+                    // Merge with local data
+                    patients = [...patients, ...serverPatients.filter(sp => !patients.find(lp => lp.id === sp.id))];
+                    saveData();
+                    renderPatientList();
+                }
+            } catch (error) {
+                console.error('Failed to fetch patients:', error);
+            }
+        }
+
+        function saveApiConfig() {
+            API_CONFIG.baseUrl = document.getElementById('apiUrl').value;
+            API_CONFIG.apiKey = document.getElementById('apiKey').value;
+            API_CONFIG.enabled = !!(API_CONFIG.baseUrl && API_CONFIG.apiKey);
+            
+            localStorage.setItem('api_baseUrl', API_CONFIG.baseUrl);
+            localStorage.setItem('api_apiKey', API_CONFIG.apiKey);
+            
+            showToast('API configuration saved', 'success');
+            updateConnectionStatus();
+            
+            if (API_CONFIG.enabled) {
+                testConnection();
+            }
+        }
+
+        // ==========================================
+        // UI HELPERS
+        // ==========================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            const icons = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+            
+            toast.innerHTML = `<span>${icons[type]}</span> ${message}`;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+        }
+
+        // ==========================================
+        // AUTH FUNCTIONS
+        // ==========================================
+        function enterDigit(digit) {
+            if (enteredPin.length < 4) {
+                enteredPin += digit;
+                updatePinDisplay();
+            }
+        }
+
+        function clearPin() {
+            enteredPin = '';
+            updatePinDisplay();
+            document.getElementById('errorMsg').textContent = '';
+        }
+
+        function updatePinDisplay() {
+            const display = enteredPin.length > 0 ? '•'.repeat(enteredPin.length) : '••••';
+            document.getElementById('pinDisplay').textContent = display;
+        }
+
+        function checkPin() {
+            const user = users.find(u => u.pin === enteredPin);
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('ward_currentUser', JSON.stringify(user));
+                showMainApp();
+            } else {
+                document.getElementById('errorMsg').textContent = 'Invalid PIN. Try 1234 (Doctor) or 5678 (Nurse)';
+                enteredPin = '';
+                updatePinDisplay();
+            }
+        }
+
+        // ==========================================
+        // VIEW FUNCTIONS
+        // ==========================================
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role.toUpperCase();
+            
+            // Show API config for doctors
+            if (currentUser.role === 'doctor') {
+                document.getElementById('apiConfigPanel').classList.remove('hidden');
+                document.getElementById('apiUrl').value = API_CONFIG.baseUrl;
+                document.getElementById('apiKey').value = API_CONFIG.apiKey;
+            }
+            
+            // Hide doctor-only features for nurses
+            document.querySelectorAll('.doctor-only').forEach(el => {
+                el.style.display = currentUser.role === 'doctor' ? 'inline-flex' : 'none';
+            });
+            
+            updateConnectionStatus();
+            showDashboard();
+            
+            // Try to fetch from server if configured
+            if (API_CONFIG.enabled) {
+                fetchPatientsFromServer();
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('ward_currentUser');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            clearPin();
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboardView').classList.remove('hidden');
+            document.getElementById('patientDetailView').classList.add('hidden');
+            renderPatientList();
+            updateStats();
+        }
+
+        function showPatientDetail(patientId) {
+            currentPatient = patients.find(p => p.id === patientId);
+            if (!currentPatient) return;
+
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('patientDetailView').classList.remove('hidden');
+            
+            document.getElementById('detailName').textContent = currentPatient.name;
+            document.getElementById('detailBed').textContent = 'Bed ' + currentPatient.bedNumber;
+            document.getElementById('detailMRN').textContent = 'MRN: ' + currentPatient.mrn;
+            document.getElementById('detailAllergies').textContent = currentPatient.allergies || 'No Allergies';
+            document.getElementById('detailDiagnosis').textContent = currentPatient.diagnosis;
+            document.getElementById('detailDOB').textContent = currentPatient.dob;
+            document.getElementById('detailAdmission').textContent = currentPatient.admissionDate;
+            document.getElementById('detailStatus').textContent = currentPatient.status;
+
+            renderVitals();
+            renderMedications();
+            switchTab('info', document.querySelector('.tab'));
+        }
+
+        function switchTab(tabName, tabElement) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (tabElement) tabElement.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // ==========================================
+        // RENDER FUNCTIONS
+        // ==========================================
+        function renderPatientList(searchTerm = '') {
+            const container = document.getElementById('patientListContainer');
+            let filtered = patients;
+            
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filtered = patients.filter(p => 
+                    p.name.toLowerCase().includes(term) || 
+                    p.bedNumber.toLowerCase().includes(term) ||
+                    p.mrn.toLowerCase().includes(term)
+                );
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👤</div>
+                        <p>No patients found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(patient => `
+                <div class="patient-item" onclick="showPatientDetail('${patient.id}')">
+                    <div class="patient-info">
+                        <h3>${patient.name}</h3>
+                        <div class="patient-meta">
+                            MRN: ${patient.mrn} | ${patient.diagnosis}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span class="bed-badge">Bed ${patient.bedNumber}</span>
+                        <span class="status-badge status-active">${patient.status}</span>
+                        ${!patient.synced ? '<span style="color: var(--warning); font-size: 12px;">⏳</span>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderVitals() {
+            const container = document.getElementById('vitalsContainer');
+            const patientVitals = vitals
+                .filter(v => v.patientId === currentPatient.id)
+                .sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
+
+            if (patientVitals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <p>No vitals recorded yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="vitals-table">
+                    <thead>
+                        <tr>
+                            <th>Date/Time</th>
+                            <th>BP</th>
+                            <th>Temp</th>
+                            <th>Pulse</th>
+                            <th>SpO2</th>
+                            <th>Pain</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${patientVitals.map(v => `
+                            <tr>
+                                <td>${new Date(v.recordedAt).toLocaleString()}</td>
+                                <td>${v.bpSystolic}/${v.bpDiastolic}</td>
+                                <td>${v.temp}°F</td>
+                                <td>${v.pulse}</td>
+                                <td>${v.spo2}%</td>
+                                <td>${v.pain}/10</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderMedications() {
+            const container = document.getElementById('medicationsContainer');
+            const patientMeds = medications.filter(m => m.patientId === currentPatient.id);
+
+            if (patientMeds.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💊</div>
+                        <p>No medications prescribed</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = patientMeds.map(med => `
+                <div class="medication-item">
+                    <h4>${med.name} ${med.prn ? '<span style="color: var(--warning);">(PRN)</span>' : ''}</h4>
+                    <div class="medication-details">
+                        <strong>${med.dosage}</strong> | ${med.route} | ${med.frequency}
+                        ${med.scheduledTimes ? '<br>Scheduled: ' + med.scheduledTimes : ''}
+                        ${!med.synced ? '<br><span style="color: var(--warning); font-size: 12px;">⏳ Pending sync</span>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('totalPatients').textContent = patients.length;
+            document.getElementById('activeBeds').textContent = patients.filter(p => p.status === 'active').length;
+            
+            const today = new Date().toDateString();
+            const todayCount = vitals.filter(v => new Date(v.recordedAt).toDateString() === today).length;
+            document.getElementById('todayVitals').textContent = todayCount;
+            
+            const pendingCount = patients.filter(p => !p.synced).length + 
+                                vitals.filter(v => !v.synced).length + 
+                                medications.filter(m => !m.synced).length;
+            document.getElementById('pendingSync').textContent = pendingCount;
+        }
+
+        function searchPatients(term) {
+            renderPatientList(term);
+        }
+
+        // ==========================================
+        // MODAL FUNCTIONS
+        // ==========================================
+        function showAddPatient() {
+            document.getElementById('addPatientModal').classList.remove('hidden');
+        }
+
+        function hideAddPatient() {
+            document.getElementById('addPatientModal').classList.add('hidden');
+            document.querySelector('#addPatientModal form').reset();
+        }
+
+        function showAddVitals() {
+            document.getElementById('addVitalsModal').classList.remove('hidden');
+        }
+
+        function hideAddVitals() {
+            document.getElementById('addVitalsModal').classList.add('hidden');
+            document.querySelector('#addVitalsModal form').reset();
+        }
+
+        function showAddMedication() {
+            if (currentUser.role !== 'doctor') {
+                showToast('Only doctors can add medications', 'error');
+                return;
+            }
+            document.getElementById('addMedicationModal').classList.remove('hidden');
+        }
+
+        function hideAddMedication() {
+            document.getElementById('addMedicationModal').classList.add('hidden');
+            document.querySelector('#addMedicationModal form').reset();
+        }
+
+        // ==========================================
+        // SAVE FUNCTIONS
+        // ==========================================
+        function savePatient(event) {
+            event.preventDefault();
+            
+            const patient = {
+                id: Date.now().toString(),
+                name: document.getElementById('newPatientName').value,
+                bedNumber: document.getElementById('newPatientBed').value,
+                mrn: document.getElementById('newPatientMRN').value,
+                dob: document.getElementById('newPatientDOB').value,
+                diagnosis: document.getElementById('newPatientDiagnosis').value,
+                allergies: document.getElementById('newPatientAllergies').value || 'None',
+                status: 'active',
+                admissionDate: new Date().toISOString().split('T')[0],
+                synced: false
+            };
+            
+            patients.push(patient);
+            saveData();
+            hideAddPatient();
+            renderPatientList();
+            updateStats();
+            showToast('Patient added successfully', 'success');
+            
+            // Try to sync if online
+            if (API_CONFIG.enabled && isOnline) {
+                syncPatient(patient).then(() => {
+                    saveData();
+                    updateStats();
+                });
+            }
+        }
+
+        function saveVitals(event) {
+            event.preventDefault();
+            
+            const vital = {
+                id: Date.now().toString(),
+                patientId: currentPatient.id,
+                recordedAt: new Date().toISOString(),
+                recordedBy: currentUser.name,
+                bpSystolic: parseInt(document.getElementById('vitalsBPsys').value),
+                bpDiastolic: parseInt(document.getElementById('vitalsBPdia').value),
+                temp: parseFloat(document.getElementById('vitalsTemp').value),
+                pulse: parseInt(document.getElementById('vitalsPulse').value),
+                spo2: parseInt(document.getElementById('vitalsSpO2').value),
+                pain: parseInt(document.getElementById('vitalsPain').value),
+                notes: document.getElementById('vitalsNotes').value,
+                synced: false
+            };
+            
+            vitals.push(vital);
+            saveData();
+            hideAddVitals();
+            renderVitals();
+            updateStats();
+            showToast('Vitals recorded successfully', 'success');
+            
+            if (API_CONFIG.enabled && isOnline) {
+                syncVital(vital).then(() => {
+                    saveData();
+                    updateStats();
+                });
+            }
+        }
+
+        function saveMedication(event) {
+            event.preventDefault();
+            
+            const med = {
+                id: Date.now().toString(),
+                patientId: currentPatient.id,
+                name: document.getElementById('medName').value,
+                dosage: document.getElementById('medDosage').value,
+                route: document.getElementById('medRoute').value,
+                frequency: document.getElementById('medFrequency').value,
+                scheduledTimes: document.getElementById('medTimes').value,
+                prn: document.getElementById('medPRN').checked,
+                startDate: new Date().toISOString().split('T')[0],
+                synced: false
+            };
+            
+            medications.push(med);
+            saveData();
+            hideAddMedication();
+            renderMedications();
+            updateStats();
+            showToast('Medication added successfully', 'success');
+            
+            if (API_CONFIG.enabled && isOnline) {
+                syncMedication(med).then(() => {
+                    saveData();
+                    updateStats();
+                });
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('ward_patients', JSON.stringify(patients));
+            localStorage.setItem('ward_vitals', JSON.stringify(vitals));
+            localStorage.setItem('ward_medications', JSON.stringify(medications));
+            localStorage.setItem('ward_pendingSync', JSON.stringify(pendingSync));
+        }
+
+        // ==========================================
+        // AUTO-LOGIN
+        // ==========================================
+        const savedUser = localStorage.getItem('ward_currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            showMainApp();
+        }
+    </script>
+</body>
+</html>
