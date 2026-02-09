@@ -17,9 +17,26 @@ export interface Patient {
     dob: string
     gender: 'male' | 'female'
     weight?: number
+    height?: number // cm
+    bloodGroup?: string
     emergencyContact?: string
+    address?: string
+    insuranceProvider?: string
+    insurancePolicyNumber?: string
+    nextOfKinName?: string
+    nextOfKinRelation?: string
+    nextOfKinPhone?: string
+
+    // Clinical Data
     diagnosis: string
     allergies: string
+    chiefComplaint?: string
+    historyPresentIllness?: string
+    pastMedicalHistory?: string[]
+    surgicalHistory?: string[]
+    socialHistory?: string[] // smoking, alcohol, etc.
+    familyHistory?: string[]
+
     status: 'active' | 'discharged'
     admissionDate: string
     photoUrl?: string
@@ -72,6 +89,26 @@ export interface Symptom {
     notes: string
 }
 
+export interface ProgressNote {
+    id?: number
+    patientId: number
+    date: string
+    author: string
+    type: 'Admission' | 'Daily' | 'Discharge' | 'Consult'
+    note: string // SOAP format or free text
+}
+
+export interface LabResult {
+    id?: number
+    patientId: number
+    date: string
+    testName: string
+    result: string
+    units: string
+    referenceRange: string
+    flag?: 'High' | 'Low' | 'Normal' | 'Critical'
+}
+
 // ============ DATABASE ============
 class WardDatabase extends Dexie {
     users!: Table<User>
@@ -80,16 +117,20 @@ class WardDatabase extends Dexie {
     medications!: Table<Medication>
     meals!: Table<Meal>
     symptoms!: Table<Symptom>
+    progressNotes!: Table<ProgressNote>
+    labResults!: Table<LabResult>
 
     constructor() {
         super('WardDB')
-        this.version(4).stores({
+        this.version(5).stores({
             users: '++id, name',
             patients: '++id, mrn, bedNumber',
             vitals: '++id, patientId, recordedAt',
             medications: '++id, patientId',
             meals: '++id, patientId, recordedAt',
-            symptoms: '++id, patientId, recordedAt'
+            symptoms: '++id, patientId, recordedAt',
+            progressNotes: '++id, patientId, date',
+            labResults: '++id, patientId, date'
         })
     }
 }
@@ -204,9 +245,23 @@ export async function seedDatabase(): Promise<void> {
                     dob: '1965-03-15',
                     gender: 'male',
                     weight: 68,
+                    height: 172,
+                    bloodGroup: 'B+',
                     emergencyContact: '+91 98765 43210',
+                    address: '123 MG Road, Mumbai',
+                    insuranceProvider: 'HDFC Ergo',
+                    insurancePolicyNumber: 'POL-123456789',
+                    nextOfKinName: 'Suresh Patel',
+                    nextOfKinRelation: 'Son',
+                    nextOfKinPhone: '+91 98765 43210',
                     diagnosis: 'Community Acquired Pneumonia',
                     allergies: 'Penicillin',
+                    chiefComplaint: 'Fever and shortness of breath for 3 days',
+                    historyPresentIllness: '68-year-old male with 3-day history of high grade fever, productive cough with yellow sputum, and progressive dyspnea. No chest pain or palpitations.',
+                    pastMedicalHistory: ['Hypertension (10 years)', 'Type 2 Diabetes Mellitus (5 years)'],
+                    surgicalHistory: ['Appendectomy (1985)'],
+                    socialHistory: ['Non-smoker', 'Occasional alcohol'],
+                    familyHistory: ['Father died of MI at 60', 'Mother has diabetes'],
                     status: 'active',
                     admissionDate: today,
                     photoUrl: generateAvatarUrl('Ramesh Patel', 'male')
@@ -218,9 +273,23 @@ export async function seedDatabase(): Promise<void> {
                     dob: '1972-08-22',
                     gender: 'female',
                     weight: 55,
+                    height: 160,
+                    bloodGroup: 'O+',
                     emergencyContact: '+91 87654 32109',
+                    address: '45 Park Street, Kolkata',
+                    insuranceProvider: 'Star Health',
+                    insurancePolicyNumber: 'POL-987654321',
+                    nextOfKinName: 'Rajesh Kumar',
+                    nextOfKinRelation: 'Husband',
+                    nextOfKinPhone: '+91 87654 32109',
                     diagnosis: 'Uncontrolled Hypertension',
                     allergies: 'None',
+                    chiefComplaint: 'Severe headache and dizziness',
+                    historyPresentIllness: '52-year-old female presenting with sudden onset severe occipital headache and dizziness. BP recorded 180/110 at home.',
+                    pastMedicalHistory: ['Hypertension (diagnosed 1 year ago, non-compliant)'],
+                    surgicalHistory: ['C-Section x2'],
+                    socialHistory: ['Teacher by profession', 'No tobacco/alcohol'],
+                    familyHistory: ['Mother had stroke at 65'],
                     status: 'active',
                     admissionDate: today,
                     photoUrl: generateAvatarUrl('Sunita Devi', 'female')
@@ -232,9 +301,23 @@ export async function seedDatabase(): Promise<void> {
                     dob: '1958-11-10',
                     gender: 'male',
                     weight: 72,
+                    height: 175,
+                    bloodGroup: 'AB-',
                     emergencyContact: '+91 76543 21098',
+                    address: '78 Mosque Road, Bangalore',
+                    insuranceProvider: 'LIC',
+                    insurancePolicyNumber: 'POL-456123789',
+                    nextOfKinName: 'Aisha Hussain',
+                    nextOfKinRelation: 'Wife',
+                    nextOfKinPhone: '+91 76543 21098',
                     diagnosis: 'Diabetic Ketoacidosis',
                     allergies: 'Iodine contrast',
+                    chiefComplaint: 'Abdominal pain, vomiting, and confusion',
+                    historyPresentIllness: '65-year-old male with history of T2DM admitted with DKA. Presented with abdominal pain, vomiting, and altered sensorium.',
+                    pastMedicalHistory: ['Type 2 Diabetes Mellitus (20 years)', 'Diabetic Neuropathy'],
+                    surgicalHistory: ['Cataract surgery (2020)'],
+                    socialHistory: ['Ex-smoker (quit 10 years ago)'],
+                    familyHistory: ['Brother has renal failure'],
                     status: 'active',
                     admissionDate: today,
                     photoUrl: generateAvatarUrl('Mohammed Hussain', 'male')
@@ -246,9 +329,22 @@ export async function seedDatabase(): Promise<void> {
                     dob: '1980-05-28',
                     gender: 'female',
                     weight: 58,
+                    height: 162,
+                    bloodGroup: 'A+',
                     emergencyContact: '+91 65432 10987',
+                    address: '90 Temple Street, Chennai',
+                    insuranceProvider: 'None',
+                    nextOfKinName: 'Narayanan K',
+                    nextOfKinRelation: 'Husband',
+                    nextOfKinPhone: '+91 65432 10987',
                     diagnosis: 'Acute Appendicitis - Post-Op',
                     allergies: 'Morphine',
+                    chiefComplaint: 'RLQ abdominal pain',
+                    historyPresentIllness: '44-year-old female post-op day 1 following laparoscopic appendectomy. Pain well controlled.',
+                    pastMedicalHistory: ['None'],
+                    surgicalHistory: ['Laparoscopic Appendectomy (yesterday)'],
+                    socialHistory: ['Housewife', 'Vegetarian'],
+                    familyHistory: ['No significant history'],
                     status: 'active',
                     admissionDate: today,
                     photoUrl: generateAvatarUrl('Lakshmi Narayanan', 'female')
@@ -260,9 +356,23 @@ export async function seedDatabase(): Promise<void> {
                     dob: '1945-12-03',
                     gender: 'male',
                     weight: 65,
+                    height: 168,
+                    bloodGroup: 'B-',
                     emergencyContact: '+91 54321 09876',
+                    address: '12 Fort Road, Jaipur',
+                    insuranceProvider: 'CGHS',
+                    insurancePolicyNumber: 'CGHS-12345',
+                    nextOfKinName: 'Rohan Singh',
+                    nextOfKinRelation: 'Son',
+                    nextOfKinPhone: '+91 54321 09876',
                     diagnosis: 'Congestive Heart Failure',
-                    allergies: 'ACE Inhibitors',
+                    allergies: 'ACE Inhibitors (Cough)',
+                    chiefComplaint: 'Worsening breathlessness and leg swelling',
+                    historyPresentIllness: '78-year-old male known case of CHF presenting with decompensation. Orthopnea + PND present.',
+                    pastMedicalHistory: ['CHF (EF 35%)', 'CAD (Post-PTCA 2015)', 'CKD Stage 3'],
+                    surgicalHistory: ['PTCA to LAD (2015)', 'TURP (2018)'],
+                    socialHistory: ['Chronic smoker'],
+                    familyHistory: ['Father died of stroke'],
                     status: 'active',
                     admissionDate: today,
                     photoUrl: generateAvatarUrl('Vikram Singh', 'male')
@@ -274,9 +384,23 @@ export async function seedDatabase(): Promise<void> {
                     dob: '1990-02-14',
                     gender: 'female',
                     weight: 52,
+                    height: 158,
+                    bloodGroup: 'O-',
                     emergencyContact: '+91 43210 98765',
+                    address: '34 Market Road, Hyderabad',
+                    insuranceProvider: 'Corporate',
+                    insurancePolicyNumber: 'C-98765',
+                    nextOfKinName: 'Ahmed Khan',
+                    nextOfKinRelation: 'Husband',
+                    nextOfKinPhone: '+91 43210 98765',
                     diagnosis: 'Acute Gastroenteritis',
                     allergies: 'None',
+                    chiefComplaint: 'Loose stools and vomiting',
+                    historyPresentIllness: '34-year-old female with 1-day history of multiple episodes of watery diarrhea and vomiting. Signs of dehydration present.',
+                    pastMedicalHistory: ['None'],
+                    surgicalHistory: ['None'],
+                    socialHistory: ['Works in IT'],
+                    familyHistory: ['Diabetes in mother'],
                     status: 'active',
                     admissionDate: today,
                     photoUrl: generateAvatarUrl('Fatima Begum', 'female')
@@ -292,6 +416,24 @@ export async function seedDatabase(): Promise<void> {
                 { patientId: 4, name: 'Ceftriaxone', dosage: '1g', route: 'IV', frequency: 'BID', prn: false, startDate: today, lastGiven: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() },
                 { patientId: 5, name: 'Furosemide', dosage: '40mg', route: 'IV', frequency: 'BID', prn: false, startDate: today, lastGiven: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
                 { patientId: 6, name: 'Ondansetron', dosage: '4mg', route: 'IV', frequency: 'PRN', prn: true, startDate: today, lastGiven: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() }
+            ])
+
+            // Add Progress Notes
+            await db.progressNotes.bulkAdd([
+                { patientId: 1, date: new Date().toISOString(), author: 'Dr. Priya Sharma', type: 'Admission', note: 'Patient admitted with fever and cough. Started on IV antibiotics. Monitor vitals Q4H.' },
+                { patientId: 2, date: new Date().toISOString(), author: 'Dr. Priya Sharma', type: 'Admission', note: 'Admitted for hypertensive urgency. BP control with oral meds attempted. Watch for signs of end-organ damage.' },
+                { patientId: 3, date: new Date().toISOString(), author: 'Dr. Priya Sharma', type: 'Admission', note: 'DKA logic protocol started. Hourly RBS monitoring.' }
+            ])
+
+            // Add Lab Results
+            await db.labResults.bulkAdd([
+                { patientId: 1, date: new Date().toISOString(), testName: 'WBC', result: '14,000', units: '/µL', referenceRange: '4,000-11,000', flag: 'High' },
+                { patientId: 1, date: new Date().toISOString(), testName: 'Hemoglobin', result: '13.5', units: 'g/dL', referenceRange: '13.5-17.5', flag: 'Normal' },
+                { patientId: 1, date: new Date().toISOString(), testName: 'CRP', result: '45', units: 'mg/L', referenceRange: '<5', flag: 'High' },
+                { patientId: 3, date: new Date().toISOString(), testName: 'Glucose (Random)', result: '450', units: 'mg/dL', referenceRange: '70-140', flag: 'Critical' },
+                { patientId: 3, date: new Date().toISOString(), testName: 'pH', result: '7.25', units: '', referenceRange: '7.35-7.45', flag: 'Low' },
+                { patientId: 5, date: new Date().toISOString(), testName: 'BNP', result: '1200', units: 'pg/mL', referenceRange: '<100', flag: 'High' },
+                { patientId: 5, date: new Date().toISOString(), testName: 'Creatinine', result: '1.8', units: 'mg/dL', referenceRange: '0.7-1.3', flag: 'High' }
             ])
         }
     } catch (error) {

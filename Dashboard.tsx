@@ -134,19 +134,20 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     }
 
     return (
-        <div className="min-h-screen bg-black p-4 md:p-6">
+        <div className="min-h-screen p-4 md:p-6 pb-20">
             {/* Header */}
-            <header className="bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-5 mb-6 flex justify-between items-center">
+            {/* Header */}
+            <header className="header">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                    <h1 className="flex items-center gap-2">
                         🏥 Open Ward
                     </h1>
                     <p className="text-gray-400 text-sm mt-1">General Ward Dashboard</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="user-info">
                     <div className="text-right hidden sm:block">
-                        <p className="text-white font-medium text-sm">{user.name}</p>
-                        <p className="text-xs text-indigo-400 uppercase font-semibold">{user.role}</p>
+                        <p className="user-name">{user.name}</p>
+                        <p className="user-role">{user.role}</p>
                     </div>
                     <button
                         onClick={onLogout}
@@ -217,26 +218,29 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                         </p>
                     )}
                 </div>
-            )}
+            )
+            }
 
             {/* Collapsed reminder indicator */}
-            {reminders.length > 0 && !showReminders && (
-                <button
-                    onClick={() => setShowReminders(true)}
-                    className="mb-6 flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-all"
-                >
-                    <Bell className="w-4 h-4" />
-                    {reminders.length} reminder{reminders.length > 1 ? 's' : ''}
-                    {overdueCount > 0 && <span className="text-red-400">({overdueCount} overdue)</span>}
-                </button>
-            )}
+            {
+                reminders.length > 0 && !showReminders && (
+                    <button
+                        onClick={() => setShowReminders(true)}
+                        className="mb-6 flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-all"
+                    >
+                        <Bell className="w-4 h-4" />
+                        {reminders.length} reminder{reminders.length > 1 ? 's' : ''}
+                        {overdueCount > 0 && <span className="text-red-400">({overdueCount} overdue)</span>}
+                    </button>
+                )
+            }
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <StatCard icon={Users} label="Total Patients" value={patients.length} color="indigo" />
-                <StatCard icon={Bed} label="Active Beds" value={activePatients.length} color="green" />
-                <StatCard icon={Pill} label="Med Reminders" value={reminders.filter(r => r.type === 'medication').length} color="amber" />
-                <StatCard icon={AlertTriangle} label="Overdue" value={overdueCount} color="red" />
+            <div className="stats-grid">
+                <StatCard icon={Users} label="Total Patients" value={patients.length} />
+                <StatCard icon={Bed} label="Active Beds" value={activePatients.length} />
+                <StatCard icon={Pill} label="Med Reminders" value={reminders.filter(r => r.type === 'medication').length} />
+                <StatCard icon={AlertTriangle} label="Overdue" value={overdueCount} />
             </div>
 
             {/* Section Header */}
@@ -244,7 +248,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                 <h2 className="text-xl font-bold text-white">Patients</h2>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/25"
+                    className="btn btn-primary"
                 >
                     <Plus className="w-4 h-4" />
                     Add Patient
@@ -252,123 +256,106 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
             </div>
 
             {/* Patient Grid */}
-            {patients.length === 0 ? (
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
-                    <div className="text-5xl mb-4">👤</div>
-                    <p className="text-gray-400">No patients yet. Add your first patient.</p>
+            <div className="patient-list">
+                <div className="list-header">
+                    <h2>Current Inpatients</h2>
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                    {patients.map(patient => {
-                        const lastMed = getLastMedication(patient.id!)
-                        return (
-                            <PatientCard
-                                key={patient.id}
-                                patient={patient}
-                                lastMedication={lastMed}
-                            />
-                        )
-                    })}
-                </div>
-            )}
+                {patients.length === 0 ? (
+                    <div className="empty-state">
+                        <div className="empty-state-icon">👤</div>
+                        <p>No patients yet. Add your first patient.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {patients.map(patient => {
+                            const lastMed = getLastMedication(patient.id!)
+                            return (
+                                <PatientGridCard
+                                    key={patient.id}
+                                    patient={patient}
+                                    lastMedication={lastMed}
+                                />
+                            )
+                        })}
+                    </div>
+                )}
+            </div>
 
             {/* Add Patient Modal */}
-            {showAddModal && (
-                <AddPatientModal onClose={() => setShowAddModal(false)} />
-            )}
-        </div>
+            {
+                showAddModal && (
+                    <AddPatientModal onClose={() => setShowAddModal(false)} />
+                )
+            }
+        </div >
     )
 }
 
-function StatCard({ icon: Icon, label, value, color }: { icon: React.ComponentType<{ className?: string }>; label: string; value: number; color: string }) {
-    const colors: Record<string, string> = {
-        indigo: 'from-indigo-500/20 to-indigo-600/10 border-indigo-500/20 text-indigo-400',
-        green: 'from-green-500/20 to-green-600/10 border-green-500/20 text-green-400',
-        amber: 'from-amber-500/20 to-amber-600/10 border-amber-500/20 text-amber-400',
-        red: 'from-red-500/20 to-red-600/10 border-red-500/20 text-red-400',
-    }
-
+function StatCard({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: number }) {
     return (
-        <div className={`bg-gradient-to-br ${colors[color]} border rounded-2xl p-4`}>
-            <div className="flex items-center gap-2 mb-2">
-                <Icon className="w-4 h-4" />
-                <span className="text-xs font-medium opacity-80">{label}</span>
-            </div>
-            <p className="text-3xl font-bold text-white">{value}</p>
+        <div className="stat-card">
+            <h3>
+                <Icon className="w-3 h-3 inline-block mr-1 mb-0.5" />
+                {label}
+            </h3>
+            <div className="stat-value">{value}</div>
         </div>
     )
 }
 
-function PatientCard({ patient, lastMedication }: { patient: Patient; lastMedication?: Medication }) {
+function PatientGridCard({ patient, lastMedication }: { patient: Patient; lastMedication?: Medication }) {
     const age = calculateAge(patient.dob)
 
     return (
         <Link
             to={`/patient/${patient.id}`}
-            className="group bg-gradient-to-b from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:border-indigo-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1"
+            className="group relative bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-4 transition-all hover:scale-[1.02] flex flex-col gap-4 overflow-hidden"
         >
-            {/* Patient Photo */}
-            <div className="relative h-40 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center overflow-hidden">
-                {patient.photoUrl ? (
-                    <img
-                        src={patient.photoUrl}
-                        alt={patient.name}
-                        className="w-24 h-24 rounded-full border-4 border-white/10 shadow-xl group-hover:scale-110 transition-transform duration-300"
-                    />
-                ) : (
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-4xl font-bold text-white">
-                        {patient.name.charAt(0)}
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        {patient.photoUrl ? (
+                            <img
+                                src={patient.photoUrl}
+                                alt={patient.name}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white/10"
+                            />
+                        ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-lg font-bold text-white">
+                                {patient.name.charAt(0)}
+                            </div>
+                        )}
+                        <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-[#1e293b]" />
                     </div>
-                )}
-                {/* Bed Badge */}
-                <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500 text-white shadow-lg">
-                    Bed {patient.bedNumber}
-                </span>
-                {/* Status indicator */}
-                <span className="absolute top-3 left-3 w-3 h-3 rounded-full bg-green-500 shadow-lg animate-pulse" />
-            </div>
-
-            {/* Patient Details */}
-            <div className="p-4">
-                <h3 className="text-lg font-bold text-white mb-1 truncate">{patient.name}</h3>
-
-                <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-500">Age:</span>
-                        <span className="text-white font-medium">{age} years</span>
-                        <span className="text-gray-600">•</span>
-                        <span className="text-gray-500">Gender:</span>
-                        <span className="text-white font-medium capitalize">{patient.gender}</span>
-                    </div>
-
-                    <div className="flex items-start gap-2 text-sm">
-                        <span className="text-gray-500 shrink-0">Condition:</span>
-                        <span className="text-amber-400 font-medium line-clamp-2">{patient.diagnosis}</span>
+                    <div>
+                        <h3 className="font-semibold text-white truncate max-w-[140px]">{patient.name}</h3>
+                        <p className="text-xs text-gray-400">{age} yrs • {patient.gender}</p>
                     </div>
                 </div>
+                <span className="bg-indigo-500/20 text-indigo-300 text-xs font-medium px-2 py-1 rounded-lg border border-indigo-500/20">
+                    Bed {patient.bedNumber}
+                </span>
+            </div>
 
-                {/* Last Medication */}
-                {lastMedication ? (
-                    <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                            <Clock className="w-3 h-3" />
-                            Last medication
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <p className="text-white font-semibold text-sm">{lastMedication.name}</p>
-                                <p className="text-gray-400 text-xs">{lastMedication.dosage}</p>
-                            </div>
-                            <span className="text-xs text-indigo-400 font-medium">
-                                {lastMedication.lastGiven && formatDistanceToNow(new Date(lastMedication.lastGiven), { addSuffix: true })}
-                            </span>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="bg-white/5 rounded-xl p-3 border border-white/5 text-center">
-                        <p className="text-gray-500 text-xs">No medications recorded</p>
-                    </div>
-                )}
+            <div>
+                <p className="text-xs text-gray-500 mb-1">Diagnosis</p>
+                <p className="text-sm text-gray-300 truncate">{patient.diagnosis}</p>
+            </div>
+
+            <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                <div className="text-xs">
+                    {lastMedication ? (
+                        <>
+                            <span className="text-gray-500">Last Med: </span>
+                            <span className="text-indigo-400">{formatDistanceToNow(new Date(lastMedication.lastGiven!), { addSuffix: true })}</span>
+                        </>
+                    ) : (
+                        <span className="text-gray-500">No meds recorded</span>
+                    )}
+                </div>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-white/50">
+                    →
+                </div>
             </div>
         </Link>
     )

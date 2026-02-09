@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { db, User } from './db'
-import ErrorBoundary from './components/ErrorBoundary'
+import ErrorBoundary from './ErrorBoundary'
 import Login from './Login'
 import Dashboard from './Dashboard'
 import PatientDetail from './PatientDetail'
