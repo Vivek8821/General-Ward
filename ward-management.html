@@ -839,6 +839,33 @@
             margin-bottom: 20px;
             opacity: 0.5;
         }
+
+        /* Validation Errors */
+        .input-error {
+            border-color: var(--danger) !important;
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2) !important;
+        }
+
+        .validation-error {
+            color: var(--danger);
+            font-size: 12px;
+            margin-top: 4px;
+            display: block;
+            font-weight: 500;
+        }
+
+        /* Discharged status badge */
+        .status-discharged {
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--text-muted);
+        }
+
+        /* Action buttons row in patient detail */
+        .patient-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -941,8 +968,13 @@
                 <div class="patient-list">
                     <div class="list-header">
                         <h2>Patients</h2>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <label class="checkbox-group" style="margin: 0;">
+                                <input type="checkbox" id="showDischarged" onchange="toggleDischargedFilter(this.checked)">
+                                <span style="font-size: 13px;">Show Discharged</span>
+                            </label>
                             <input type="text" class="search-box" placeholder="Search patients..." onkeyup="searchPatients(this.value)">
+                            <button class="btn btn-info" onclick="exportAllData()">Export CSV</button>
                             <button class="btn btn-primary" onclick="showAddPatient()">+ Add Patient</button>
                         </div>
                     </div>
@@ -964,6 +996,11 @@
                                 <span class="tag tag-allergy" id="detailAllergies">No Allergies</span>
                             </div>
                             <p style="margin-top: 10px; color: var(--text-secondary);" id="detailDiagnosis">Diagnosis</p>
+                        </div>
+                        <div class="patient-actions">
+                            <button class="btn btn-info" onclick="showEditPatient()">Edit</button>
+                            <button class="btn btn-warning" id="btnDischarge" onclick="dischargePatient()">Discharge</button>
+                            <button class="btn btn-danger doctor-only" onclick="deletePatient()">Delete</button>
                         </div>
                     </div>
 
@@ -1043,6 +1080,47 @@
                 </div>
             </div>
 
+            <!-- Edit Patient Modal -->
+            <div id="editPatientModal" class="modal-overlay hidden" onclick="if(event.target === this) hideEditPatient()">
+                <div class="modal-content">
+                    <h2>Edit Patient</h2>
+                    <form onsubmit="saveEditPatient(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Full Name *</label>
+                                <input type="text" id="editPatientName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Bed Number *</label>
+                                <input type="text" id="editPatientBed" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>MRN *</label>
+                                <input type="text" id="editPatientMRN" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth *</label>
+                                <input type="date" id="editPatientDOB" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Diagnosis *</label>
+                            <input type="text" id="editPatientDiagnosis" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Allergies</label>
+                            <input type="text" id="editPatientAllergies" placeholder="None">
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="hideEditPatient()">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Add Vitals Modal -->
             <div id="addVitalsModal" class="modal-overlay hidden" onclick="if(event.target === this) hideAddVitals()">
                 <div class="modal-content">
@@ -1051,27 +1129,27 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>BP Systolic (mmHg) *</label>
-                                <input type="number" id="vitalsBPsys" placeholder="120" required>
+                                <input type="number" id="vitalsBPsys" placeholder="120" min="40" max="300" required>
                             </div>
                             <div class="form-group">
                                 <label>BP Diastolic (mmHg) *</label>
-                                <input type="number" id="vitalsBPdia" placeholder="80" required>
+                                <input type="number" id="vitalsBPdia" placeholder="80" min="20" max="200" required>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Temperature (°F) *</label>
-                                <input type="number" step="0.1" id="vitalsTemp" placeholder="98.6" required>
+                                <input type="number" step="0.1" id="vitalsTemp" placeholder="98.6" min="90" max="110" required>
                             </div>
                             <div class="form-group">
                                 <label>Pulse (bpm) *</label>
-                                <input type="number" id="vitalsPulse" placeholder="72" required>
+                                <input type="number" id="vitalsPulse" placeholder="72" min="20" max="300" required>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>SpO2 (%) *</label>
-                                <input type="number" id="vitalsSpO2" placeholder="98" required>
+                                <input type="number" id="vitalsSpO2" placeholder="98" min="0" max="100" required>
                             </div>
                             <div class="form-group">
                                 <label>Pain Scale (0-10) *</label>
@@ -1165,6 +1243,30 @@
         let currentPatient = null;
         let enteredPin = '';
         let isOnline = navigator.onLine;
+        let showDischargedPatients = false;
+        let failedPinAttempts = 0;
+        let pinLockoutUntil = null;
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeCSV(value) {
+            const str = String(value == null ? '' : value);
+            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
 
         // ==========================================
         // INITIALIZATION
@@ -1374,8 +1476,16 @@
         }
 
         function saveApiConfig() {
-            API_CONFIG.baseUrl = document.getElementById('apiUrl').value;
-            API_CONFIG.apiKey = document.getElementById('apiKey').value;
+            const url = document.getElementById('apiUrl').value.trim();
+            const key = document.getElementById('apiKey').value;
+
+            if (url && !/^https?:\/\//i.test(url)) {
+                showToast('API URL must start with http:// or https://', 'error');
+                return;
+            }
+
+            API_CONFIG.baseUrl = url;
+            API_CONFIG.apiKey = key;
             API_CONFIG.enabled = !!(API_CONFIG.baseUrl && API_CONFIG.apiKey);
             
             localStorage.setItem('api_baseUrl', API_CONFIG.baseUrl);
@@ -1404,7 +1514,7 @@
                 info: 'ℹ'
             };
             
-            toast.innerHTML = `<span>${icons[type]}</span> ${message}`;
+            toast.innerHTML = `<span>${icons[type]}</span> ${escapeHtml(message)}`;
             container.appendChild(toast);
             
             setTimeout(() => toast.remove(), 3000);
@@ -1412,6 +1522,24 @@
 
         function showLoading(show) {
             document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+        }
+
+        function showValidationError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+            field.classList.add('input-error');
+            // Remove existing error for this field
+            const existing = field.parentElement.querySelector('.validation-error');
+            if (existing) existing.remove();
+            const span = document.createElement('span');
+            span.className = 'validation-error';
+            span.textContent = message;
+            field.parentElement.appendChild(span);
+        }
+
+        function clearValidationErrors() {
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            document.querySelectorAll('.validation-error').forEach(el => el.remove());
         }
 
         // ==========================================
@@ -1436,13 +1564,30 @@
         }
 
         function checkPin() {
+            // Check lockout
+            if (pinLockoutUntil && Date.now() < pinLockoutUntil) {
+                const remaining = Math.ceil((pinLockoutUntil - Date.now()) / 1000);
+                document.getElementById('errorMsg').textContent = `Too many attempts. Try again in ${remaining}s`;
+                enteredPin = '';
+                updatePinDisplay();
+                return;
+            }
+
             const user = users.find(u => u.pin === enteredPin);
             if (user) {
+                failedPinAttempts = 0;
+                pinLockoutUntil = null;
                 currentUser = user;
                 localStorage.setItem('ward_currentUser', JSON.stringify(user));
                 showMainApp();
             } else {
-                document.getElementById('errorMsg').textContent = 'Invalid PIN. Try 1234 (Doctor) or 5678 (Nurse)';
+                failedPinAttempts++;
+                if (failedPinAttempts >= 5) {
+                    pinLockoutUntil = Date.now() + 30000;
+                    document.getElementById('errorMsg').textContent = 'Too many attempts. Locked out for 30 seconds.';
+                } else {
+                    document.getElementById('errorMsg').textContent = `Invalid PIN. ${5 - failedPinAttempts} attempts remaining.`;
+                }
                 enteredPin = '';
                 updatePinDisplay();
             }
@@ -1509,6 +1654,17 @@
             document.getElementById('detailAdmission').textContent = currentPatient.admissionDate;
             document.getElementById('detailStatus').textContent = currentPatient.status;
 
+            // Hide discharge button if already discharged
+            const dischargeBtn = document.getElementById('btnDischarge');
+            if (dischargeBtn) {
+                dischargeBtn.style.display = currentPatient.status === 'discharged' ? 'none' : '';
+            }
+
+            // Re-apply doctor-only visibility
+            document.querySelectorAll('.doctor-only').forEach(el => {
+                el.style.display = currentUser.role === 'doctor' ? 'inline-flex' : 'none';
+            });
+
             renderVitals();
             renderMedications();
             switchTab('info', document.querySelector('.tab'));
@@ -1529,9 +1685,13 @@
             const container = document.getElementById('patientListContainer');
             let filtered = patients;
             
+            if (!showDischargedPatients) {
+                filtered = filtered.filter(p => p.status !== 'discharged');
+            }
+
             if (searchTerm) {
                 const term = searchTerm.toLowerCase();
-                filtered = patients.filter(p => 
+                filtered = filtered.filter(p => 
                     p.name.toLowerCase().includes(term) || 
                     p.bedNumber.toLowerCase().includes(term) ||
                     p.mrn.toLowerCase().includes(term)
@@ -1549,17 +1709,17 @@
             }
 
             container.innerHTML = filtered.map(patient => `
-                <div class="patient-item" onclick="showPatientDetail('${patient.id}')">
+                <div class="patient-item" onclick="showPatientDetail('${escapeHtml(patient.id)}')">
                     <div class="patient-info">
-                        <h3>${patient.name}</h3>
+                        <h3>${escapeHtml(patient.name)}</h3>
                         <div class="patient-meta">
-                            MRN: ${patient.mrn} | ${patient.diagnosis}
+                            MRN: ${escapeHtml(patient.mrn)} | ${escapeHtml(patient.diagnosis)}
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <span class="bed-badge">Bed ${patient.bedNumber}</span>
-                        <span class="status-badge status-active">${patient.status}</span>
-                        ${!patient.synced ? '<span style="color: var(--warning); font-size: 12px;">⏳</span>' : ''}
+                        <span class="bed-badge">Bed ${escapeHtml(patient.bedNumber)}</span>
+                        <span class="status-badge ${patient.status === 'discharged' ? 'status-discharged' : 'status-active'}">${escapeHtml(patient.status)}</span>
+                        ${!patient.synced ? '<span style="color: var(--warning); font-size: 12px;">&#9203;</span>' : ''}
                     </div>
                 </div>
             `).join('');
@@ -1596,12 +1756,12 @@
                     <tbody>
                         ${patientVitals.map(v => `
                             <tr>
-                                <td>${new Date(v.recordedAt).toLocaleString()}</td>
-                                <td>${v.bpSystolic}/${v.bpDiastolic}</td>
-                                <td>${v.temp}°F</td>
-                                <td>${v.pulse}</td>
-                                <td>${v.spo2}%</td>
-                                <td>${v.pain}/10</td>
+                                <td>${escapeHtml(new Date(v.recordedAt).toLocaleString())}</td>
+                                <td>${escapeHtml(v.bpSystolic)}/${escapeHtml(v.bpDiastolic)}</td>
+                                <td>${escapeHtml(v.temp)}&deg;F</td>
+                                <td>${escapeHtml(v.pulse)}</td>
+                                <td>${escapeHtml(v.spo2)}%</td>
+                                <td>${escapeHtml(v.pain)}/10</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -1625,11 +1785,11 @@
 
             container.innerHTML = patientMeds.map(med => `
                 <div class="medication-item">
-                    <h4>${med.name} ${med.prn ? '<span style="color: var(--warning);">(PRN)</span>' : ''}</h4>
+                    <h4>${escapeHtml(med.name)} ${med.prn ? '<span style="color: var(--warning);">(PRN)</span>' : ''}</h4>
                     <div class="medication-details">
-                        <strong>${med.dosage}</strong> | ${med.route} | ${med.frequency}
-                        ${med.scheduledTimes ? '<br>Scheduled: ' + med.scheduledTimes : ''}
-                        ${!med.synced ? '<br><span style="color: var(--warning); font-size: 12px;">⏳ Pending sync</span>' : ''}
+                        <strong>${escapeHtml(med.dosage)}</strong> | ${escapeHtml(med.route)} | ${escapeHtml(med.frequency)}
+                        ${med.scheduledTimes ? '<br>Scheduled: ' + escapeHtml(med.scheduledTimes) : ''}
+                        ${!med.synced ? '<br><span style="color: var(--warning); font-size: 12px;">&#9203; Pending sync</span>' : ''}
                     </div>
                 </div>
             `).join('');
@@ -1663,6 +1823,7 @@
         function hideAddPatient() {
             document.getElementById('addPatientModal').classList.add('hidden');
             document.querySelector('#addPatientModal form').reset();
+            clearValidationErrors();
         }
 
         function showAddVitals() {
@@ -1672,6 +1833,7 @@
         function hideAddVitals() {
             document.getElementById('addVitalsModal').classList.add('hidden');
             document.querySelector('#addVitalsModal form').reset();
+            clearValidationErrors();
         }
 
         function showAddMedication() {
@@ -1685,22 +1847,133 @@
         function hideAddMedication() {
             document.getElementById('addMedicationModal').classList.add('hidden');
             document.querySelector('#addMedicationModal form').reset();
+            clearValidationErrors();
+        }
+
+        function showEditPatient() {
+            if (!currentPatient) return;
+            document.getElementById('editPatientName').value = currentPatient.name;
+            document.getElementById('editPatientBed').value = currentPatient.bedNumber;
+            document.getElementById('editPatientMRN').value = currentPatient.mrn;
+            document.getElementById('editPatientDOB').value = currentPatient.dob;
+            document.getElementById('editPatientDiagnosis').value = currentPatient.diagnosis;
+            document.getElementById('editPatientAllergies').value = currentPatient.allergies === 'None' ? '' : currentPatient.allergies;
+            document.getElementById('editPatientModal').classList.remove('hidden');
+        }
+
+        function hideEditPatient() {
+            document.getElementById('editPatientModal').classList.add('hidden');
+            document.querySelector('#editPatientModal form').reset();
+            clearValidationErrors();
+        }
+
+        function deletePatient() {
+            if (!currentPatient) return;
+            if (currentUser.role !== 'doctor') {
+                showToast('Only doctors can delete patients', 'error');
+                return;
+            }
+            if (!confirm('Are you sure you want to delete ' + currentPatient.name + '? This will also remove all their vitals and medications.')) {
+                return;
+            }
+            const id = currentPatient.id;
+            patients = patients.filter(p => p.id !== id);
+            vitals = vitals.filter(v => v.patientId !== id);
+            medications = medications.filter(m => m.patientId !== id);
+            saveData();
+            showToast('Patient deleted successfully', 'success');
+            showDashboard();
+        }
+
+        function dischargePatient() {
+            if (!currentPatient) return;
+            if (currentPatient.status === 'discharged') {
+                showToast('Patient is already discharged', 'warning');
+                return;
+            }
+            if (!confirm('Discharge ' + currentPatient.name + '?')) return;
+            const patient = patients.find(p => p.id === currentPatient.id);
+            if (!patient) return;
+            patient.status = 'discharged';
+            patient.dischargeDate = new Date().toISOString().split('T')[0];
+            patient.synced = false;
+            saveData();
+            showPatientDetail(currentPatient.id);
+            updateStats();
+            showToast('Patient discharged successfully', 'success');
+        }
+
+        function toggleDischargedFilter(checked) {
+            showDischargedPatients = checked;
+            renderPatientList();
         }
 
         // ==========================================
         // SAVE FUNCTIONS
         // ==========================================
+        function validatePatientFields(prefix) {
+            clearValidationErrors();
+            let valid = true;
+            const nameId = prefix + 'PatientName';
+            const bedId = prefix + 'PatientBed';
+            const mrnId = prefix + 'PatientMRN';
+            const dobId = prefix + 'PatientDOB';
+            const diagId = prefix + 'PatientDiagnosis';
+
+            const name = document.getElementById(nameId).value.trim();
+            const bed = document.getElementById(bedId).value.trim();
+            const mrn = document.getElementById(mrnId).value.trim();
+            const dob = document.getElementById(dobId).value;
+            const diag = document.getElementById(diagId).value.trim();
+
+            if (name.length < 1 || name.length > 100) {
+                showValidationError(nameId, 'Name must be between 1 and 100 characters');
+                valid = false;
+            }
+            if (!/^[A-Z]\d+$/i.test(bed)) {
+                showValidationError(bedId, 'Bed number must be a letter followed by a number (e.g., A1)');
+                valid = false;
+            }
+            if (!/^MRN\d{3,6}$/i.test(mrn)) {
+                showValidationError(mrnId, 'MRN must be in format MRN001 to MRN999999');
+                valid = false;
+            }
+            if (dob && new Date(dob) > new Date()) {
+                showValidationError(dobId, 'Date of birth cannot be in the future');
+                valid = false;
+            }
+            if (diag.length < 1 || diag.length > 500) {
+                showValidationError(diagId, 'Diagnosis must be between 1 and 500 characters');
+                valid = false;
+            }
+
+            return { valid, name, bed, mrn, dob, diag };
+        }
+
         function savePatient(event) {
             event.preventDefault();
-            
+
+            const v = validatePatientFields('new');
+            if (!v.valid) return;
+
+            // Duplicate checks
+            if (patients.some(p => p.mrn.toLowerCase() === v.mrn.toLowerCase())) {
+                showValidationError('newPatientMRN', 'A patient with this MRN already exists');
+                return;
+            }
+            if (patients.some(p => p.bedNumber.toLowerCase() === v.bed.toLowerCase() && p.status === 'active')) {
+                showValidationError('newPatientBed', 'This bed is already occupied');
+                return;
+            }
+
             const patient = {
-                id: Date.now().toString(),
-                name: document.getElementById('newPatientName').value,
-                bedNumber: document.getElementById('newPatientBed').value,
-                mrn: document.getElementById('newPatientMRN').value,
-                dob: document.getElementById('newPatientDOB').value,
-                diagnosis: document.getElementById('newPatientDiagnosis').value,
-                allergies: document.getElementById('newPatientAllergies').value || 'None',
+                id: crypto.randomUUID(),
+                name: v.name,
+                bedNumber: v.bed,
+                mrn: v.mrn,
+                dob: v.dob,
+                diagnosis: v.diag,
+                allergies: document.getElementById('newPatientAllergies').value.trim() || 'None',
                 status: 'active',
                 admissionDate: new Date().toISOString().split('T')[0],
                 synced: false
@@ -1722,20 +1995,101 @@
             }
         }
 
+        function saveEditPatient(event) {
+            event.preventDefault();
+
+            const v = validatePatientFields('edit');
+            if (!v.valid) return;
+
+            // Duplicate checks (skip self)
+            if (patients.some(p => p.id !== currentPatient.id && p.mrn.toLowerCase() === v.mrn.toLowerCase())) {
+                showValidationError('editPatientMRN', 'A patient with this MRN already exists');
+                return;
+            }
+            if (patients.some(p => p.id !== currentPatient.id && p.bedNumber.toLowerCase() === v.bed.toLowerCase() && p.status === 'active')) {
+                showValidationError('editPatientBed', 'This bed is already occupied');
+                return;
+            }
+
+            const patient = patients.find(p => p.id === currentPatient.id);
+            if (!patient) return;
+
+            patient.name = v.name;
+            patient.bedNumber = v.bed;
+            patient.mrn = v.mrn;
+            patient.dob = v.dob;
+            patient.diagnosis = v.diag;
+            patient.allergies = document.getElementById('editPatientAllergies').value.trim() || 'None';
+            patient.synced = false;
+
+            saveData();
+            hideEditPatient();
+            showPatientDetail(currentPatient.id);
+            renderPatientList();
+            updateStats();
+            showToast('Patient updated successfully', 'success');
+
+            if (API_CONFIG.enabled && isOnline) {
+                syncPatient(patient).then(() => {
+                    saveData();
+                    updateStats();
+                });
+            }
+        }
+
         function saveVitals(event) {
             event.preventDefault();
-            
+            clearValidationErrors();
+            let valid = true;
+
+            const sys = parseInt(document.getElementById('vitalsBPsys').value);
+            const dia = parseInt(document.getElementById('vitalsBPdia').value);
+            const temp = parseFloat(document.getElementById('vitalsTemp').value);
+            const pulse = parseInt(document.getElementById('vitalsPulse').value);
+            const spo2 = parseInt(document.getElementById('vitalsSpO2').value);
+            const pain = parseInt(document.getElementById('vitalsPain').value);
+
+            if (isNaN(sys) || sys < 40 || sys > 300) {
+                showValidationError('vitalsBPsys', 'Systolic BP must be between 40 and 300 mmHg');
+                valid = false;
+            }
+            if (isNaN(dia) || dia < 20 || dia > 200) {
+                showValidationError('vitalsBPdia', 'Diastolic BP must be between 20 and 200 mmHg');
+                valid = false;
+            }
+            if (!isNaN(sys) && !isNaN(dia) && dia >= sys) {
+                showValidationError('vitalsBPdia', 'Diastolic BP must be less than systolic BP');
+                valid = false;
+            }
+            if (isNaN(temp) || temp < 90 || temp > 110) {
+                showValidationError('vitalsTemp', 'Temperature must be between 90 and 110 F');
+                valid = false;
+            }
+            if (isNaN(pulse) || pulse < 20 || pulse > 300) {
+                showValidationError('vitalsPulse', 'Pulse must be between 20 and 300 bpm');
+                valid = false;
+            }
+            if (isNaN(spo2) || spo2 < 0 || spo2 > 100) {
+                showValidationError('vitalsSpO2', 'SpO2 must be between 0 and 100%');
+                valid = false;
+            }
+            if (isNaN(pain) || pain < 0 || pain > 10) {
+                showValidationError('vitalsPain', 'Pain scale must be between 0 and 10');
+                valid = false;
+            }
+            if (!valid) return;
+
             const vital = {
-                id: Date.now().toString(),
+                id: crypto.randomUUID(),
                 patientId: currentPatient.id,
                 recordedAt: new Date().toISOString(),
                 recordedBy: currentUser.name,
-                bpSystolic: parseInt(document.getElementById('vitalsBPsys').value),
-                bpDiastolic: parseInt(document.getElementById('vitalsBPdia').value),
-                temp: parseFloat(document.getElementById('vitalsTemp').value),
-                pulse: parseInt(document.getElementById('vitalsPulse').value),
-                spo2: parseInt(document.getElementById('vitalsSpO2').value),
-                pain: parseInt(document.getElementById('vitalsPain').value),
+                bpSystolic: sys,
+                bpDiastolic: dia,
+                temp: temp,
+                pulse: pulse,
+                spo2: spo2,
+                pain: pain,
                 notes: document.getElementById('vitalsNotes').value,
                 synced: false
             };
@@ -1757,14 +2111,34 @@
 
         function saveMedication(event) {
             event.preventDefault();
-            
+            clearValidationErrors();
+            let valid = true;
+
+            const name = document.getElementById('medName').value.trim();
+            const dosage = document.getElementById('medDosage').value.trim();
+            const frequency = document.getElementById('medFrequency').value.trim();
+
+            if (name.length < 1 || name.length > 200) {
+                showValidationError('medName', 'Medication name must be between 1 and 200 characters');
+                valid = false;
+            }
+            if (dosage.length < 1 || dosage.length > 100) {
+                showValidationError('medDosage', 'Dosage must be between 1 and 100 characters');
+                valid = false;
+            }
+            if (frequency.length < 1 || frequency.length > 100) {
+                showValidationError('medFrequency', 'Frequency must be between 1 and 100 characters');
+                valid = false;
+            }
+            if (!valid) return;
+
             const med = {
-                id: Date.now().toString(),
+                id: crypto.randomUUID(),
                 patientId: currentPatient.id,
-                name: document.getElementById('medName').value,
-                dosage: document.getElementById('medDosage').value,
+                name: name,
+                dosage: dosage,
                 route: document.getElementById('medRoute').value,
-                frequency: document.getElementById('medFrequency').value,
+                frequency: frequency,
                 scheduledTimes: document.getElementById('medTimes').value,
                 prn: document.getElementById('medPRN').checked,
                 startDate: new Date().toISOString().split('T')[0],
@@ -1791,6 +2165,52 @@
             localStorage.setItem('ward_vitals', JSON.stringify(vitals));
             localStorage.setItem('ward_medications', JSON.stringify(medications));
             localStorage.setItem('ward_pendingSync', JSON.stringify(pendingSync));
+        }
+
+        // ==========================================
+        // DATA EXPORT
+        // ==========================================
+        function exportAllData() {
+            const lines = [];
+
+            // Patients section
+            lines.push('# PATIENTS');
+            lines.push(['ID','Name','MRN','Bed','DOB','Diagnosis','Allergies','Status','Admission Date','Discharge Date'].map(escapeCSV).join(','));
+            patients.forEach(p => {
+                lines.push([p.id, p.name, p.mrn, p.bedNumber, p.dob, p.diagnosis, p.allergies, p.status, p.admissionDate, p.dischargeDate || ''].map(escapeCSV).join(','));
+            });
+
+            lines.push('');
+
+            // Vitals section
+            lines.push('# VITALS');
+            lines.push(['ID','Patient ID','Patient Name','Recorded At','Recorded By','BP Systolic','BP Diastolic','Temperature','Pulse','SpO2','Pain','Notes'].map(escapeCSV).join(','));
+            vitals.forEach(v => {
+                const pName = (patients.find(p => p.id === v.patientId) || {}).name || '';
+                lines.push([v.id, v.patientId, pName, v.recordedAt, v.recordedBy, v.bpSystolic, v.bpDiastolic, v.temp, v.pulse, v.spo2, v.pain, v.notes || ''].map(escapeCSV).join(','));
+            });
+
+            lines.push('');
+
+            // Medications section
+            lines.push('# MEDICATIONS');
+            lines.push(['ID','Patient ID','Patient Name','Medication','Dosage','Route','Frequency','Scheduled Times','PRN','Start Date'].map(escapeCSV).join(','));
+            medications.forEach(m => {
+                const pName = (patients.find(p => p.id === m.patientId) || {}).name || '';
+                lines.push([m.id, m.patientId, pName, m.name, m.dosage, m.route, m.frequency, m.scheduledTimes, m.prn ? 'Yes' : 'No', m.startDate].map(escapeCSV).join(','));
+            });
+
+            const csvContent = lines.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'ward-export-' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('Data exported successfully', 'success');
         }
 
         // ==========================================
