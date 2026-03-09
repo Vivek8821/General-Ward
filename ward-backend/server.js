@@ -8,6 +8,7 @@ const patientRoutes = require('./routes/patients');
 const statRoutes = require('./routes/stats');
 const medicationRoutes = require('./routes/medications');
 const escalationRoutes = require('./routes/escalations');
+const historyRoutes = require('./routes/history');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -19,6 +20,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
+app.use('/api/patients/:patientId/history', historyRoutes);
 app.use('/api/patients/:patientId/stats', statRoutes);
 app.use('/api/patients/:patientId/medications', medicationRoutes);
 app.use('/api/patients/:patientId/escalations', escalationRoutes);

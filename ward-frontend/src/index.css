@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #8294f8;
+  --color-primary-dark: #6b7ced;
+  --color-secondary: #a385e0;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #fb7185;
+  --color-info: #60a5fa;
+  
+  --color-bg-primary: #e8eef3;
+  --color-bg-secondary: #e8eef3;
+  --color-bg-tertiary: #f3f6fa;
+  --color-text-primary: #475569;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-border: transparent;
+  --color-hover: #f1f5f9;
+  --color-input: #e8eef3;
+}
+
+/* Dark mode configuration */
+.dark {
+  --color-primary: #6366f1;
+  --color-bg-primary: #1e2433;
+  --color-bg-secondary: #1e2433;
+  --color-bg-tertiary: #262d40;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #64748b;
+  --color-border: transparent;
+  --color-hover: #262d40;
+  --color-input: #1e2433;
+}
+
+body {
+  @apply bg-bg-primary text-text-primary antialiased;
+}
+
+/* Neo-claymorphism Utilities */
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply px-6 py-3 rounded-2xl font-bold inline-flex justify-center items-center gap-2 transition-all duration-300 border-2 border-transparent;
+  }
+  
+  .btn:hover {
+    @apply -translate-y-1;
+  }
+  
+  .btn:active {
+    @apply translate-y-0.5 scale-95;
+    box-shadow: inset 4px 4px 8px rgba(0,0,0,0.1), inset -4px -4px 8px rgba(255,255,255,0.4) !important;
+  }
+  .dark .btn:active {
+    box-shadow: inset 4px 4px 8px rgba(0,0,0,0.5), inset -4px -4px 8px rgba(255,255,255,0.05) !important;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white;
+    box-shadow: 
+      6px 6px 12px rgba(130, 148, 248, 0.4),
+      -6px -6px 12px rgba(255, 255, 255, 0.8),
+      inset -3px -3px 6px rgba(0,0,0,0.1),
+      inset 3px 3px 6px rgba(255,255,255,0.4);
+  }
+  
+  .btn-danger {
+    @apply bg-danger text-white;
+    box-shadow: 
+      6px 6px 12px rgba(251, 113, 133, 0.4),
+      -6px -6px 12px rgba(255, 255, 255, 0.8),
+      inset -3px -3px 6px rgba(0,0,0,0.1),
+      inset 3px 3px 6px rgba(255,255,255,0.4);
+  }
+  
+  .btn-secondary {
+    @apply bg-bg-secondary text-text-primary border-2 border-transparent;
+    box-shadow: 
+      6px 6px 12px rgba(0, 0, 0, 0.08),
+      -6px -6px 12px rgba(255, 255, 255, 0.9),
+      inset -3px -3px 6px rgba(0,0,0,0.03),
+      inset 3px 3px 6px rgba(255,255,255,0.6);
+  }
+  
+  .btn-success {
+    @apply bg-success text-white;
+    box-shadow: 
+      6px 6px 12px rgba(74, 222, 128, 0.4),
+      -6px -6px 12px rgba(255, 255, 255, 0.8),
+      inset -3px -3px 6px rgba(0,0,0,0.1),
+      inset 3px 3px 6px rgba(255,255,255,0.4);
+  }
+  
+  .btn-warning {
+    @apply bg-warning text-white;
+    box-shadow: 
+      6px 6px 12px rgba(251, 191, 36, 0.4),
+      -6px -6px 12px rgba(255, 255, 255, 0.8),
+      inset -3px -3px 6px rgba(0,0,0,0.1),
+      inset 3px 3px 6px rgba(255,255,255,0.4);
+  }
+  
+  .btn-info {
+    @apply bg-info text-white;
+    box-shadow: 
+      6px 6px 12px rgba(96, 165, 250, 0.4),
+      -6px -6px 12px rgba(255, 255, 255, 0.8),
+      inset -3px -3px 6px rgba(0,0,0,0.1),
+      inset 3px 3px 6px rgba(255,255,255,0.4);
+  }
+
+  .dark .btn-primary, .dark .btn-danger, .dark .btn-success, .dark .btn-warning, .dark .btn-info, .dark .btn-secondary {
+    box-shadow: 
+      6px 6px 12px rgba(0, 0, 0, 0.4),
+      -6px -6px 12px rgba(255, 255, 255, 0.03),
+      inset -3px -3px 6px rgba(0,0,0,0.2),
+      inset 3px 3px 6px rgba(255,255,255,0.05);
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-bg-secondary rounded-[2rem] border-4 border-transparent transition-all duration-300;
+    box-shadow: 
+      12px 12px 24px rgba(0, 0, 0, 0.08),
+      -12px -12px 24px rgba(255, 255, 255, 0.8),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.02),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.8);
+  }
+  
+  .dark .card {
+    box-shadow: 
+      12px 12px 24px rgba(0, 0, 0, 0.4),
+      -12px -12px 24px rgba(255, 255, 255, 0.02),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.1),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Inputs */
+  .input-field {
+    @apply w-full px-5 py-4 rounded-2xl bg-input text-text-primary transition-all border-2 border-transparent focus:outline-none focus:border-primary/50;
+    box-shadow: 
+      inset 6px 6px 10px rgba(0,0,0,0.06),
+      inset -6px -6px 10px rgba(255,255,255,0.8);
+  }
+  
+  .dark .input-field {
+     box-shadow: 
+      inset 6px 6px 10px rgba(0,0,0,0.5),
+      inset -6px -6px 10px rgba(255,255,255,0.03);
+  }
+
+  .nav-ribbon {
+    @apply bg-bg-secondary rounded-[2rem] border-4 border-transparent transition-all duration-300;
+    box-shadow: 
+      6px 6px 14px rgba(0, 0, 0, 0.08),
+      -6px -6px 14px rgba(255, 255, 255, 0.8),
+      inset -2px -2px 6px rgba(0, 0, 0, 0.01),
+      inset 2px 2px 6px rgba(255, 255, 255, 0.8);
+  }
+  .dark .nav-ribbon {
+    box-shadow: 
+      6px 6px 14px rgba(0, 0, 0, 0.4),
+      -6px -6px 14px rgba(255, 255, 255, 0.02),
+      inset -2px -2px 6px rgba(0, 0, 0, 0.1),
+      inset 2px 2px 6px rgba(255, 255, 255, 0.05);
+  }
+}
