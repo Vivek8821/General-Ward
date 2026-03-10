@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { FileText, Save, Edit2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function HistoryTab({ patientId }) {
   const [history, setHistory] = useState(null);
@@ -35,6 +36,7 @@ export default function HistoryTab({ patientId }) {
         });
       }
     } catch (err) {
+      toast.error("Failed to load medical history: " + err.message);
       console.error(err);
     } finally {
       setLoading(false);
@@ -46,20 +48,33 @@ export default function HistoryTab({ patientId }) {
     try {
       await api.post(`/patients/${patientId}/history`, formData);
       setIsEditing(false);
-      fetchHistory();
+      await fetchHistory();
+      toast.success("Medical history updated");
     } catch (err) {
-      alert("Failed to save history: " + err.message);
+      toast.error("Failed to save history: " + err.message);
     }
   };
 
-  if (loading) {
-     return <div className="text-center p-8 text-text-muted">Loading medical history...</div>;
-  }
-
   const isDoctor = user.role === 'doctor';
 
-  if (isEditing) {
-      return (
+  return (
+    <div className="animate-in fade-in pt-4">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold flex items-center gap-2"><FileText className="text-secondary"/> Extensive Medical History</h3>
+        
+        {isDoctor && !isEditing && (
+          <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 !px-4 text-sm">
+            <Edit2 className="w-4 h-4" /> {history ? 'Update History' : 'Create Profile'}
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center p-12 text-text-muted animate-pulse">
+          <div className="w-8 h-8 border-4 border-secondary border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="font-medium">Loading medical history...</p>
+        </div>
+      ) : isEditing ? (
         <form onSubmit={handleSubmit} className="bg-bg-tertiary p-6 rounded-xl border border-border mt-4 animate-in fade-in">
           <h4 className="font-bold mb-4 text-primary flex items-center gap-2">
              <FileText className="w-5 h-5"/> Edit Medical History
@@ -93,26 +108,11 @@ export default function HistoryTab({ patientId }) {
             <button type="submit" className="btn btn-primary !py-2 !px-4"><Save className="w-4 h-4"/> Save History</button>
           </div>
         </form>
-      );
-  }
-
-  return (
-    <div className="animate-in fade-in pt-4">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold flex items-center gap-2"><FileText className="text-secondary"/> Extensive Medical History</h3>
-        
-        {isDoctor && (
-          <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 !px-4 text-sm">
-            <Edit2 className="w-4 h-4" /> {history ? 'Update History' : 'Create Profile'}
-          </button>
-        )}
-      </div>
-
-      {!history ? (
-        <div className="text-center p-8 bg-bg-tertiary rounded-xl border border-dashed border-border text-text-muted transition-all hover:bg-bg-secondary">
-          <FileText className="w-10 h-10 mx-auto mb-3 opacity-20"/>
-          No extensive medical history profile has been established yet.
-          {isDoctor && <p className="mt-2 text-sm">Click &quot;Create Profile&quot; to begin.</p>}
+      ) : !history ? (
+        <div className="text-center p-10 bg-bg-tertiary rounded-2xl border-2 border-dashed border-border text-text-muted flex flex-col items-center justify-center gap-3 mt-4">
+          <FileText size={48} className="opacity-20" />
+          <p className="font-semibold">No extensive medical history profile has been established yet.</p>
+          {isDoctor && <p className="text-sm">Click "Create Profile" to begin.</p>}
         </div>
       ) : (
         <div className="card p-6 border-l-4 border-l-secondary">

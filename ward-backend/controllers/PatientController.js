@@ -1,7 +1,17 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const patientService = require('../services/PatientService');
+const medicationRoutes = require('../routes/medications');
+const historyRoutes = require('../routes/history');
+const statRoutes = require('../routes/stats');
+const escalationRoutes = require('./EscalationController');
+
+// Sub-routers for nested resources
+router.use('/:patientId/medications', medicationRoutes);
+router.use('/:patientId/history', historyRoutes);
+router.use('/:patientId/stats', statRoutes);
+router.use('/:patientId/escalations', escalationRoutes);
 
 // Create a patient (Doctor or Nurse)
 router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req, res) => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { Moon, Plus, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function SleepTab({ patientId }) {
   const [sleepLogs, setSleepLogs] = useState([]);
@@ -27,6 +28,7 @@ export default function SleepTab({ patientId }) {
       const data = await api.get(`/patients/${patientId}/stats?type=sleep`);
       setSleepLogs(data);
     } catch (err) {
+      toast.error("Failed to load sleep records: " + err.message);
       console.error(err);
     } finally {
       setLoading(false);
@@ -43,9 +45,10 @@ export default function SleepTab({ patientId }) {
       
       setShowForm(false);
       setFormData({ hoursSlept: '', quality: 'Good', interrupted: false, nap: false, notes: '' });
-      fetchSleepLogs();
+      await fetchSleepLogs();
+      toast.success("Sleep log saved");
     } catch (err) {
-      alert("Failed to save sleep log: " + err.message);
+      toast.error("Failed to save sleep log: " + err.message);
     }
   };
 
@@ -140,10 +143,14 @@ export default function SleepTab({ patientId }) {
       )}
 
       {loading ? (
-        <div className="text-center p-8 text-text-muted">Loading sleep records...</div>
+        <div className="flex flex-col items-center justify-center p-12 text-text-muted animate-pulse">
+          <div className="w-8 h-8 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="font-medium">Loading sleep history...</p>
+        </div>
       ) : sleepLogs.length === 0 ? (
-        <div className="text-center p-8 bg-bg-tertiary rounded-xl border border-dashed border-border text-text-muted">
-          No sleep records for this patient yet.
+        <div className="text-center p-10 bg-bg-tertiary rounded-2xl border-2 border-dashed border-border text-text-muted flex flex-col items-center justify-center gap-3 mt-4">
+          <Moon size={48} className="opacity-20" />
+          <p className="font-semibold">No sleep records for this patient yet.</p>
         </div>
       ) : (
         <div className="space-y-4">

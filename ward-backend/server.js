@@ -5,6 +5,7 @@ const db = require('./db');
 const { auditLog } = require('./middleware/audit');
 
 // Import routes
+// Import routes
 const authRoutes = require('./controllers/AuthController');
 const patientRoutes = require('./controllers/PatientController');
 const statRoutes = require('./routes/stats');
@@ -24,10 +25,6 @@ app.use(auditLog); // Attach audit logging globally
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
-app.use('/api/patients/:patientId/history', historyRoutes);
-app.use('/api/patients/:patientId/stats', statRoutes);
-app.use('/api/patients/:patientId/medications', medicationRoutes);
-app.use('/api/patients/:patientId/escalations', escalationRoutes);
 app.use('/api/escalations', escalationRoutes);
 
 // Health check endpoint

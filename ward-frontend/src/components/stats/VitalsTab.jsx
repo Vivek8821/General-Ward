@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { Activity, Plus, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
@@ -26,6 +27,7 @@ export default function VitalsTab({ patientId }) {
       const data = await api.get(`/patients/${patientId}/stats?type=vital`);
       setVitals(data);
     } catch (err) {
+      toast.error("Failed to load vitals: " + err.message);
       console.error(err);
     } finally {
       setLoading(false);
@@ -48,9 +50,10 @@ export default function VitalsTab({ patientId }) {
       
       setShowForm(false);
       setFormData({ bpSystolic: '', bpDiastolic: '', temp: '', pulse: '', spo2: '', pain: '' });
-      fetchVitals();
+      await fetchVitals();
+      toast.success("Vitals recorded successfully");
     } catch (err) {
-      alert("Failed to save vitals: " + err.message);
+      toast.error("Failed to save vitals: " + err.message);
     }
   };
 
@@ -154,10 +157,14 @@ export default function VitalsTab({ patientId }) {
       )}
 
       {loading ? (
-        <div className="text-center p-8 text-text-muted">Loading vitals...</div>
+        <div className="flex flex-col items-center justify-center p-12 text-text-muted animate-pulse">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="font-medium">Loading vitals history...</p>
+        </div>
       ) : vitals.length === 0 ? (
-        <div className="text-center p-8 bg-bg-tertiary rounded-xl border border-dashed border-border text-text-muted">
-          No vitals recorded for this patient yet.
+        <div className="text-center p-10 bg-bg-tertiary rounded-2xl border-2 border-dashed border-border text-text-muted flex flex-col items-center justify-center gap-3">
+          <Activity size={48} className="opacity-20" />
+          <p className="font-semibold">No vitals recorded for this patient yet.</p>
         </div>
       ) : (
         <div className="space-y-6">

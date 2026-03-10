@@ -63,11 +63,31 @@ const initDb = () => {
             scheduledTimes TEXT,
             prn BOOLEAN DEFAULT 0,
             startDate DATE NOT NULL,
-            status TEXT DEFAULT 'active',
             prescribedBy TEXT NOT NULL,
+            status TEXT DEFAULT 'active',
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (patientId) REFERENCES Patients(id)
           )
         `);
+
+        // Medication Administrations Table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS MedicationAdministrations (
+            id TEXT PRIMARY KEY,
+            medicationId TEXT NOT NULL,
+            patientId TEXT NOT NULL,
+            status TEXT CHECK(status IN ('given', 'refused', 'missed')) NOT NULL,
+            notes TEXT,
+            administeredBy TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (medicationId) REFERENCES Medications(id),
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+
+        // Dynamically patch existing DB for MAR and timestamp
+        db.run(`ALTER TABLE Medications ADD COLUMN timestamp DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {});
+        db.run(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`, (err) => {});
 
         // Dynamically patch existing DB for MedsTab fix
         db.run(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`, (err) => { /* Ignore duplicate column error */ });
@@ -96,7 +116,6 @@ const initDb = () => {
             dischargeVitals TEXT NOT NULL,
             dischargeRecommendations TEXT,
             dischargedBy TEXT NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (patientId) REFERENCES Patients(id)
           )

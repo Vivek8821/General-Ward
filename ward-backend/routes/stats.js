@@ -4,15 +4,31 @@ const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const crypto = require('crypto');
 
+const validateStats = (type, data) => {
+    if (typeof data !== 'object' || data === null) return false;
+    switch (type) {
+        case 'vital':
+            return !!(data.bpSystolic && data.bpDiastolic && data.temp && data.pulse);
+        case 'diet':
+            return !!(data.mealType && data.consumedPercentage);
+        case 'sleep':
+            return !!(data.hoursSlept && data.quality);
+        case 'symptom':
+            return !!(data.severity && data.description);
+        default:
+            return true;
+    }
+};
+
 // POST /api/patients/:patientId/stats
 router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), (req, res) => {
     const { patientId } = req.params;
     const { type, data } = req.body;
     const id = crypto.randomUUID();
     
-    // validate type
-    if (!['vital', 'symptom', 'diet', 'sleep'].includes(type)) {
-        return res.status(400).json({ error: 'Invalid stat type' });
+    // validate type and content
+    if (!['vital', 'symptom', 'diet', 'sleep'].includes(type) || !validateStats(type, data)) {
+        return res.status(400).json({ error: 'Invalid stat type or malformed data structure' });
     }
 
     const dataString = typeof data === 'object' ? JSON.stringify(data) : data;

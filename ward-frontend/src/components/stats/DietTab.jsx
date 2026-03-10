@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { Apple, Plus, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function DietTab({ patientId }) {
   const [diets, setDiets] = useState([]);
@@ -26,6 +27,7 @@ export default function DietTab({ patientId }) {
       const data = await api.get(`/patients/${patientId}/stats?type=diet`);
       setDiets(data);
     } catch (err) {
+      toast.error("Failed to load diet records: " + err.message);
       console.error(err);
     } finally {
       setLoading(false);
@@ -42,9 +44,10 @@ export default function DietTab({ patientId }) {
       
       setShowForm(false);
       setFormData({ mealType: 'Breakfast', consumedPercentage: '100', fluidIntakeMl: '', notes: '' });
-      fetchDiets();
+      await fetchDiets();
+      toast.success("Meal record saved");
     } catch (err) {
-      alert("Failed to save diet tracking: " + err.message);
+      toast.error("Failed to save diet tracking: " + err.message);
     }
   };
 
@@ -130,10 +133,14 @@ export default function DietTab({ patientId }) {
       )}
 
       {loading ? (
-        <div className="text-center p-8 text-text-muted">Loading diet records...</div>
+        <div className="flex flex-col items-center justify-center p-12 text-text-muted animate-pulse">
+           <div className="w-8 h-8 border-4 border-success border-t-transparent rounded-full animate-spin mb-4"></div>
+           <p className="font-medium">Loading diet records...</p>
+        </div>
       ) : diets.length === 0 ? (
-        <div className="text-center p-8 bg-bg-tertiary rounded-xl border border-dashed border-border text-text-muted">
-          No meals recorded for this patient yet.
+        <div className="text-center p-10 bg-bg-tertiary rounded-2xl border-2 border-dashed border-border text-text-muted flex flex-col items-center justify-center gap-3 mt-4">
+          <Apple size={48} className="opacity-20" />
+          <p className="font-semibold">No meals recorded for this patient yet.</p>
         </div>
       ) : (
         <div className="space-y-4">
