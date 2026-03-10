@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const db = require('../db');
+const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const crypto = require('crypto');
 

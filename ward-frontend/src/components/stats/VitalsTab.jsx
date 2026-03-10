@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { Activity, Plus, Save } from 'lucide-react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 export default function VitalsTab({ patientId }) {
   const [vitals, setVitals] = useState([]);
@@ -157,8 +160,46 @@ export default function VitalsTab({ patientId }) {
           No vitals recorded for this patient yet.
         </div>
       ) : (
-        <div className="space-y-4">
-          {vitals.map(renderVitalCard)}
+        <div className="space-y-6">
+          {/* Graph Timeline View */}
+          <div className="bg-bg-tertiary p-6 rounded-xl border border-border">
+            <h4 className="font-bold text-text-secondary mb-6 flex items-center gap-2">
+               Recovery Trends
+            </h4>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={[...vitals].reverse().map(v => ({
+                      time: new Date(v.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }),
+                      temp: parseFloat(v.data.temp),
+                      bpSystolic: parseInt(v.data.bpSystolic),
+                      bpDiastolic: parseInt(v.data.bpDiastolic)
+                  }))}
+                  margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} tickMargin={10} />
+                  <YAxis yAxisId="left" stroke="#9ca3af" fontSize={12} domain={['dataMin - 10', 'dataMax + 10']} />
+                  <YAxis yAxisId="right" orientation="right" stroke="#9ca3af" fontSize={12} domain={['dataMin - 2', 'dataMax + 2']} />
+                  <Tooltip 
+                     contentStyle={{ backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                  <Line yAxisId="left" type="monotone" dataKey="bpSystolic" name="BP Systolic" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="left" type="monotone" dataKey="bpDiastolic" name="BP Diastolic" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="temp" name="Temp (°F)" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* List View */}
+          <div className="space-y-4 pt-4 border-t border-border">
+             <h4 className="font-bold text-text-secondary mb-2 flex items-center gap-2">
+               Detailed Logs
+            </h4>
+            {vitals.map(renderVitalCard)}
+          </div>
         </div>
       )}
     </div>

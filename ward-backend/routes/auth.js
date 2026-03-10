@@ -2,11 +2,20 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const db = require('../db');
+const rateLimit = require('express-rate-limit');
+const { db } = require('../db');
 const { JWT_SECRET, authenticateToken } = require('../middleware/auth');
 
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 login requests per `window` per 15 minutes
+    message: { error: 'Too many login attempts from this IP, please try again after 15 minutes' },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {

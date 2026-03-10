@@ -1,13 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const db = require('./db');
+const { auditLog } = require('./middleware/audit');
 
 // Import routes
-const authRoutes = require('./routes/auth');
-const patientRoutes = require('./routes/patients');
+const authRoutes = require('./controllers/AuthController');
+const patientRoutes = require('./controllers/PatientController');
 const statRoutes = require('./routes/stats');
 const medicationRoutes = require('./routes/medications');
-const escalationRoutes = require('./routes/escalations');
+const escalationRoutes = require('./controllers/EscalationController');
 const historyRoutes = require('./routes/history');
 
 const app = express();
@@ -15,7 +17,9 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
+app.use(helmet());
 app.use(express.json());
+app.use(auditLog); // Attach audit logging globally
 
 // Routes
 app.use('/api/auth', authRoutes);

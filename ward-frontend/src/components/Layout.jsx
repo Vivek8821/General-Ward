@@ -1,6 +1,7 @@
 import { Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User as UserIcon, Moon, Sun } from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
 
 export const ProtectedLayout = ({ allowedRoles }) => {
   const { user, logout } = useAuth();
@@ -57,6 +58,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
           <Outlet />
         </main>
       </div>
+      <Toaster position="top-right" />
     </div>
   );
 };

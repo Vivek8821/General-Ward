@@ -1,4 +1,4 @@
-const db = require('./db');
+const { db, initDb } = require('./db');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
@@ -9,10 +9,21 @@ async function seed() {
     const drHash = await bcrypt.hash('1234', 10);
     const nurseHash = await bcrypt.hash('5678', 10);
 
-    db.serialize(() => {
-        // Users
-        db.run(`INSERT OR IGNORE INTO Users (id, name, role, passwordHash) VALUES (?, ?, ?, ?)`, ['u1', 'Dr. Smith', 'doctor', drHash]);
-        db.run(`INSERT OR IGNORE INTO Users (id, name, role, passwordHash) VALUES (?, ?, ?, ?)`, ['u2', 'Nurse Johnson', 'nurse', nurseHash]);
+    db.serialize(async () => {
+        // Clear existing data for a clean slate
+        db.run('DROP TABLE IF EXISTS Escalations');
+        db.run('DROP TABLE IF EXISTS DailyStats');
+        db.run('DROP TABLE IF EXISTS Medications');
+        db.run('DROP TABLE IF EXISTS Patients');
+        db.run('DROP TABLE IF EXISTS AuditLogs');
+        db.run('DROP TABLE IF EXISTS Users', async () => {
+              
+            // Re-initialize the tables
+            await initDb();
+            
+            // Users
+            db.run(`INSERT OR IGNORE INTO Users (id, name, role, passwordHash) VALUES (?, ?, ?, ?)`, ['u1', 'Dr. Smith', 'doctor', drHash]);
+            db.run(`INSERT OR IGNORE INTO Users (id, name, role, passwordHash) VALUES (?, ?, ?, ?)`, ['u2', 'Nurse Johnson', 'nurse', nurseHash]);
 
         // Patients
   // Seed Mock Patients Data
@@ -48,6 +59,7 @@ async function seed() {
             [crypto.randomUUID(), 'u3', 'Patient reporting continuous chest pain despite nitro.', 'Nurse Johnson', 'pending']);
             
         console.log('Database seeded successfully.');
+        });
     });
 }
 

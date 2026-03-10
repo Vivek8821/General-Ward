@@ -2,17 +2,52 @@ import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { Users, Bed, Activity, AlertCircle, Plus, Search } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([]);
   const [escalated, setEscalated] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [isReviewingCases, setIsReviewingCases] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     fetchData();
-  }, []);
+
+    // Polling setup for Doctors to receive real-time-like notifications
+    let intervalId;
+    if (user.role === 'doctor') {
+      intervalId = setInterval(async () => {
+        try {
+          const eData = await api.get('/escalations/all');
+          setEscalated(prev => {
+            // Check if there are new escalations not in our current state
+            if (eData.length > prev.length) {
+              const newEscalations = eData.filter(e => !prev.some(p => p.id === e.id));
+              newEscalations.forEach(e => {
+                 toast.error(`Case Escalate: ${e.reason}`, {
+                    icon: '🚨',
+                    duration: 6000,
+                 });
+              });
+            }
+            return eData;
+          });
+          
+          // Refresh patient list to get any new 'escalated' status changes
+          const pData = await api.get('/patients');
+          setPatients(pData);
+        } catch (err) {
+          console.error("Polling error", err);
+        }
+      }, 15000); // 15 seconds
+    }
+
+    return () => {
+       if (intervalId) clearInterval(intervalId);
+    };
+  }, [user.role]);
 
   const fetchData = async () => {
     try {
@@ -30,12 +65,17 @@ export default function Dashboard() {
     }
   };
 
-  const activePatients = patients.filter(p => p.status === 'active');
-  const filteredPatients = patients.filter(p => 
+  const activePatients = patients.filter(p => ['active', 'escalated'].includes(p.status));
+  let filteredPatients = patients.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) || 
     p.mrn.toLowerCase().includes(search.toLowerCase()) ||
     p.bedNumber.toLowerCase().includes(search.toLowerCase())
   );
+  
+  // Filter further if reviewing cases
+  if (isReviewingCases) {
+      filteredPatients = filteredPatients.filter(p => p.status === 'escalated');
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -47,7 +87,12 @@ export default function Dashboard() {
             <AlertCircle className="w-6 h-6 animate-pulse" />
             {escalated.length} Patient{escalated.length > 1 ? 's' : ''} Require Immediate Attention
           </div>
-          <button className="btn btn-danger text-sm !px-4 !py-2">Review Cases</button>
+          <button 
+            onClick={() => setIsReviewingCases(!isReviewingCases)}
+            className={`btn ${isReviewingCases ? 'bg-bg-tertiary text-danger border border-danger' : 'btn-danger'} text-sm !px-4 !py-2`}
+          >
+            {isReviewingCases ? 'View All Patients' : 'Review Cases'}
+          </button>
         </div>
       )}
 
@@ -95,7 +140,7 @@ export default function Dashboard() {
               <div 
                 key={patient.id} 
                 onClick={() => window.location.href = `/patient/${patient.id}`}
-                className="card p-6 cursor-pointer hover:border-primary/30 flex flex-col justify-between h-full group transition-all"
+                className={`card p-6 cursor-pointer hover:border-primary/30 flex flex-col justify-between h-full group transition-all ${patient.status === 'escalated' ? 'border-danger/60 shadow-[0_0_15px_rgba(251,113,133,0.3)]' : ''}`}
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
@@ -126,7 +171,7 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="mt-6 pt-4 border-t-2 border-border/50 flex justify-between items-center">
-                  <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full ${patient.status === 'active' ? 'bg-success/20 text-success' : 'bg-text-muted/20 text-text-muted'}`}>
+                  <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full ${patient.status === 'active' ? 'bg-success/20 text-success' : patient.status === 'escalated' ? 'bg-danger text-white animate-pulse' : 'bg-text-muted/20 text-text-muted'}`}>
                     {patient.status}
                   </span>
                   <span className="text-xs font-bold text-primary group-hover:underline flex items-center gap-1">

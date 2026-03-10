@@ -20,22 +20,39 @@
   --color-input: #e8eef3;
 }
 
-/* Dark mode configuration */
+/* Dark mode configuration (OLED Optimized but softened) */
 .dark {
-  --color-primary: #6366f1;
-  --color-bg-primary: #1e2433;
-  --color-bg-secondary: #1e2433;
-  --color-bg-tertiary: #262d40;
+  --color-primary: #818cf8;
+  --color-bg-primary: #0b0f19;
+  --color-bg-secondary: #111827;
+  --color-bg-tertiary: #1f2937;
   --color-text-primary: #f8fafc;
   --color-text-secondary: #cbd5e1;
   --color-text-muted: #64748b;
   --color-border: transparent;
-  --color-hover: #262d40;
-  --color-input: #1e2433;
+  --color-hover: #1f2937;
+  --color-input: #0f172a;
 }
 
 body {
-  @apply bg-bg-primary text-text-primary antialiased;
+  @apply bg-bg-primary text-text-primary antialiased transition-colors duration-500;
+}
+
+/* Animations */
+@keyframes oledGlow {
+  0% { box-shadow: 0 0 10px rgba(129, 140, 248, 0.1), inset 0 0 10px rgba(129, 140, 248, 0.05); }
+  50% { box-shadow: 0 0 15px rgba(129, 140, 248, 0.3), inset 0 0 15px rgba(129, 140, 248, 0.1); }
+  100% { box-shadow: 0 0 10px rgba(129, 140, 248, 0.1), inset 0 0 10px rgba(129, 140, 248, 0.05); }
+}
+
+@keyframes dangerPulse {
+  0% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(251, 113, 133, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0); }
+}
+
+.animate-pulse-danger {
+  animation: dangerPulse 2s infinite;
 }
 
 /* Neo-claymorphism Utilities */
@@ -54,7 +71,7 @@ body {
     box-shadow: inset 4px 4px 8px rgba(0,0,0,0.1), inset -4px -4px 8px rgba(255,255,255,0.4) !important;
   }
   .dark .btn:active {
-    box-shadow: inset 4px 4px 8px rgba(0,0,0,0.5), inset -4px -4px 8px rgba(255,255,255,0.05) !important;
+    box-shadow: inset 4px 4px 8px rgba(0,0,0,0.9), inset -4px -4px 8px rgba(255,255,255,0.02) !important;
   }
 
   .btn-primary {
@@ -111,12 +128,73 @@ body {
       inset 3px 3px 6px rgba(255,255,255,0.4);
   }
 
-  .dark .btn-primary, .dark .btn-danger, .dark .btn-success, .dark .btn-warning, .dark .btn-info, .dark .btn-secondary {
+  /* OLED Glow Buttons */
+  .dark .btn-primary {
+    background-color: #1a1e36;
+    color: #818cf8;
+    border: 1px solid rgba(129, 140, 248, 0.2);
     box-shadow: 
-      6px 6px 12px rgba(0, 0, 0, 0.4),
-      -6px -6px 12px rgba(255, 255, 255, 0.03),
-      inset -3px -3px 6px rgba(0,0,0,0.2),
-      inset 3px 3px 6px rgba(255,255,255,0.05);
+      4px 4px 10px rgba(0, 0, 0, 0.8),
+      -4px -4px 10px rgba(255, 255, 255, 0.01),
+      inset -2px -2px 4px rgba(0,0,0,0.5),
+      inset 2px 2px 4px rgba(129,140,248,0.1);
+  }
+  .dark .btn-primary:hover {
+     animation: oledGlow 2s infinite ease-in-out;
+  }
+
+  .dark .btn-danger {
+    background-color: #2e1015;
+    color: #fb7185;
+    border: 1px solid rgba(251, 113, 133, 0.2);
+    box-shadow: 
+      4px 4px 10px rgba(0, 0, 0, 0.8),
+      -4px -4px 10px rgba(255, 255, 255, 0.01),
+      inset -2px -2px 4px rgba(0,0,0,0.5),
+      inset 2px 2px 4px rgba(251, 113, 133, 0.1);
+  }
+
+  .dark .btn-success {
+    background-color: #0f291a;
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    box-shadow: 
+      4px 4px 10px rgba(0, 0, 0, 0.8),
+      -4px -4px 10px rgba(255, 255, 255, 0.01),
+      inset -2px -2px 4px rgba(0,0,0,0.5),
+      inset 2px 2px 4px rgba(74, 222, 128, 0.1);
+  }
+  
+  .dark .btn-warning {
+    background-color: #2b2108;
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    box-shadow: 
+      4px 4px 10px rgba(0, 0, 0, 0.8),
+      -4px -4px 10px rgba(255, 255, 255, 0.01),
+      inset -2px -2px 4px rgba(0,0,0,0.5),
+      inset 2px 2px 4px rgba(251, 191, 36, 0.1);
+  }
+
+  .dark .btn-info {
+    background-color: #101e33;
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    box-shadow: 
+      4px 4px 10px rgba(0, 0, 0, 0.8),
+      -4px -4px 10px rgba(255, 255, 255, 0.01),
+      inset -2px -2px 4px rgba(0,0,0,0.5),
+      inset 2px 2px 4px rgba(96, 165, 250, 0.1);
+  }
+
+  .dark .btn-secondary {
+    @apply border border-white/5;
+    background-image: linear-gradient(145deg, #1f2937, #111827);
+    box-shadow: 
+      4px 4px 10px rgba(0, 0, 0, 0.6),
+      -4px -4px 10px rgba(255, 255, 255, 0.02),
+      inset -2px -2px 4px rgba(0,0,0,0.4),
+      inset 2px 2px 4px rgba(255,255,255,0.03);
   }
 
   /* Cards */
@@ -129,12 +207,24 @@ body {
       inset 4px 4px 10px rgba(255, 255, 255, 0.8);
   }
   
+  /* OLED Smooth Deep Cards */
   .dark .card {
+    @apply border border-white/10;
+    /* Soft noise texture simulated with gradient */
+    background: radial-gradient(circle at top left, #1f2937, #111827);
     box-shadow: 
-      12px 12px 24px rgba(0, 0, 0, 0.4),
-      -12px -12px 24px rgba(255, 255, 255, 0.02),
-      inset -4px -4px 10px rgba(0, 0, 0, 0.1),
-      inset 4px 4px 10px rgba(255, 255, 255, 0.05);
+      10px 10px 30px rgba(0, 0, 0, 0.6),
+      -2px -2px 15px rgba(255, 255, 255, 0.03),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.4),
+      inset 4px 4px 15px rgba(255, 255, 255, 0.03);
+  }
+  
+  .dark .card:hover {
+     box-shadow: 
+      15px 15px 35px rgba(0, 0, 0, 0.7),
+      -2px -2px 20px rgba(129, 140, 248, 0.08),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.5),
+      inset 4px 4px 15px rgba(129, 140, 248, 0.08);
   }
   
   /* Inputs */
@@ -146,9 +236,11 @@ body {
   }
   
   .dark .input-field {
+     @apply border border-white/5 focus:border-primary/50 focus:shadow-[0_0_10px_rgba(129,140,248,0.2),inset_4px_4px_8px_rgba(0,0,0,0.8)];
+     background-color: #030303;
      box-shadow: 
-      inset 6px 6px 10px rgba(0,0,0,0.5),
-      inset -6px -6px 10px rgba(255,255,255,0.03);
+      inset 4px 4px 8px rgba(0,0,0,0.9),
+      inset -4px -4px 8px rgba(255,255,255,0.02);
   }
 
   .nav-ribbon {
@@ -159,11 +251,14 @@ body {
       inset -2px -2px 6px rgba(0, 0, 0, 0.01),
       inset 2px 2px 6px rgba(255, 255, 255, 0.8);
   }
+  
   .dark .nav-ribbon {
+    @apply border border-white/10;
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
     box-shadow: 
-      6px 6px 14px rgba(0, 0, 0, 0.4),
-      -6px -6px 14px rgba(255, 255, 255, 0.02),
-      inset -2px -2px 6px rgba(0, 0, 0, 0.1),
-      inset 2px 2px 6px rgba(255, 255, 255, 0.05);
+      8px 8px 20px rgba(0, 0, 0, 0.6),
+      -2px -2px 10px rgba(255, 255, 255, 0.03),
+      inset -2px -2px 6px rgba(0, 0, 0, 0.4),
+      inset 2px 2px 6px rgba(255, 255, 255, 0.04);
   }
 }

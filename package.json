@@ -1,0 +1,15 @@
+{
+  "name": "general-ward-app",
+  "version": "1.0.0",
+  "description": "General Ward Management Application",
+  "scripts": {
+    "install-all": "npm install --prefix ward-backend && npm install --prefix ward-frontend",
+    "start-backend": "npm start --prefix ward-backend",
+    "start-frontend": "npm run dev --prefix ward-frontend",
+    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
+    "build": "npm run build --prefix ward-frontend"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
