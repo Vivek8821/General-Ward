@@ -47,7 +47,7 @@ const initDb = () => {
             data TEXT NOT NULL,
             recordedBy TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (patientId) REFERENCES Patients(id) ON DELETE CASCADE
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
           )
         `);
 
@@ -63,10 +63,14 @@ const initDb = () => {
             scheduledTimes TEXT,
             prn BOOLEAN DEFAULT 0,
             startDate DATE NOT NULL,
+            status TEXT DEFAULT 'active',
             prescribedBy TEXT NOT NULL,
-            FOREIGN KEY (patientId) REFERENCES Patients(id) ON DELETE CASCADE
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
           )
         `);
+
+        // Dynamically patch existing DB for MedsTab fix
+        db.run(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`, (err) => { /* Ignore duplicate column error */ });
 
         // Escalations Table
         db.run(`
@@ -77,7 +81,7 @@ const initDb = () => {
             escalatedBy TEXT NOT NULL,
             status TEXT CHECK(status IN ('pending', 'reviewed')) DEFAULT 'pending',
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (patientId) REFERENCES Patients(id) ON DELETE CASCADE
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
           )
         `);
 
@@ -93,7 +97,8 @@ const initDb = () => {
             dischargeRecommendations TEXT,
             dischargedBy TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (patientId) REFERENCES Patients(id) ON DELETE CASCADE
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
           )
         `);
 

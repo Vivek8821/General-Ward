@@ -19,12 +19,24 @@ class PatientService {
         return await patientRepository.findAll();
     }
 
+    async getArchivedPatients() {
+        return await patientRepository.findArchived();
+    }
+
     async getPatientById(id) {
         const patient = await patientRepository.findById(id);
         if (!patient) {
             throw new Error('Patient not found');
         }
         return patient;
+    }
+
+    async getDischargeSummary(patientId) {
+        const summary = await patientRepository.findDischargeSummary(patientId);
+        if (!summary) {
+            throw new Error('Summary not found');
+        }
+        return summary;
     }
 
     async updatePatient(id, data) {

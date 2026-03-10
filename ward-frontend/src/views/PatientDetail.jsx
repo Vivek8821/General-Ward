@@ -8,6 +8,8 @@ import VitalsTab from '../components/stats/VitalsTab';
 import DietTab from '../components/stats/DietTab';
 import SleepTab from '../components/stats/SleepTab';
 import MedsTab from '../components/stats/MedsTab';
+import DischargeSummaryTab from '../components/stats/DischargeSummaryTab';
+import { Archive } from 'lucide-react';
 
 export default function PatientDetail() {
   const { id } = useParams();
@@ -36,6 +38,10 @@ export default function PatientDetail() {
       const data = await api.get(`/patients/${id}`);
       setPatient(data);
       setEditForm(data);
+      
+      if (data.status === 'discharged') {
+          setActiveTab('discharge');
+      }
       
       if (data.status === 'escalated' && user.role === 'doctor') {
          fetchEscalations();
@@ -91,6 +97,24 @@ export default function PatientDetail() {
       }
   };
 
+  const prepareDischarge = async () => {
+      try {
+          // Auto-fetch medication history for the discharge summary
+          const meds = await api.get(`/patients/${id}/medications`);
+          const formattedMeds = meds.length > 0 
+              ? meds.map(m => `• ${m.name} — ${m.dosage} (${m.frequency}) [${m.status.toUpperCase()}]`).join('\n')
+              : 'No medications administered during this admission.';
+              
+          setDischargeForm(prev => ({
+              ...prev,
+              medicationsDuringAdmission: formattedMeds
+          }));
+      } catch (err) {
+          console.error("Failed to auto-fetch medications for discharge context", err);
+      }
+      setIsDischarging(true);
+  };
+
   const handleDischargeCase = async (e) => {
       e.preventDefault();
       try {
@@ -134,11 +158,12 @@ export default function PatientDetail() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-primary mb-1 flex items-center gap-3">
               {patient.name}
               <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full text-white ${
+                patient.status === 'discharged' ? 'bg-secondary' :
                 patient.careIntensity === 4 ? 'bg-danger' : 
                 patient.careIntensity === 3 ? 'bg-warning' : 
                 patient.careIntensity === 2 ? 'bg-info' : 'bg-success'
               }`}>
-                Intensity L{patient.careIntensity}
+                {patient.status === 'discharged' ? 'ARCHIVED' : `Intensity L${patient.careIntensity}`}
               </span>
             </h1>
             <div className="flex flex-wrap gap-3 text-sm mt-3">
@@ -150,14 +175,23 @@ export default function PatientDetail() {
           </div>
 
           <div className="flex flex-wrap md:flex-col gap-3">
-            <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 w-full md:w-auto">Edit Info</button>
-            {user.role === 'nurse' && patient.status !== 'escalated' && (
-              <button onClick={handleEscalate} className="btn btn-danger !py-2 w-full md:w-auto flex justify-center">
-                <AlertTriangle className="w-4 h-4" /> Escalate Case
-              </button>
+            {patient.status !== 'discharged' && (
+               <>
+                 <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 w-full md:w-auto">Edit Info</button>
+                 {user.role === 'nurse' && patient.status !== 'escalated' && (
+                   <button onClick={handleEscalate} className="btn btn-danger !py-2 w-full md:w-auto flex justify-center">
+                     <AlertTriangle className="w-4 h-4" /> Escalate Case
+                   </button>
+                 )}
+                 {user.role === 'doctor' && (
+                   <button onClick={prepareDischarge} className="btn btn-warning !py-2 w-full md:w-auto">Discharge</button>
+                 )}
+               </>
             )}
-            {user.role === 'doctor' && patient.status !== 'discharged' && (
-              <button onClick={() => setIsDischarging(true)} className="btn btn-warning !py-2 w-full md:w-auto">Discharge</button>
+            {patient.status === 'discharged' && (
+               <div className="bg-bg-tertiary border border-border px-4 py-2 rounded-lg text-sm font-bold text-text-muted flex items-center gap-2">
+                   <Archive className="w-4 h-4" /> Read-Only Archive
+               </div>
             )}
           </div>
         </div>
@@ -287,7 +321,10 @@ export default function PatientDetail() {
         )}
 
         {/* Navigation Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2 border-b-2 border-border mb-6">
+        <div className="flex gap-2 overflow-x-auto pb-2 border-b-2 border-border mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {patient.status === 'discharged' && (
+             <TabButton active={activeTab === 'discharge'} onClick={() => setActiveTab('discharge')} icon={<Archive size={18}/>}>Discharge Summary</TabButton>
+          )}
           <TabButton active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<FileText size={18}/>}>Profile & History</TabButton>
           <TabButton active={activeTab === 'vitals'} onClick={() => setActiveTab('vitals')} icon={<Activity size={18}/>}>Vitals & Symptoms</TabButton>
           <TabButton active={activeTab === 'diet'} onClick={() => setActiveTab('diet')} icon={<Apple size={18}/>}>Diet & Nutrition</TabButton>
@@ -297,6 +334,7 @@ export default function PatientDetail() {
 
         {/* Tab Contents */}
         <div className="min-h-[150px] relative transition-all duration-300">
+          {activeTab === 'discharge' && patient.status === 'discharged' && <DischargeSummaryTab patientId={id} />}
           {activeTab === 'history' && <HistoryTab patientId={id} />}
           {activeTab === 'vitals' && <VitalsTab patientId={id} />}
           {activeTab === 'diet' && <DietTab patientId={id} />}

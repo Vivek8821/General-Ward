@@ -23,6 +23,16 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
+// Get archived (discharged) patients
+router.get('/archives', authenticateToken, async (req, res) => {
+    try {
+        const patients = await patientService.getArchivedPatients();
+        res.json(patients);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get patient by ID
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
@@ -30,6 +40,19 @@ router.get('/:id', authenticateToken, async (req, res) => {
         res.json(patient);
     } catch (error) {
         if (error.message === 'Patient not found') {
+            return res.status(404).json({ error: error.message });
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get discharge summary
+router.get('/:id/discharge-summary', authenticateToken, async (req, res) => {
+    try {
+        const summary = await patientService.getDischargeSummary(req.params.id);
+        res.json(summary);
+    } catch (error) {
+        if (error.message === 'Summary not found') {
             return res.status(404).json({ error: error.message });
         }
         res.status(500).json({ error: error.message });

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Users, Bed, Activity, AlertCircle, Plus, Search } from 'lucide-react';
+import { Users, Bed, Activity, AlertCircle, Plus, Search, Archive } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Dashboard() {
+  const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
   const [patients, setPatients] = useState([]);
   const [escalated, setEscalated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +18,7 @@ export default function Dashboard() {
 
     // Polling setup for Doctors to receive real-time-like notifications
     let intervalId;
-    if (user.role === 'doctor') {
+    if (user.role === 'doctor' && viewMode === 'active') {
       intervalId = setInterval(async () => {
         try {
           const eData = await api.get('/escalations/all');
@@ -47,14 +48,16 @@ export default function Dashboard() {
     return () => {
        if (intervalId) clearInterval(intervalId);
     };
-  }, [user.role]);
+  }, [user.role, viewMode]);
 
   const fetchData = async () => {
     try {
-      const pData = await api.get('/patients');
+      setLoading(true);
+      const endpoint = viewMode === 'active' ? '/patients' : '/patients/archives';
+      const pData = await api.get(endpoint);
       setPatients(pData);
       
-      if (user.role === 'doctor') {
+      if (user.role === 'doctor' && viewMode === 'active') {
         const eData = await api.get('/escalations/all');
         setEscalated(eData);
       }
@@ -80,8 +83,24 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
+      {/* View Toggle */}
+      <div className="flex gap-4 border-b border-border pb-4 w-fit">
+        <button 
+          onClick={() => setViewMode('active')} 
+          className={`flex items-center gap-2 font-bold px-4 py-2 rounded-lg transition-all ${viewMode === 'active' ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:text-primary hover:bg-primary/10'}`}
+        >
+          <Activity size={18} /> Active Ward
+        </button>
+        <button 
+          onClick={() => setViewMode('archived')} 
+          className={`flex items-center gap-2 font-bold px-4 py-2 rounded-lg transition-all ${viewMode === 'archived' ? 'bg-secondary text-white shadow-md' : 'text-text-muted hover:text-secondary hover:bg-secondary/10'}`}
+        >
+          <Archive size={18} /> Hospital Archives
+        </button>
+      </div>
+
       {/* Escalation Alert Bar (Doctor Only) */}
-      {user.role === 'doctor' && escalated.length > 0 && (
+      {viewMode === 'active' && user.role === 'doctor' && escalated.length > 0 && (
         <div className="bg-danger/10 border-l-4 border-danger p-5 rounded-r-xl flex justify-between items-center shadow-sm">
           <div className="flex items-center gap-3 text-danger font-bold text-lg">
             <AlertCircle className="w-6 h-6 animate-pulse" />
@@ -97,17 +116,19 @@ export default function Dashboard() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Patients" value={patients.length} icon={<Users size={24} />} />
-        <StatCard title="Active Beds" value={activePatients.length} icon={<Bed size={24} />} />
-        <StatCard title="Critical Care (L4)" value={activePatients.filter(p => p.careIntensity === 4).length} icon={<Activity size={24} />} color="text-danger" />
-        <StatCard title="Escalations" value={escalated.length} icon={<AlertCircle size={24} />} color="text-warning" />
-      </div>
+      {viewMode === 'active' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard title="Total Patients" value={patients.length} icon={<Users size={24} />} />
+          <StatCard title="Active Beds" value={activePatients.length} icon={<Bed size={24} />} />
+          <StatCard title="Critical Care (L4)" value={activePatients.filter(p => p.careIntensity === 4).length} icon={<Activity size={24} />} color="text-danger" />
+          <StatCard title="Escalations" value={escalated.length} icon={<AlertCircle size={24} />} color="text-warning" />
+        </div>
+      )}
 
       {/* Patient List */}
       <div className="card overflow-hidden">
         <div className="bg-bg-tertiary p-6 border-b border-border flex flex-wrap justify-between items-center gap-4">
-          <h2 className="text-xl font-bold">Patient Roster</h2>
+          <h2 className="text-xl font-bold">{viewMode === 'active' ? 'Active Patient Roster' : 'Archived Discharge Records'}</h2>
           
           <div className="flex items-center gap-4 flex-wrap w-full md:w-auto">
             <div className="relative w-full md:w-64">
@@ -145,7 +166,7 @@ export default function Dashboard() {
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div className="bg-bg-tertiary px-3 py-1 rounded-lg shadow-inner border border-transparent font-black text-sm text-text-secondary">
-                      Level {patient.careIntensity}
+                      {viewMode === 'active' ? `Level ${patient.careIntensity}` : 'DISCHARGED'}
                     </div>
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg ${
                       patient.careIntensity === 4 ? 'bg-danger shadow-[inset_2px_2px_6px_rgba(255,255,255,0.4),0_4px_10px_rgba(251,113,133,0.5)]' : 

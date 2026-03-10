@@ -17,7 +17,16 @@ class PatientRepository {
 
     findAll() {
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM Patients`, [], (err, rows) => {
+            db.all(`SELECT * FROM Patients WHERE status IN ('active', 'escalated')`, [], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    }
+
+    findArchived() {
+        return new Promise((resolve, reject) => {
+            db.all(`SELECT * FROM Patients WHERE status = 'discharged'`, [], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows);
             });
@@ -27,6 +36,15 @@ class PatientRepository {
     findById(id) {
         return new Promise((resolve, reject) => {
             db.get(`SELECT * FROM Patients WHERE id = ?`, [id], (err, row) => {
+                if (err) return reject(err);
+                resolve(row);
+            });
+        });
+    }
+
+    findDischargeSummary(patientId) {
+        return new Promise((resolve, reject) => {
+            db.get(`SELECT * FROM DischargeSummaries WHERE patientId = ? ORDER BY timestamp DESC LIMIT 1`, [patientId], (err, row) => {
                 if (err) return reject(err);
                 resolve(row);
             });
