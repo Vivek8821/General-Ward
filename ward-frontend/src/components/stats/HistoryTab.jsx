@@ -109,8 +109,8 @@ export default function HistoryTab({ patientId }) {
       </div>
 
       {!history ? (
-        <div className="text-center p-12 bg-bg-tertiary rounded-xl border border-dashed border-border text-text-muted">
-          <FileText className="w-12 h-12 mx-auto mb-3 opacity-20"/>
+        <div className="text-center p-8 bg-bg-tertiary rounded-xl border border-dashed border-border text-text-muted transition-all hover:bg-bg-secondary">
+          <FileText className="w-10 h-10 mx-auto mb-3 opacity-20"/>
           No extensive medical history profile has been established yet.
           {isDoctor && <p className="mt-2 text-sm">Click &quot;Create Profile&quot; to begin.</p>}
         </div>

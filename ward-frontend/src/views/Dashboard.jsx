@@ -135,12 +135,12 @@ export default function Dashboard() {
             <p className="font-semibold">No patients found matching your search.</p>
           </div>
         ) : (
-          <div className="p-6 bg-bg-primary grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="p-6 bg-bg-primary grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-slide-up">
             {filteredPatients.map(patient => (
               <div 
                 key={patient.id} 
                 onClick={() => window.location.href = `/patient/${patient.id}`}
-                className={`card p-6 cursor-pointer hover:border-primary/30 flex flex-col justify-between h-full group transition-all ${patient.status === 'escalated' ? 'border-danger/60 shadow-[0_0_15px_rgba(251,113,133,0.3)]' : ''}`}
+                className={`card p-6 cursor-pointer hover:-translate-y-2 flex flex-col justify-between h-full group transition-all duration-300 ${patient.status === 'escalated' ? 'border-danger/60 shadow-[0_0_15px_rgba(251,113,133,0.3)]' : ''}`}
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
@@ -189,12 +189,12 @@ export default function Dashboard() {
 
 function StatCard({ title, value, icon, color = 'text-primary' }) {
   return (
-    <div className="card p-6 border-t-4 border-t-primary relative overflow-hidden group">
+    <div className="card p-6 pb-4 border-t-4 border-t-primary relative overflow-hidden group flex flex-col justify-between min-h-[140px] transition-transform hover:-translate-y-1">
       <div className={`absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity ${color} transform scale-[3]`}>
         {icon}
       </div>
-      <h3 className="text-xs font-black text-text-secondary uppercase tracking-widest mb-3">{title}</h3>
-      <div className={`text-5xl font-extrabold tracking-tighter ${color} drop-shadow-sm`}>{value}</div>
+      <h3 className="text-xs font-black text-text-secondary uppercase tracking-widest mb-1">{title}</h3>
+      <div className={`text-5xl font-extrabold tracking-tighter ${color} drop-shadow-sm leading-tight`}>{value}</div>
     </div>
   );
 }

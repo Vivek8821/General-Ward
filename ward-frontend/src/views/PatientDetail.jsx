@@ -106,12 +106,12 @@ export default function PatientDetail() {
       )}
 
       {/* Patient Header Block */}
-      <div className="card p-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6 pb-6 border-b border-border">
+      <div className="card p-6 md:p-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-border stagger-slide-up">
           <div>
-            <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-4">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-primary mb-1 flex items-center gap-3">
               {patient.name}
-              <span className={`text-sm font-bold uppercase px-3 py-1 rounded-full text-white ${
+              <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full text-white ${
                 patient.careIntensity === 4 ? 'bg-danger' : 
                 patient.careIntensity === 3 ? 'bg-warning' : 
                 patient.careIntensity === 2 ? 'bg-info' : 'bg-success'
@@ -207,7 +207,7 @@ export default function PatientDetail() {
         </div>
 
         {/* Tab Contents */}
-        <div className="min-h-[300px]">
+        <div className="min-h-[150px] relative transition-all duration-300">
           {activeTab === 'history' && <HistoryTab patientId={id} />}
           {activeTab === 'vitals' && <VitalsTab patientId={id} />}
           {activeTab === 'diet' && <DietTab patientId={id} />}
