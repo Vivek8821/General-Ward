@@ -2,7 +2,11 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const dbPath = path.resolve(__dirname, 'ward.db');
-const db = new sqlite3.Database(dbPath);
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (!err) {
+        db.run('PRAGMA foreign_keys = ON;'); // Crucial for cascading deletes in SQLite
+    }
+});
 
 const initDb = () => {
   return new Promise((resolve, reject) => {
@@ -89,6 +93,12 @@ const initDb = () => {
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
           )
         `);
+
+        // Production Indexes for query performance and cascading speed
+        db.run(`CREATE INDEX IF NOT EXISTS idx_dailystats_patient ON DailyStats(patientId);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_medications_patient ON Medications(patientId);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_escalations_patient ON Escalations(patientId);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_auditlogs_timestamp ON AuditLogs(timestamp);`);
         
         resolve();
       } catch (err) {

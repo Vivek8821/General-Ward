@@ -145,7 +145,7 @@ export default function Dashboard() {
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div className="bg-bg-tertiary px-3 py-1 rounded-lg shadow-inner border border-transparent font-black text-sm text-text-secondary">
-                      Bed {patient.bedNumber}
+                      Level {patient.careIntensity}
                     </div>
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg ${
                       patient.careIntensity === 4 ? 'bg-danger shadow-[inset_2px_2px_6px_rgba(255,255,255,0.4),0_4px_10px_rgba(251,113,133,0.5)]' : 
@@ -153,7 +153,7 @@ export default function Dashboard() {
                       patient.careIntensity === 2 ? 'bg-info shadow-[inset_2px_2px_6px_rgba(255,255,255,0.4),0_4px_10px_rgba(96,165,250,0.5)]' : 
                       'bg-success shadow-[inset_2px_2px_6px_rgba(255,255,255,0.4),0_4px_10px_rgba(74,222,128,0.5)]'
                     }`}>
-                      L{patient.careIntensity}
+                      {patient.bedNumber}
                     </div>
                   </div>
                   
