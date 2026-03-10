@@ -54,6 +54,52 @@ class PatientRepository {
             });
         });
     }
+
+    discharge(patientId, data, dischargedBy) {
+        return new Promise((resolve, reject) => {
+            db.serialize(() => {
+                db.run("BEGIN TRANSACTION;");
+
+                // 1. Mark patient as discharged
+                db.run(`UPDATE Patients SET status = 'discharged' WHERE id = ?`, [patientId], function(err) {
+                    if (err) {
+                        db.run("ROLLBACK;");
+                        return reject(err);
+                    }
+                    if (this.changes === 0) {
+                        db.run("ROLLBACK;");
+                        return reject(new Error('Patient not found'));
+                    }
+                });
+
+                // 2. Insert into DischargeSummaries
+                const summaryId = require('crypto').randomUUID();
+                db.run(`
+                    INSERT INTO DischargeSummaries (
+                        id, patientId, reasonForAdmission, duration, 
+                        medicationsDuringAdmission, dischargeVitals, 
+                        dischargeRecommendations, dischargedBy
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        summaryId, patientId, data.reasonForAdmission, data.duration,
+                        data.medicationsDuringAdmission, JSON.stringify(data.dischargeVitals),
+                        data.dischargeRecommendations, dischargedBy
+                    ],
+                    function(err) {
+                        if (err) {
+                            db.run("ROLLBACK;");
+                            return reject(err);
+                        }
+                    }
+                );
+
+                db.run("COMMIT;", (err) => {
+                    if (err) return reject(err);
+                    resolve({ message: 'Patient discharged successfully', summaryId });
+                });
+            });
+        });
+    }
 }
 
 module.exports = new PatientRepository();

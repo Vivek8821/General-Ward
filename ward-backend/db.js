@@ -81,6 +81,22 @@ const initDb = () => {
           )
         `);
 
+        // Discharge Summaries Table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS DischargeSummaries (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL,
+            reasonForAdmission TEXT NOT NULL,
+            duration TEXT NOT NULL,
+            medicationsDuringAdmission TEXT,
+            dischargeVitals TEXT NOT NULL,
+            dischargeRecommendations TEXT,
+            dischargedBy TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id) ON DELETE CASCADE
+          )
+        `);
+
         // Audit Logs Table
         db.run(`
           CREATE TABLE IF NOT EXISTS AuditLogs (
@@ -98,6 +114,7 @@ const initDb = () => {
         db.run(`CREATE INDEX IF NOT EXISTS idx_dailystats_patient ON DailyStats(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_medications_patient ON Medications(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_escalations_patient ON Escalations(patientId);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_discharges_patient ON DischargeSummaries(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_auditlogs_timestamp ON AuditLogs(timestamp);`);
         
         resolve();

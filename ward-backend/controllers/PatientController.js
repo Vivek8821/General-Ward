@@ -52,13 +52,14 @@ router.put('/:id', authenticateToken, requireRole(['doctor', 'nurse']), async (r
 // Discharge patient (Doctor only)
 router.post('/:id/discharge', authenticateToken, requireRole(['doctor']), async (req, res) => {
     try {
-        const result = await patientService.dischargePatient(req.params.id);
+        const dischargedBy = req.user.name || 'Doctor';
+        const result = await patientService.dischargePatient(req.params.id, req.body, dischargedBy);
         res.json(result);
     } catch (error) {
         if (error.message === 'Patient not found') {
             return res.status(404).json({ error: error.message });
         }
-        res.status(500).json({ error: error.message });
+        res.status(400).json({ error: error.message }); // Changed to 400 for validation errors
     }
 });
 

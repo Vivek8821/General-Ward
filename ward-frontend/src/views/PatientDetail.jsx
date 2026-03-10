@@ -16,7 +16,15 @@ export default function PatientDetail() {
   const [patient, setPatient] = useState(null);
   const [activeTab, setActiveTab] = useState('history');
   const [isEditing, setIsEditing] = useState(false);
+  const [isDischarging, setIsDischarging] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [dischargeForm, setDischargeForm] = useState({
+      reasonForAdmission: '',
+      duration: '',
+      medicationsDuringAdmission: '',
+      dischargeVitals: { hr: '', bp: '', o2: '', temp: '', lipids: '' },
+      dischargeRecommendations: ''
+  });
   const [escalations, setEscalations] = useState([]);
 
   useEffect(() => {
@@ -83,6 +91,20 @@ export default function PatientDetail() {
       }
   };
 
+  const handleDischargeCase = async (e) => {
+      e.preventDefault();
+      try {
+          await api.post(`/patients/${id}/discharge`, dischargeForm);
+          setIsDischarging(false);
+          fetchPatient();
+          // After successfully updating, send the user back to the dashboard or let them view the discharged state.
+          alert("Patient successfully discharged.");
+          navigate('/');
+      } catch (err) {
+          alert("Failed to discharge patient: " + err.message);
+      }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 relative">
       <button onClick={() => navigate('/')} className="btn bg-bg-tertiary border-border border-2 hover:border-primary !py-2">
@@ -135,7 +157,7 @@ export default function PatientDetail() {
               </button>
             )}
             {user.role === 'doctor' && patient.status !== 'discharged' && (
-              <button className="btn btn-warning !py-2 w-full md:w-auto">Discharge</button>
+              <button onClick={() => setIsDischarging(true)} className="btn btn-warning !py-2 w-full md:w-auto">Discharge</button>
             )}
           </div>
         </div>
@@ -191,6 +213,73 @@ export default function PatientDetail() {
                      <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-border">
                          <button type="button" onClick={() => setIsEditing(false)} className="btn btn-secondary !py-2">Cancel</button>
                          <button type="submit" className="btn btn-primary !py-2">Save Changes</button>
+                     </div>
+                  </form>
+               </div>
+            </div>
+        )}
+
+        {/* Discharge Modal / Form Overlay */}
+        {isDischarging && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 overflow-y-auto">
+               <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-2xl border border-warning/50 my-8">
+                  <div className="p-6 border-b border-warning/30 bg-warning/10 rounded-t-2xl">
+                     <h2 className="text-2xl font-black text-warning flex items-center gap-3">
+                         <AlertTriangle className="w-6 h-6" /> Official Patient Discharge
+                     </h2>
+                     <p className="text-warning/80 text-sm mt-1">Please completely fill out the clinical discharge summary for {patient.name}.</p>
+                  </div>
+                  <form onSubmit={handleDischargeCase} className="p-6 space-y-6">
+                     
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div className="col-span-1 md:col-span-2">
+                             <label className="block text-sm font-bold mb-1 text-text-secondary">Reason for Admission</label>
+                             <input type="text" className="input-field" placeholder="e.g. Acute appendicitis" value={dischargeForm.reasonForAdmission} onChange={e => setDischargeForm({...dischargeForm, reasonForAdmission: e.target.value})} required />
+                         </div>
+                         <div>
+                             <label className="block text-sm font-bold mb-1 text-text-secondary">Duration of Stay</label>
+                             <input type="text" className="input-field" placeholder="e.g. 5 days" value={dischargeForm.duration} onChange={e => setDischargeForm({...dischargeForm, duration: e.target.value})} required />
+                         </div>
+                         <div className="col-span-1 md:col-span-2">
+                             <label className="block text-sm font-bold mb-1 text-text-secondary">Medication History during Admission</label>
+                             <textarea className="input-field min-h-[80px]" placeholder="Summary of administered meds..." value={dischargeForm.medicationsDuringAdmission} onChange={e => setDischargeForm({...dischargeForm, medicationsDuringAdmission: e.target.value})} required />
+                         </div>
+                     </div>
+
+                     <div className="bg-bg-tertiary p-5 rounded-xl border border-border">
+                         <h4 className="font-bold text-sm uppercase tracking-wider text-text-muted mb-4">Vitals at Time of Discharge</h4>
+                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                             <div>
+                                 <label className="block text-xs font-bold mb-1 text-text-secondary">Heart Rate</label>
+                                 <input type="text" className="input-field !text-sm" placeholder="72 bpm" value={dischargeForm.dischargeVitals.hr} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, hr: e.target.value}})} required />
+                             </div>
+                             <div>
+                                 <label className="block text-xs font-bold mb-1 text-text-secondary">BP</label>
+                                 <input type="text" className="input-field !text-sm" placeholder="120/80" value={dischargeForm.dischargeVitals.bp} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, bp: e.target.value}})} required />
+                             </div>
+                             <div>
+                                 <label className="block text-xs font-bold mb-1 text-text-secondary">SpO2</label>
+                                 <input type="text" className="input-field !text-sm" placeholder="98%" value={dischargeForm.dischargeVitals.o2} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, o2: e.target.value}})} required />
+                             </div>
+                             <div>
+                                 <label className="block text-xs font-bold mb-1 text-text-secondary">Temp</label>
+                                 <input type="text" className="input-field !text-sm" placeholder="98.6 °F" value={dischargeForm.dischargeVitals.temp} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, temp: e.target.value}})} required />
+                             </div>
+                             <div className="col-span-2 lg:col-span-1">
+                                 <label className="block text-xs font-bold mb-1 text-text-secondary">Lipid Panel / Labs</label>
+                                 <input type="text" className="input-field !text-sm" placeholder="e.g. LDL 90" value={dischargeForm.dischargeVitals.lipids} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, lipids: e.target.value}})} />
+                             </div>
+                         </div>
+                     </div>
+
+                     <div className="col-span-1 md:col-span-2">
+                         <label className="block text-sm font-bold mb-1 text-text-secondary">Medications & Health Recommendations</label>
+                         <textarea className="input-field min-h-[100px]" placeholder="Post-discharge care, prescriptions, follow-up dates..." value={dischargeForm.dischargeRecommendations} onChange={e => setDischargeForm({...dischargeForm, dischargeRecommendations: e.target.value})} required />
+                     </div>
+
+                     <div className="flex justify-end gap-3 pt-4">
+                         <button type="button" onClick={() => setIsDischarging(false)} className="btn btn-secondary !py-3 !px-6">Cancel</button>
+                         <button type="submit" className="btn btn-warning !py-3 !px-6 shadow-[0_4px_15px_rgba(251,191,36,0.4)]">Submit Discharge</button>
                      </div>
                   </form>
                </div>

@@ -35,12 +35,11 @@ class PatientService {
         return { message: 'Patient updated successfully' };
     }
 
-    async dischargePatient(id) {
-        const changes = await patientRepository.updateStatus(id, 'discharged');
-        if (changes === 0) {
-            throw new Error('Patient not found');
+    async dischargePatient(id, data, dischargedBy) {
+        if (!data.reasonForAdmission || !data.duration || !data.dischargeVitals) {
+             throw new Error("Missing required discharge fields");
         }
-        return { message: 'Patient discharged successfully' };
+        return await patientRepository.discharge(id, data, dischargedBy);
     }
 }
 
