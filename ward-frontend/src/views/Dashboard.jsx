@@ -120,7 +120,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard title="Total Patients" value={patients.length} icon={<Users size={24} />} />
           <StatCard title="Active Beds" value={activePatients.length} icon={<Bed size={24} />} />
-          <StatCard title="Critical Care (L4)" value={activePatients.filter(p => p.careIntensity === 4).length} icon={<Activity size={24} />} color="text-danger" />
+          <StatCard title="Critical Care (Level 4)" value={activePatients.filter(p => p.careIntensity === 4).length} icon={<Activity size={24} />} color="text-danger" />
           <StatCard title="Escalations" value={escalated.length} icon={<AlertCircle size={24} />} color="text-warning" />
         </div>
       )}
@@ -153,7 +153,11 @@ export default function Dashboard() {
         ) : filteredPatients.length === 0 ? (
           <div className="p-10 text-center text-text-muted flex flex-col items-center justify-center gap-3">
             <Users size={48} className="opacity-20" />
-            <p className="font-semibold">No patients found matching your search.</p>
+            <p className="font-semibold">
+              {isReviewingCases 
+                ? "No pending cases require immediate attention." 
+                : "No patients found matching your search."}
+            </p>
           </div>
         ) : (
           <div className="p-6 bg-bg-primary grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-slide-up">

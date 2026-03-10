@@ -163,7 +163,7 @@ export default function PatientDetail() {
                 patient.careIntensity === 3 ? 'bg-warning' : 
                 patient.careIntensity === 2 ? 'bg-info' : 'bg-success'
               }`}>
-                {patient.status === 'discharged' ? 'ARCHIVED' : `Intensity L${patient.careIntensity}`}
+                {patient.status === 'discharged' ? 'ARCHIVED' : `Level ${patient.careIntensity}`}
               </span>
             </h1>
             <div className="flex flex-wrap gap-3 text-sm mt-3">
