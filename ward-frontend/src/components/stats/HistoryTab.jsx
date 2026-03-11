@@ -62,7 +62,7 @@ export default function HistoryTab({ patientId }) {
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold flex items-center gap-2"><FileText className="text-secondary"/> Extensive Medical History</h3>
         
-        {isDoctor && !isEditing && (
+        {isDoctor && !isEditing && !readOnly && (
           <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 !px-4 text-sm">
             <Edit2 className="w-4 h-4" /> {history ? 'Update History' : 'Create Profile'}
           </button>

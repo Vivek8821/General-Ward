@@ -89,7 +89,7 @@ export default function DietTab({ patientId }) {
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold flex items-center gap-2"><Apple className="text-success"/> Diet & Nutrition</h3>
         
-        {(user.role === 'nurse' || user.role === 'doctor') && !showForm && (
+        {(user.role === 'nurse' || user.role === 'doctor') && !showForm && !readOnly && (
           <button onClick={() => setShowForm(true)} className="btn btn-success !py-2 !px-4 text-sm">
             <Plus className="w-4 h-4" /> Log Meal
           </button>

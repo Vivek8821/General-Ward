@@ -92,6 +92,8 @@ class PatientRepository {
 
                 // 2. Insert into DischargeSummaries
                 const summaryId = require('crypto').randomUUID();
+                const vitals = data.dischargeVitals ? JSON.stringify(data.dischargeVitals) : '{}';
+                
                 db.run(`
                     INSERT INTO DischargeSummaries (
                         id, patientId, reasonForAdmission, duration, 
@@ -100,7 +102,7 @@ class PatientRepository {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         summaryId, patientId, data.reasonForAdmission, data.duration,
-                        data.medicationsDuringAdmission, JSON.stringify(data.dischargeVitals),
+                        data.medicationsDuringAdmission, vitals,
                         data.dischargeRecommendations, dischargedBy
                     ],
                     function(err) {

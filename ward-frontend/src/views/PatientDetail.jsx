@@ -335,11 +335,11 @@ export default function PatientDetail() {
         {/* Tab Contents */}
         <div className="min-h-[150px] relative transition-all duration-300">
           {activeTab === 'discharge' && patient.status === 'discharged' && <DischargeSummaryTab patientId={id} />}
-          {activeTab === 'history' && <HistoryTab patientId={id} />}
-          {activeTab === 'vitals' && <VitalsTab patientId={id} />}
-          {activeTab === 'diet' && <DietTab patientId={id} />}
-          {activeTab === 'sleep' && <SleepTab patientId={id} />}
-          {activeTab === 'meds' && <MedsTab patientId={id} />}
+          {activeTab === 'history' && <HistoryTab patientId={id} readOnly={patient.status === 'discharged'} />}
+          {activeTab === 'vitals' && <VitalsTab patientId={id} readOnly={patient.status === 'discharged'} />}
+          {activeTab === 'diet' && <DietTab patientId={id} readOnly={patient.status === 'discharged'} />}
+          {activeTab === 'sleep' && <SleepTab patientId={id} readOnly={patient.status === 'discharged'} />}
+          {activeTab === 'meds' && <MedsTab patientId={id} readOnly={patient.status === 'discharged'} />}
         </div>
       </div>
     </div>

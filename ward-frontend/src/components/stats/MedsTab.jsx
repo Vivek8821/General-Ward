@@ -176,7 +176,7 @@ export default function MedsTab({ patientId }) {
             {activeSubTab === 'history' && <><History className="text-warning"/> Administration Log</>}
         </h3>
         
-        {isDoctor && activeSubTab === 'active' && !showForm && (
+        {isDoctor && activeSubTab === 'active' && !showForm && !readOnly && (
           <button onClick={() => setShowForm(true)} className="btn btn-info !bg-info !text-white !py-2 !px-4 text-sm">
             <Plus className="w-4 h-4" /> New Prescription
           </button>
@@ -261,7 +261,7 @@ export default function MedsTab({ patientId }) {
                            </div>
                         </div>
 
-                        {isNurse && !isCompleted && (
+                        {isNurse && !isCompleted && !readOnly && (
                            <div className="flex gap-2">
                               <button onClick={() => administerMed(med.id, 'refused')} className="btn btn-secondary !py-1.5 !px-3 text-xs flex items-center gap-1 text-danger border-danger/20 hover:bg-danger/10">
                                  <Ban className="w-3 h-3"/> Refused
@@ -271,14 +271,14 @@ export default function MedsTab({ patientId }) {
                               </button>
                            </div>
                         )}
-                        {isNurse && isPRN && (
+                        {isNurse && isPRN && !readOnly && (
                            <button onClick={() => administerMed(med.id, 'given')} className="btn btn-info !bg-info !text-white !py-1.5 !px-3 text-xs flex items-center gap-1 shadow-sm hover:shadow-md">
                               <Plus className="w-3 h-3"/> Log PRN Dose
                            </button>
                         )}
                       </div>
 
-                      {isNurse && !isCompleted && (
+                      {isNurse && !isCompleted && !readOnly && (
                         <div className="flex flex-wrap gap-3 pt-3 border-t border-border/50 animate-in slide-in-from-top-2">
                            <div className="flex items-center gap-2">
                               <span className="text-[10px] font-bold text-text-muted uppercase">Admin Time:</span>
@@ -340,12 +340,12 @@ export default function MedsTab({ patientId }) {
                        <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${admin.status === 'given' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
                           {admin.status}
                        </div>
-                       {isNurse && editingAdmin !== admin.id && (
-                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                             <button onClick={() => setEditingAdmin(admin.id)} className="text-info hover:bg-info/10 p-1 rounded transition-colors"><Edit2 className="w-3 h-3"/></button>
-                             {isDoctor && <button onClick={() => deleteAdminRecord(admin.id)} className="text-danger hover:bg-danger/10 p-1 rounded transition-colors"><Trash2 className="w-3 h-3"/></button>}
-                          </div>
-                       )}
+                       {isNurse && editingAdmin !== admin.id && !readOnly && (
+                           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => setEditingAdmin(admin.id)} className="text-info hover:bg-info/10 p-1 rounded transition-colors"><Edit2 className="w-3 h-3"/></button>
+                              {isDoctor && <button onClick={() => deleteAdminRecord(admin.id)} className="text-danger hover:bg-danger/10 p-1 rounded transition-colors"><Trash2 className="w-3 h-3"/></button>}
+                           </div>
+                        )}
                     </div>
                  </div>
                ))}
@@ -382,7 +382,7 @@ function MedCard({ med, isDoctor, onStop }) {
             {med.status}
          </span>
 
-         {isDoctor && med.status === 'active' && onStop && (
+         {isDoctor && med.status === 'active' && onStop && !readOnly && (
              <button onClick={onStop} className="text-xs text-danger hover:underline font-semibold flex items-center gap-1">
                 <Trash2 className="w-3 h-3"/> Discontinue
              </button>

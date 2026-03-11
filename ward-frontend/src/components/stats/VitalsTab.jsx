@@ -112,7 +112,7 @@ export default function VitalsTab({ patientId }) {
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold flex items-center gap-2"><Activity className="text-primary"/> Vitals History</h3>
         
-        {(user.role === 'nurse' || user.role === 'doctor') && !showForm && (
+        {(user.role === 'nurse' || user.role === 'doctor') && !showForm && !readOnly && (
           <button onClick={() => setShowForm(true)} className="btn btn-primary !py-2 !px-4 text-sm">
             <Plus className="w-4 h-4" /> Log Vitals
           </button>

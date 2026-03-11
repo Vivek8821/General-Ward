@@ -3,13 +3,26 @@ const crypto = require('crypto');
 
 class PatientService {
     async createPatient(data) {
-        if (!data.name || !data.mrn || !data.bedNumber || !data.dob || !data.diagnosis) {
+        const { name, mrn, bedNumber, dob, diagnosis, careIntensity } = data;
+        
+        if (!name || !mrn || !bedNumber || !dob || !diagnosis) {
             throw new Error('Missing required fields');
+        }
+
+        // Basic MRN validation: should be a non-empty string, maybe alphanumeric
+        if (typeof mrn !== 'string' || mrn.length < 3) {
+            throw new Error('Invalid MRN format');
+        }
+
+        // Basic DOB validation: ensure it's a valid date string
+        if (isNaN(Date.parse(dob))) {
+            throw new Error('Invalid Date of Birth');
         }
         
         const newPatient = {
             id: crypto.randomUUID(),
-            ...data
+            ...data,
+            careIntensity: Math.max(1, Math.min(4, careIntensity || 1))
         };
         
         return await patientRepository.create(newPatient);
