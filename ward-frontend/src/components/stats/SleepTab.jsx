@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Moon, Plus, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function SleepTab({ patientId }) {
+export default function SleepTab({ patientId, readOnly }) {
   const [sleepLogs, setSleepLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

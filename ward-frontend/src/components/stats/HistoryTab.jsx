@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { FileText, Save, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function HistoryTab({ patientId }) {
+export default function HistoryTab({ patientId, readOnly }) {
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);

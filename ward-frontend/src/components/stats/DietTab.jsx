@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Apple, Plus, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function DietTab({ patientId }) {
+export default function DietTab({ patientId, readOnly }) {
   const [diets, setDiets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

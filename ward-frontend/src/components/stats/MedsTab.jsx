@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ClipboardList, Plus, Save, Syringe, Trash2, CheckCircle, Clock, History, Ban, Edit2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function MedsTab({ patientId }) {
+export default function MedsTab({ patientId, readOnly }) {
   const [activeSubTab, setActiveSubTab] = useState('active'); // 'active', 'mar', 'history'
   const [medications, setMedications] = useState([]);
   const [administrations, setAdministrations] = useState([]);

@@ -7,7 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-export default function VitalsTab({ patientId }) {
+export default function VitalsTab({ patientId, readOnly }) {
   const [vitals, setVitals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
