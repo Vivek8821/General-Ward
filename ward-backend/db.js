@@ -47,8 +47,8 @@ const allAsync = (sql, params = []) =>
   });
 
 function withTransaction(work) {
-  // Chain onto the last transaction promise.
-  transactionChain = transactionChain.then(async () => {
+  // Ensure a previous failure doesn't poison the global transaction queue.
+  transactionChain = transactionChain.catch(() => {}).then(async () => {
     await runAsync('BEGIN IMMEDIATE;');
     try {
       const result = await work({ runAsync, getAsync, allAsync });
@@ -116,7 +116,7 @@ const initDb = () => {
             id TEXT PRIMARY KEY,
             patientId TEXT NOT NULL,
             tenantId TEXT,
-            type TEXT CHECK(type IN ('vital', 'symptom', 'diet', 'sleep')) NOT NULL,
+            type TEXT CHECK(type IN ('vital', 'symptom', 'diet', 'sleep', 'history')) NOT NULL,
             data TEXT NOT NULL,
             recordedBy TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,

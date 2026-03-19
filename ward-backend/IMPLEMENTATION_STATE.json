@@ -25,7 +25,8 @@
     "Stress test fix: corrected `POST /api/patients/:patientId/medications/:medId/administer` insert placeholder count and added best-effort retry for SQLITE_BUSY/LOCKED to prevent transient 500s.",
     "Verification after stress-hardening: backend Jest still passes (11/11 suites; 26/26 tests).",
     "Verification after meds/stress hardening: initial stress runner reported `server5xx: 0`. However, the runner’s DB seeding (while the backend was running) later caused `SQLITE_CORRUPT` during a subsequent Jest run. We restored the DB from git and confirmed Jest passes again.",
-    "Stress verification (safe mode): updated `ward-backend/stressEverything.js` to refuse DB seeding while `/health` is reachable; reran stress with seeding disabled (`CONCURRENCY=12`, `DURATION_SEC=18`) and confirmed `server5xx: 0`. Re-ran backend Jest (`npm test`) and confirmed all tests pass."
+    "Stress verification (safe mode): updated `ward-backend/stressEverything.js` to refuse DB seeding while `/health` is reachable; reran stress with seeding disabled (`CONCURRENCY=12`, `DURATION_SEC=18`) and confirmed `server5xx: 0`. Re-ran backend Jest (`npm test`) and confirmed all tests pass.",
+    "History endpoint fix: aligned `routes/history.js` with SQLite `DailyStats.type` CHECK constraints (persisted history under an allowed type) and added `tests/integration/history.test.js` to verify tenant scoping for history writes/reads; updated `withTransaction()` to recover after transactional failures."
   ],
   "artifacts": [
     "ward-backend:npm-test:passed",
