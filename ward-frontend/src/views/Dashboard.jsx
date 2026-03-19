@@ -228,7 +228,7 @@ export default function Dashboard() {
               <div 
                 key={patient.id} 
                 onClick={() => window.location.href = `/patient/${patient.id}`}
-                className={`card p-6 cursor-pointer hover:-translate-y-2 flex flex-col justify-between h-full group transition-all duration-300 ${patient.status === 'escalated' ? 'border-danger/60 shadow-[0_0_15px_rgba(251,113,133,0.3)]' : ''}`}
+                className={`card p-6 cursor-pointer hover:-translate-y-2 flex flex-col justify-between h-full group transition-all duration-300 ${patient.status === 'escalated' ? 'border-danger/60' : ''}`}
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
@@ -236,10 +236,10 @@ export default function Dashboard() {
                       {viewMode === 'active' ? `Level ${patient.careIntensity}` : 'DISCHARGED'}
                     </div>
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg ${
-                      patient.careIntensity === 4 ? 'bg-danger shadow-[inset_2px_2px_6px_rgba(255,255,255,0.4),0_4px_10px_rgba(251,113,133,0.5)]' : 
-                      patient.careIntensity === 3 ? 'bg-warning shadow-[inset_2px_2px_6px_rgba(255,255,255,0.4),0_4px_10px_rgba(251,191,36,0.5)]' : 
-                      patient.careIntensity === 2 ? 'bg-info shadow-[inset_2px_2px_6px_rgba(255,255,255,0.4),0_4px_10px_rgba(96,165,250,0.5)]' : 
-                      'bg-success shadow-[inset_2px_2px_6px_rgba(255,255,255,0.4),0_4px_10px_rgba(74,222,128,0.5)]'
+                      patient.careIntensity === 4 ? 'bg-danger' : 
+                      patient.careIntensity === 3 ? 'bg-warning' : 
+                      patient.careIntensity === 2 ? 'bg-info' : 
+                      'bg-success'
                     }`}>
                       {patient.bedNumber}
                     </div>

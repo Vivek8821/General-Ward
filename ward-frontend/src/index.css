@@ -15,7 +15,7 @@
   --color-text-primary: #475569;
   --color-text-secondary: #64748b;
   --color-text-muted: #94a3b8;
-  --color-border: transparent;
+  --color-border: rgba(148, 163, 184, 0.35);
   --color-hover: #f1f5f9;
   --color-input: #e8eef3;
 }
@@ -36,7 +36,7 @@
   --color-text-primary: #f8fafc;
   --color-text-secondary: #cbd5e1;
   --color-text-muted: #64748b;
-  --color-border: transparent;
+  --color-border: rgba(100, 116, 139, 0.35);
   --color-hover: #1f2937;
   --color-input: #0f172a;
 }
@@ -107,210 +107,110 @@ body {
   animation: dangerPulse 2s infinite;
 }
 
-/* Neo-claymorphism Utilities */
+/* Enterprise UI Primitives */
 @layer components {
   /* Buttons */
   .btn {
-    @apply px-6 py-3 rounded-2xl font-bold inline-flex justify-center items-center gap-2 transition-all duration-300 border-2 border-transparent;
+    @apply px-5 py-2.5 rounded-xl font-semibold inline-flex justify-center items-center gap-2 transition-all duration-200 border border-border bg-bg-tertiary text-text-primary shadow-sm;
   }
   
   .btn:hover {
-    @apply -translate-y-1;
+    @apply -translate-y-px;
   }
   
   .btn:active {
-    @apply translate-y-0.5 scale-95;
-    box-shadow: inset 4px 4px 8px rgba(0,0,0,0.1), inset -4px -4px 8px rgba(255,255,255,0.4) !important;
+    @apply translate-y-0 scale-[0.99];
+    box-shadow: none !important;
   }
   .dark .btn:active {
-    box-shadow: inset 4px 4px 8px rgba(0,0,0,0.9), inset -4px -4px 8px rgba(255,255,255,0.02) !important;
+    box-shadow: none !important;
   }
 
   .btn-primary {
-    @apply bg-primary text-white;
-    box-shadow: 
-      6px 6px 12px rgba(130, 148, 248, 0.4),
-      -6px -6px 12px rgba(255, 255, 255, 0.8),
-      inset -3px -3px 6px rgba(0,0,0,0.1),
-      inset 3px 3px 6px rgba(255,255,255,0.4);
+    @apply bg-primary text-white border-primary/30;
   }
   
   .btn-danger {
-    @apply bg-danger text-white;
-    box-shadow: 
-      6px 6px 12px rgba(251, 113, 133, 0.4),
-      -6px -6px 12px rgba(255, 255, 255, 0.8),
-      inset -3px -3px 6px rgba(0,0,0,0.1),
-      inset 3px 3px 6px rgba(255,255,255,0.4);
+    @apply bg-danger text-white border-danger/30;
   }
   
   .btn-secondary {
-    @apply bg-bg-secondary text-text-primary border-2 border-transparent;
-    box-shadow: 
-      6px 6px 12px rgba(0, 0, 0, 0.08),
-      -6px -6px 12px rgba(255, 255, 255, 0.9),
-      inset -3px -3px 6px rgba(0,0,0,0.03),
-      inset 3px 3px 6px rgba(255,255,255,0.6);
+    @apply bg-bg-tertiary text-text-primary border-border;
   }
   
   .btn-success {
-    @apply bg-success text-white;
-    box-shadow: 
-      6px 6px 12px rgba(74, 222, 128, 0.4),
-      -6px -6px 12px rgba(255, 255, 255, 0.8),
-      inset -3px -3px 6px rgba(0,0,0,0.1),
-      inset 3px 3px 6px rgba(255,255,255,0.4);
+    @apply bg-success text-white border-success/30;
   }
   
   .btn-warning {
-    @apply bg-warning text-white;
-    box-shadow: 
-      6px 6px 12px rgba(251, 191, 36, 0.4),
-      -6px -6px 12px rgba(255, 255, 255, 0.8),
-      inset -3px -3px 6px rgba(0,0,0,0.1),
-      inset 3px 3px 6px rgba(255,255,255,0.4);
+    @apply bg-warning text-white border-warning/30;
   }
   
   .btn-info {
-    @apply bg-info text-white;
-    box-shadow: 
-      6px 6px 12px rgba(96, 165, 250, 0.4),
-      -6px -6px 12px rgba(255, 255, 255, 0.8),
-      inset -3px -3px 6px rgba(0,0,0,0.1),
-      inset 3px 3px 6px rgba(255,255,255,0.4);
+    @apply bg-info text-white border-info/30;
   }
 
   /* OLED Glow Buttons */
   .dark .btn-primary {
-    background-color: #1a1e36;
-    color: #818cf8;
-    border: 1px solid rgba(129, 140, 248, 0.2);
-    box-shadow: 
-      4px 4px 10px rgba(0, 0, 0, 0.8),
-      -4px -4px 10px rgba(255, 255, 255, 0.01),
-      inset -2px -2px 4px rgba(0,0,0,0.5),
-      inset 2px 2px 4px rgba(129,140,248,0.1);
+    box-shadow: none;
   }
   .dark .btn-primary:hover {
-     animation: oledGlow 2s infinite ease-in-out;
+     animation: none;
   }
 
   .dark .btn-danger {
-    background-color: #2e1015;
-    color: #fb7185;
-    border: 1px solid rgba(251, 113, 133, 0.2);
-    box-shadow: 
-      4px 4px 10px rgba(0, 0, 0, 0.8),
-      -4px -4px 10px rgba(255, 255, 255, 0.01),
-      inset -2px -2px 4px rgba(0,0,0,0.5),
-      inset 2px 2px 4px rgba(251, 113, 133, 0.1);
+    box-shadow: none;
   }
 
   .dark .btn-success {
-    background-color: #0f291a;
-    color: #4ade80;
-    border: 1px solid rgba(74, 222, 128, 0.2);
-    box-shadow: 
-      4px 4px 10px rgba(0, 0, 0, 0.8),
-      -4px -4px 10px rgba(255, 255, 255, 0.01),
-      inset -2px -2px 4px rgba(0,0,0,0.5),
-      inset 2px 2px 4px rgba(74, 222, 128, 0.1);
+    box-shadow: none;
   }
   
   .dark .btn-warning {
-    background-color: #2b2108;
-    color: #fbbf24;
-    border: 1px solid rgba(251, 191, 36, 0.2);
-    box-shadow: 
-      4px 4px 10px rgba(0, 0, 0, 0.8),
-      -4px -4px 10px rgba(255, 255, 255, 0.01),
-      inset -2px -2px 4px rgba(0,0,0,0.5),
-      inset 2px 2px 4px rgba(251, 191, 36, 0.1);
+    box-shadow: none;
   }
 
   .dark .btn-info {
-    background-color: #101e33;
-    color: #60a5fa;
-    border: 1px solid rgba(96, 165, 250, 0.2);
-    box-shadow: 
-      4px 4px 10px rgba(0, 0, 0, 0.8),
-      -4px -4px 10px rgba(255, 255, 255, 0.01),
-      inset -2px -2px 4px rgba(0,0,0,0.5),
-      inset 2px 2px 4px rgba(96, 165, 250, 0.1);
+    box-shadow: none;
   }
 
   .dark .btn-secondary {
-    @apply border border-white/5;
-    background-image: linear-gradient(145deg, #1f2937, #111827);
-    box-shadow: 
-      4px 4px 10px rgba(0, 0, 0, 0.6),
-      -4px -4px 10px rgba(255, 255, 255, 0.02),
-      inset -2px -2px 4px rgba(0,0,0,0.4),
-      inset 2px 2px 4px rgba(255,255,255,0.03);
+    @apply border border-border;
+    background-image: none;
+    box-shadow: none;
   }
 
   /* Cards */
   .card {
-    @apply bg-bg-secondary rounded-[2rem] border-4 border-transparent transition-all duration-300;
-    box-shadow: 
-      12px 12px 24px rgba(0, 0, 0, 0.08),
-      -12px -12px 24px rgba(255, 255, 255, 0.8),
-      inset -4px -4px 10px rgba(0, 0, 0, 0.02),
-      inset 4px 4px 10px rgba(255, 255, 255, 0.8);
+    @apply bg-bg-secondary rounded-xl border border-border transition-all duration-300;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   }
   
   /* OLED Smooth Deep Cards */
   .dark .card {
-    @apply border border-white/10;
-    /* Soft noise texture simulated with gradient */
-    background: radial-gradient(circle at top left, #1f2937, #111827);
-    box-shadow: 
-      10px 10px 30px rgba(0, 0, 0, 0.6),
-      -2px -2px 15px rgba(255, 255, 255, 0.03),
-      inset -4px -4px 10px rgba(0, 0, 0, 0.4),
-      inset 4px 4px 15px rgba(255, 255, 255, 0.03);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
   }
   
   .dark .card:hover {
-     box-shadow: 
-      15px 15px 35px rgba(0, 0, 0, 0.7),
-      -2px -2px 20px rgba(129, 140, 248, 0.08),
-      inset -4px -4px 10px rgba(0, 0, 0, 0.5),
-      inset 4px 4px 15px rgba(129, 140, 248, 0.08);
+     box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
   }
   
   /* Inputs */
   .input-field {
-    @apply w-full px-5 py-4 rounded-2xl bg-input text-text-primary transition-all border-2 border-transparent focus:outline-none focus:border-primary/50;
-    box-shadow: 
-      inset 6px 6px 10px rgba(0,0,0,0.06),
-      inset -6px -6px 10px rgba(255,255,255,0.8);
+    @apply w-full px-4 py-3 rounded-xl bg-input text-text-primary transition-all border border-border focus:outline-none focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20;
+    box-shadow: none;
   }
   
   .dark .input-field {
-     @apply border border-white/5 focus:border-primary/50 focus:shadow-[0_0_10px_rgba(129,140,248,0.2),inset_4px_4px_8px_rgba(0,0,0,0.8)];
-     background-color: #030303;
-     box-shadow: 
-      inset 4px 4px 8px rgba(0,0,0,0.9),
-      inset -4px -4px 8px rgba(255,255,255,0.02);
+     box-shadow: none;
   }
 
   .nav-ribbon {
-    @apply bg-bg-secondary rounded-[2rem] border-4 border-transparent transition-all duration-300;
-    box-shadow: 
-      6px 6px 14px rgba(0, 0, 0, 0.08),
-      -6px -6px 14px rgba(255, 255, 255, 0.8),
-      inset -2px -2px 6px rgba(0, 0, 0, 0.01),
-      inset 2px 2px 6px rgba(255, 255, 255, 0.8);
+    @apply bg-bg-secondary rounded-xl border border-border transition-all duration-300;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   }
   
   .dark .nav-ribbon {
-    @apply border border-white/10;
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-    box-shadow: 
-      8px 8px 20px rgba(0, 0, 0, 0.6),
-      -2px -2px 10px rgba(255, 255, 255, 0.03),
-      inset -2px -2px 6px rgba(0, 0, 0, 0.4),
-      inset 2px 2px 6px rgba(255, 255, 255, 0.04);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
   }
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
-import { Moon, Plus, Save } from 'lucide-react';
+import { Moon, Plus, Save, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function SleepTab({ patientId, readOnly }) {
@@ -58,7 +58,7 @@ export default function SleepTab({ patientId, readOnly }) {
     const poorSleep = parseFloat(d.hoursSlept) < 5 || d.quality === 'Poor';
 
     return (
-      <div key={log.id} className="bg-bg-tertiary p-5 rounded-xl border border-border mb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div key={log.id} className="bg-bg-tertiary p-5 rounded-2xl border border-border mb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex-1">
           <div className="text-sm font-semibold text-text-secondary mb-2">{date}</div>
           <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -79,9 +79,10 @@ export default function SleepTab({ patientId, readOnly }) {
         <div className="text-right flex flex-col items-end gap-2 w-full md:w-auto">
            <div className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full">{log.recordedBy}</div>
            {poorSleep && (
-              <span className="text-xs bg-danger text-white px-2 py-0.5 rounded shadow-sm flex items-center gap-1 font-bold">
-                 ⚠️ Sleep Deprivation Risk
-              </span>
+             <span className="text-xs bg-danger/10 text-danger px-2 py-0.5 rounded-lg border border-danger/20 shadow-sm flex items-center gap-1 font-bold">
+               <AlertTriangle className="w-3 h-3" />
+               Sleep Deprivation Risk
+             </span>
            )}
         </div>
       </div>
@@ -91,17 +92,17 @@ export default function SleepTab({ patientId, readOnly }) {
   return (
     <div className="animate-in fade-in pt-4">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold flex items-center gap-2 text-indigo-500"><Moon className="text-indigo-500"/> Sleep & Rest Log</h3>
+        <h3 className="text-xl font-bold flex items-center gap-2 text-primary"><Moon className="text-primary" /> Sleep & Rest Log</h3>
         
         {(user.role === 'nurse' || user.role === 'doctor') && !showForm && !readOnly && (
-          <button onClick={() => setShowForm(true)} className="btn btn-primary !bg-indigo-500 hover:!bg-indigo-600 !py-2 !px-4 text-sm">
+          <button onClick={() => setShowForm(true)} className="btn btn-primary !py-2 !px-4 text-sm">
             <Plus className="w-4 h-4" /> Log Sleep
           </button>
         )}
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-bg-tertiary p-6 rounded-xl border-2 border-indigo-400 mb-8 animate-in slide-in-from-top-4">
+        <form onSubmit={handleSubmit} className="bg-bg-tertiary p-6 rounded-2xl border-2 border-primary/40 mb-8 animate-in slide-in-from-top-4">
           <h4 className="font-bold mb-4">New Rest Entry</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
@@ -120,11 +121,11 @@ export default function SleepTab({ patientId, readOnly }) {
             
             <div className="flex items-center gap-4 mt-2">
                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 accent-indigo-500" checked={formData.interrupted} onChange={e => setFormData({...formData, interrupted: e.target.checked})} />
+                  <input type="checkbox" className="w-4 h-4 accent-primary" checked={formData.interrupted} onChange={e => setFormData({...formData, interrupted: e.target.checked})} />
                   <span className="text-sm font-semibold">Sleep was interrupted</span>
                </label>
                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 accent-indigo-500" checked={formData.nap} onChange={e => setFormData({...formData, nap: e.target.checked})} />
+                  <input type="checkbox" className="w-4 h-4 accent-primary" checked={formData.nap} onChange={e => setFormData({...formData, nap: e.target.checked})} />
                   <span className="text-sm font-semibold">This was a daytime nap</span>
                </label>
             </div>
@@ -137,14 +138,14 @@ export default function SleepTab({ patientId, readOnly }) {
           
           <div className="flex gap-3 justify-end mt-6">
             <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary !py-2 !px-4">Cancel</button>
-            <button type="submit" className="btn btn-primary !bg-indigo-500 hover:!bg-indigo-600 !py-2 !px-4"><Save className="w-4 h-4"/> Save Log</button>
+            <button type="submit" className="btn btn-primary !py-2 !px-4"><Save className="w-4 h-4"/> Save Log</button>
           </div>
         </form>
       )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center p-12 text-text-muted animate-pulse">
-          <div className="w-8 h-8 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="w-8 h-8 border-4 border-primary/60 border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="font-medium">Loading sleep history...</p>
         </div>
       ) : sleepLogs.length === 0 ? (

@@ -222,17 +222,15 @@ export default function VitalsTab({ patientId, readOnly }) {
                   }))}
                   margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} tickMargin={10} />
-                  <YAxis yAxisId="left" stroke="#9ca3af" fontSize={12} domain={['dataMin - 10', 'dataMax + 10']} />
-                  <YAxis yAxisId="right" orientation="right" stroke="#9ca3af" fontSize={12} domain={['dataMin - 2', 'dataMax + 2']} />
-                  <Tooltip 
-                     contentStyle={{ backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-text-muted)" />
+                  <XAxis dataKey="time" stroke="var(--color-text-muted)" fontSize={12} tickMargin={10} />
+                  <YAxis yAxisId="left" stroke="var(--color-text-muted)" fontSize={12} domain={['dataMin - 10', 'dataMax + 10']} />
+                  <YAxis yAxisId="right" orientation="right" stroke="var(--color-text-muted)" fontSize={12} domain={['dataMin - 2', 'dataMax + 2']} />
+                  <Tooltip content={VitalsChartTooltip} />
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                  <Line yAxisId="left" type="monotone" dataKey="bpSystolic" name="BP Systolic" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  <Line yAxisId="left" type="monotone" dataKey="bpDiastolic" name="BP Diastolic" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  <Line yAxisId="right" type="monotone" dataKey="temp" name="Temp (°F)" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="left" type="monotone" dataKey="bpSystolic" name="BP Systolic" stroke="var(--color-danger)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="left" type="monotone" dataKey="bpDiastolic" name="BP Diastolic" stroke="var(--color-info)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="temp" name="Temp (°F)" stroke="var(--color-warning)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -264,6 +262,24 @@ function TrendPill({ label, value, direction }) {
       <span className="uppercase tracking-widest">{label}</span>
       <span className="font-black">{direction}</span>
       <span className="font-black">{value}</span>
+    </div>
+  );
+}
+
+function VitalsChartTooltip({ active, payload, label }) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  return (
+    <div className="bg-bg-tertiary border border-border rounded-2xl p-3 shadow-xl">
+      <div className="text-xs font-bold text-text-secondary mb-2">{label}</div>
+      <div className="space-y-1">
+        {payload.map((p) => (
+          <div key={p.dataKey} className="flex items-center justify-between gap-4">
+            <span className="text-xs text-text-muted">{p.name}:</span>
+            <span className="text-xs font-bold text-text-primary">{p.value}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

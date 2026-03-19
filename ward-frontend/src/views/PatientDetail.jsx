@@ -394,7 +394,7 @@ export default function PatientDetail() {
 
                      <div className="flex justify-end gap-3 pt-4">
                          <button type="button" onClick={() => setIsDischarging(false)} className="btn btn-secondary !py-3 !px-6">Cancel</button>
-                         <button type="submit" className="btn btn-warning !py-3 !px-6 shadow-[0_4px_15px_rgba(251,191,36,0.4)]">Submit Discharge</button>
+                        <button type="submit" className="btn btn-warning !py-3 !px-6">Submit Discharge</button>
                      </div>
                   </form>
                </div>
