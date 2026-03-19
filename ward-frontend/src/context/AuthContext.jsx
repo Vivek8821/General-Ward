@@ -7,6 +7,21 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ward_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initial = prefersDark ? 'dark' : 'light';
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.toggle('dark', initial === 'dark');
+      }
+      return initial;
+    } catch {
+      return 'light';
+    }
+  });
+
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('ward_user');
     return saved ? JSON.parse(saved) : null;
@@ -18,6 +33,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('ward_user');
     setUser(null);
   };
+
+  useEffect(() => {
+    // Apply theme globally so both protected routes and login inherit it.
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    try {
+      localStorage.setItem('ward_theme', theme);
+    } catch {
+      // ignore storage failures (e.g. private mode)
+    }
+  }, [theme]);
 
   useEffect(() => {
     const token = localStorage.getItem('ward_token');
@@ -43,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, theme, setTheme }}>
       {!loading && children}
     </AuthContext.Provider>
   );

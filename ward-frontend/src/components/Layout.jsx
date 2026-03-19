@@ -4,7 +4,7 @@ import { LogOut, User as UserIcon, Moon, Sun } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
 export const ProtectedLayout = ({ allowedRoles }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, setTheme } = useAuth();
   const navigate = useNavigate();
 
   if (!user) {
@@ -21,7 +21,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
   };
 
   const toggleTheme = () => {
-    document.documentElement.classList.toggle('dark');
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   return (
