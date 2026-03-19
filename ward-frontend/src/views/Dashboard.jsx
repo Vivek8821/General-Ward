@@ -61,6 +61,11 @@ export default function Dashboard() {
     };
   }, [user.role, viewMode]);
 
+  useEffect(() => {
+    // Escalation review is only meaningful in the active roster.
+    if (viewMode === 'archived') setIsReviewingCases(false);
+  }, [viewMode]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -104,6 +109,7 @@ export default function Dashboard() {
   };
 
   const activePatients = patients.filter(p => ['active', 'escalated'].includes(p.status));
+  const escalatedPatients = activePatients.filter(p => p.status === 'escalated');
   let filteredPatients = patients.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) || 
     p.mrn.toLowerCase().includes(search.toLowerCase()) ||
@@ -156,7 +162,7 @@ export default function Dashboard() {
           <StatCard title="Total Patients" value={patients.length} icon={<Users size={24} />} />
           <StatCard title="Active Beds" value={activePatients.length} icon={<Bed size={24} />} />
           <StatCard title="Critical Care (Level 4)" value={activePatients.filter(p => p.careIntensity === 4).length} icon={<Activity size={24} />} color="text-danger" />
-          <StatCard title="Escalations" value={escalated.length} icon={<AlertCircle size={24} />} color="text-warning" />
+          <StatCard title="Escalations" value={escalatedPatients.length} icon={<AlertCircle size={24} />} color="text-warning" />
         </div>
       )}
 
@@ -183,6 +189,25 @@ export default function Dashboard() {
             >
               <Plus className="w-5 h-5" /> Add Patient
             </button>
+
+            {(user.role === 'doctor' || user.role === 'nurse') && viewMode === 'active' && (
+              <button
+                onClick={() => window.location.href = '/tasks'}
+                className="btn btn-secondary whitespace-nowrap"
+              >
+                My Tasks
+              </button>
+            )}
+
+            {/* Nurse-focused shortcut: quickly focus the roster on escalated cases */}
+            {viewMode === 'active' && user.role === 'nurse' && escalatedPatients.length > 0 && (
+              <button
+                onClick={() => setIsReviewingCases(!isReviewingCases)}
+                className={`btn ${isReviewingCases ? 'bg-bg-tertiary text-danger border border-danger' : 'btn-danger'} !px-4 whitespace-nowrap`}
+              >
+                {isReviewingCases ? 'View All Patients' : 'Review Escalated Patients'}
+              </button>
+            )}
           </div>
         </div>
 

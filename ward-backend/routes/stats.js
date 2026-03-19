@@ -159,9 +159,9 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), (req, res)
 });
 
 // GET /api/patients/:patientId/stats
-router.get('/', authenticateToken, (req, res) => {
+router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
     const { patientId } = req.params;
-    const { type } = req.query; // optional filter by type
+    const { type, limit } = req.query; // optional filter by type
     
     let query = `SELECT * FROM DailyStats WHERE patientId = ?`;
     const params = [patientId];
@@ -172,6 +172,12 @@ router.get('/', authenticateToken, (req, res) => {
     }
     
     query += ` ORDER BY timestamp DESC`;
+
+    const parsedLimit = limit !== undefined ? Number(limit) : 200;
+    if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
+        query += ` LIMIT ?`;
+        params.push(parsedLimit);
+    }
     
     db.all(query, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -204,7 +210,7 @@ router.get('/', authenticateToken, (req, res) => {
 
 // GET /api/patients/:patientId/stats/ews/latest
 // Returns the most recent vital entry with its computed early warning score.
-router.get('/ews/latest', authenticateToken, (req, res) => {
+router.get('/ews/latest', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
     const { patientId } = req.params;
 
     db.get(
@@ -242,6 +248,66 @@ router.get('/ews/latest', authenticateToken, (req, res) => {
                     ageMinutes
                 },
                 score: ews
+            });
+        }
+    );
+});
+
+// GET /api/patients/:patientId/stats/trends
+// Computes simple trend directions from the latest two vital sign entries.
+router.get('/trends', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
+    const { patientId } = req.params;
+
+    db.all(
+        `SELECT * FROM DailyStats
+         WHERE patientId = ? AND type = 'vital'
+         ORDER BY timestamp DESC
+         LIMIT 2`,
+        [patientId],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!rows || rows.length < 2) {
+                return res.status(200).json({
+                    patientId,
+                    trends: {}
+                });
+            }
+
+            const [latestRow, previousRow] = rows;
+            let latestData = latestRow.data;
+            let previousData = previousRow.data;
+
+            try {
+                latestData = JSON.parse(latestRow.data);
+            } catch (e) {}
+            try {
+                previousData = JSON.parse(previousRow.data);
+            } catch (e) {}
+
+            const mkTrend = (prevVal, latestVal) => {
+                if (prevVal === undefined || latestVal === undefined) return null;
+                const p = Number(prevVal);
+                const l = Number(latestVal);
+                if (!Number.isFinite(p) || !Number.isFinite(l)) return null;
+                const delta = l - p;
+                const direction = Math.abs(delta) < 1e-6 ? 'stable' : delta > 0 ? 'up' : 'down';
+                return { previous: p, latest: l, delta, direction };
+            };
+
+            const trends = {
+                pulse: mkTrend(previousData.pulse, latestData.pulse),
+                temp: mkTrend(previousData.temp, latestData.temp),
+                systolic: mkTrend(previousData.bpSystolic, latestData.bpSystolic),
+                diastolic: mkTrend(previousData.bpDiastolic, latestData.bpDiastolic),
+                spo2: mkTrend(previousData.spo2, latestData.spo2),
+                respRate: mkTrend(previousData.respRate, latestData.respRate)
+            };
+
+            return res.json({
+                patientId,
+                fromTimestamp: previousRow.timestamp,
+                toTimestamp: latestRow.timestamp,
+                trends
             });
         }
     );

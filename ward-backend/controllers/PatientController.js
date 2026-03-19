@@ -6,12 +6,16 @@ const medicationRoutes = require('../routes/medications');
 const historyRoutes = require('../routes/history');
 const statRoutes = require('../routes/stats');
 const escalationRoutes = require('./EscalationController');
+const patientTasksRoutes = require('../routes/patientTasks');
+const patientNotesRoutes = require('../routes/patientNotes');
 
 // Sub-routers for nested resources
 router.use('/:patientId/medications', medicationRoutes);
 router.use('/:patientId/history', historyRoutes);
 router.use('/:patientId/stats', statRoutes);
 router.use('/:patientId/escalations', escalationRoutes);
+router.use('/:patientId/tasks', patientTasksRoutes);
+router.use('/:patientId/notes', patientNotesRoutes);
 
 // Create a patient (Doctor or Nurse)
 router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req, res) => {
@@ -24,7 +28,7 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req
 });
 
 // Get all patients
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
     try {
         const patients = await patientService.getAllPatients();
         res.json(patients);
@@ -34,7 +38,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get archived (discharged) patients
-router.get('/archives', authenticateToken, async (req, res) => {
+router.get('/archives', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
     try {
         const patients = await patientService.getArchivedPatients();
         res.json(patients);
@@ -44,7 +48,7 @@ router.get('/archives', authenticateToken, async (req, res) => {
 });
 
 // Get patient by ID
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
     try {
         const patient = await patientService.getPatientById(req.params.id);
         res.json(patient);
@@ -57,7 +61,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Get discharge summary
-router.get('/:id/discharge-summary', authenticateToken, async (req, res) => {
+router.get('/:id/discharge-summary', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
     try {
         const summary = await patientService.getDischargeSummary(req.params.id);
         res.json(summary);

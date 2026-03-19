@@ -18,8 +18,11 @@ export default function MedsTab({ patientId, readOnly }) {
     name: '',
     dosage: '',
     frequency: 'Once daily',
+    scheduledTimes: '',
     status: 'active'
   });
+
+  const [adminNotes, setAdminNotes] = useState({}); // { adminId: notes }
 
   useEffect(() => {
     fetchData();
@@ -52,7 +55,7 @@ export default function MedsTab({ patientId, readOnly }) {
       
       await api.post(`/patients/${patientId}/medications`, formData);
       setShowForm(false);
-      setFormData({ name: '', dosage: '', frequency: 'Once daily', status: 'active' });
+      setFormData({ name: '', dosage: '', frequency: 'Once daily', scheduledTimes: '', status: 'active' });
       await fetchData();
       toast.success("Prescription confirmed!");
     } catch (err) {
@@ -64,6 +67,11 @@ export default function MedsTab({ patientId, readOnly }) {
     try {
       const inputs = marInputs[medId] || {};
       const payload = { status, notes: inputs.notes };
+
+      if ((status === 'refused' || status === 'missed') && (!payload.notes || payload.notes.trim().length === 0)) {
+        toast.error('Reason is required for refused/missed doses.');
+        return;
+      }
       
       if (inputs.time) {
         const [hours, minutes] = inputs.time.split(':');
@@ -78,7 +86,12 @@ export default function MedsTab({ patientId, readOnly }) {
       setMarInputs(prev => ({ ...prev, [medId]: { time: '', notes: '' } }));
       
       await fetchData();
-      toast.success(status === 'given' ? "Medication marked as Given" : "Medication recorded as Refused");
+      const msg = status === 'given'
+        ? "Medication marked as Given"
+        : status === 'missed'
+          ? "Medication recorded as Missed"
+          : "Medication recorded as Refused";
+      toast.success(msg);
     } catch (err) {
       toast.error("Failed to record: " + err.message);
     }
@@ -154,6 +167,45 @@ export default function MedsTab({ patientId, readOnly }) {
     };
   };
 
+  const parseScheduledTimesToMinutes = (scheduledTimes) => {
+    if (!scheduledTimes || typeof scheduledTimes !== 'string') return [];
+    const parts = scheduledTimes
+      .split(',')
+      .map(p => p.trim())
+      .filter(Boolean);
+
+    const minutes = [];
+    for (const t of parts) {
+      if (!/^\d{2}:\d{2}$/.test(t)) return [];
+      const [hh, mm] = t.split(':').map(Number);
+      minutes.push(hh * 60 + mm);
+    }
+    return minutes;
+  };
+
+  const getDueBadge = (med, isCompleted, isPRN) => {
+    if (isCompleted || isPRN) return null;
+
+    const minutes = parseScheduledTimesToMinutes(med.scheduledTimes);
+    if (minutes.length === 0) return null;
+
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const first = Math.min(...minutes);
+    const last = Math.max(...minutes);
+
+    if (nowMinutes < first) {
+      return { label: 'Upcoming', className: 'bg-info/10 text-info border border-info/20' };
+    }
+
+    if (nowMinutes > last) {
+      return { label: 'Overdue', className: 'bg-warning/10 text-warning border border-warning/20' };
+    }
+
+    return { label: 'Due Now', className: 'bg-success/10 text-success border border-success/20' };
+  };
+
   return (
     <div className="animate-in fade-in pt-4">
       {/* Sub-navigation */}
@@ -199,6 +251,17 @@ export default function MedsTab({ patientId, readOnly }) {
               <label className="block text-xs font-bold mb-1 text-text-secondary">Frequency / Instructions</label>
               <input type="text" className="input-field !py-2" value={formData.frequency} onChange={e => setFormData({...formData, frequency: e.target.value})} placeholder="TID for 7 days" />
             </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-xs font-bold mb-1 text-text-secondary">Scheduled Times (optional)</label>
+              <input
+                type="text"
+                className="input-field !py-2"
+                value={formData.scheduledTimes}
+                onChange={e => setFormData({ ...formData, scheduledTimes: e.target.value })}
+                placeholder="e.g. 08:00, 14:00, 20:00"
+              />
+            </div>
           </div>
           
           <div className="flex gap-3 justify-end mt-6">
@@ -215,13 +278,13 @@ export default function MedsTab({ patientId, readOnly }) {
           {activeSubTab === 'active' && (
             <>
               {activeMeds.length === 0 && <div className="text-center p-8 bg-bg-tertiary rounded-xl border border-dashed border-border text-text-muted">No active prescriptions.</div>}
-              {activeMeds.map(med => <MedCard key={med.id} med={med} isDoctor={isDoctor} onStop={() => updateMedStatus(med.id, 'discontinued')} />)}
+              {activeMeds.map(med => <MedCard key={med.id} med={med} isDoctor={isDoctor} readOnly={readOnly} onStop={() => updateMedStatus(med.id, 'discontinued')} />)}
               
               {discMeds.length > 0 && (
                 <div className="mt-8">
                   <h4 className="text-sm font-bold text-text-muted uppercase tracking-widest mb-4">Discontinued</h4>
                   <div className="space-y-4 opacity-60">
-                    {discMeds.map(med => <MedCard key={med.id} med={med} isDoctor={isDoctor} />)}
+                    {discMeds.map(med => <MedCard key={med.id} med={med} isDoctor={isDoctor} readOnly={readOnly} />)}
                   </div>
                 </div>
               )}
@@ -235,6 +298,7 @@ export default function MedsTab({ patientId, readOnly }) {
                {activeMeds.map(med => {
                  const stats = getTodayStats(med.id, med.frequency);
                  const { isCompleted, isPRN, givenCount, requiredDoses } = stats;
+                 const dueBadge = getDueBadge(med, isCompleted, isPRN);
                  const inputs = marInputs[med.id] || { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), notes: '' };
 
                  return (
@@ -249,6 +313,11 @@ export default function MedsTab({ patientId, readOnly }) {
                                  <h4 className="font-bold text-lg">{med.name}</h4>
                                  {isCompleted && <span className="text-[10px] font-black bg-success text-white px-2 py-0.5 rounded uppercase">Completed Today</span>}
                                  {isPRN && <span className="text-[10px] font-black bg-info text-white px-2 py-0.5 rounded uppercase">PRN - As Needed</span>}
+                                 {!isCompleted && !isPRN && dueBadge && (
+                                   <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${dueBadge.className}`}>
+                                     {dueBadge.label}
+                                   </span>
+                                 )}
                               </div>
                               <p className="text-sm text-text-secondary">
                                 {med.dosage} &bull; {med.frequency}
@@ -266,6 +335,9 @@ export default function MedsTab({ patientId, readOnly }) {
                               <button onClick={() => administerMed(med.id, 'refused')} className="btn btn-secondary !py-1.5 !px-3 text-xs flex items-center gap-1 text-danger border-danger/20 hover:bg-danger/10">
                                  <Ban className="w-3 h-3"/> Refused
                               </button>
+                             <button onClick={() => administerMed(med.id, 'missed')} className="btn btn-warning !py-1.5 !px-3 text-xs flex items-center gap-1 text-text-muted border-border hover:bg-bg-tertiary">
+                                <Clock className="w-3 h-3" /> Missed
+                             </button>
                               <button onClick={() => administerMed(med.id, 'given')} className="btn btn-success !bg-success !text-white !py-1.5 !px-3 text-xs flex items-center gap-1 shadow-sm hover:shadow-md">
                                  <CheckCircle className="w-3 h-3"/> Mark Given
                               </button>
@@ -317,17 +389,46 @@ export default function MedsTab({ patientId, readOnly }) {
                           {admin.status === 'given' ? <CheckCircle className="w-4 h-4"/> : <Ban className="w-4 h-4"/>}
                        </div>
                        {editingAdmin === admin.id ? (
-                          <div className="flex items-center gap-2">
-                             <select 
-                               className="input-field !py-1 !text-xs w-24"
-                               value={admin.status}
-                               onChange={(e) => updateAdminStatus(admin.id, e.target.value)}
-                             >
-                               <option value="given">Given</option>
-                               <option value="refused">Refused</option>
-                               <option value="missed">Missed</option>
-                             </select>
-                             <button onClick={() => setEditingAdmin(null)} className="text-text-muted hover:text-text-primary"><X className="w-4 h-4"/></button>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                             <div className="flex items-center gap-2">
+                               <select
+                                 className="input-field !py-1 !text-xs w-24"
+                                 value={admin.status}
+                                 onChange={(e) => {
+                                   const nextStatus = e.target.value;
+                                   const nextNotes = adminNotes[admin.id] ?? admin.notes ?? '';
+                                   if ((nextStatus === 'refused' || nextStatus === 'missed') && (!nextNotes || nextNotes.trim().length === 0)) {
+                                     toast.error('Reason is required for refused/missed doses.');
+                                     return;
+                                   }
+                                   updateAdminStatus(admin.id, nextStatus, nextNotes);
+                                 }}
+                               >
+                                 <option value="given">Given</option>
+                                 <option value="refused">Refused</option>
+                                 <option value="missed">Missed</option>
+                               </select>
+                               <button
+                                 onClick={() => {
+                                   setEditingAdmin(null);
+                                   setAdminNotes(prev => {
+                                     const copy = { ...prev };
+                                     delete copy[admin.id];
+                                     return copy;
+                                   });
+                                 }}
+                                 className="text-text-muted hover:text-text-primary"
+                               >
+                                 <X className="w-4 h-4" />
+                               </button>
+                             </div>
+                             <input
+                               type="text"
+                               className="input-field !py-1 !text-xs bg-white w-64"
+                               placeholder="Reason/notes"
+                               value={adminNotes[admin.id] ?? admin.notes ?? ''}
+                               onChange={(e) => setAdminNotes(prev => ({ ...prev, [admin.id]: e.target.value }))}
+                             />
                           </div>
                        ) : (
                           <div>
@@ -357,7 +458,7 @@ export default function MedsTab({ patientId, readOnly }) {
   );
 }
 
-function MedCard({ med, isDoctor, onStop }) {
+function MedCard({ med, isDoctor, onStop, readOnly }) {
   return (
     <div className={`p-5 rounded-xl border flex items-center justify-between gap-4 bg-bg-tertiary border-border shadow-sm`}>
       <div className="flex items-start gap-4 flex-1">

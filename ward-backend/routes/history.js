@@ -22,7 +22,7 @@ router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
 });
 
 // GET /api/patients/:patientId/history
-router.get('/', authenticateToken, (req, res) => {
+router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
     db.get(
         `SELECT * FROM DailyStats WHERE patientId = ? AND type = 'history' ORDER BY timestamp DESC LIMIT 1`,
         [req.params.patientId],

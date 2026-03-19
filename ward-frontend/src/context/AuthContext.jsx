@@ -1,3 +1,4 @@
+/* eslint react-refresh/only-export-components: 0 */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
 
@@ -10,7 +11,13 @@ export const AuthProvider = ({ children }) => {
     const saved = localStorage.getItem('ward_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem('ward_token')));
+
+  const logout = () => {
+    localStorage.removeItem('ward_token');
+    localStorage.removeItem('ward_user');
+    setUser(null);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('ward_token');
@@ -24,8 +31,6 @@ export const AuthProvider = ({ children }) => {
           logout();
         })
         .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
     }
   }, []);
 
@@ -35,12 +40,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('ward_user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('ward_token');
-    localStorage.removeItem('ward_user');
-    setUser(null);
   };
 
   return (

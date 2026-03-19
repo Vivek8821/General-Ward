@@ -28,7 +28,10 @@ export const api = {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || 'API Request Failed');
+      const err = new Error(error.error || 'API Request Failed');
+      err.status = response.status;
+      err.details = error;
+      throw err;
     }
 
     return response.json().catch(() => ({}));

@@ -9,6 +9,7 @@ import {
 
 export default function VitalsTab({ patientId, readOnly }) {
   const [vitals, setVitals] = useState([]);
+  const [trends, setTrends] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const { user } = useAuth();
@@ -24,8 +25,12 @@ export default function VitalsTab({ patientId, readOnly }) {
 
   const fetchVitals = async () => {
     try {
-      const data = await api.get(`/patients/${patientId}/stats?type=vital`);
+      const [data, trendData] = await Promise.all([
+        api.get(`/patients/${patientId}/stats?type=vital`),
+        api.get(`/patients/${patientId}/stats/trends`)
+      ]);
       setVitals(data);
+      setTrends(trendData?.trends || {});
     } catch (err) {
       toast.error("Failed to load vitals: " + err.message);
       console.error(err);
@@ -107,6 +112,14 @@ export default function VitalsTab({ patientId, readOnly }) {
     );
   };
 
+  const trendRows = trends || {};
+  const formatDelta = (delta, decimals = 0) => {
+    const v = Number(delta);
+    if (!Number.isFinite(v)) return '--';
+    const fixed = v.toFixed(decimals);
+    return v > 0 ? `+${fixed}` : fixed;
+  };
+
   return (
     <div className="animate-in fade-in pt-4">
       <div className="flex justify-between items-center mb-6">
@@ -168,6 +181,31 @@ export default function VitalsTab({ patientId, readOnly }) {
         </div>
       ) : (
         <div className="space-y-6">
+          {trends && Object.keys(trendRows).length > 0 && (
+            <div className="bg-bg-tertiary p-5 rounded-xl border border-border">
+              <h4 className="font-bold text-text-secondary mb-3">
+                Latest Trends
+              </h4>
+              <div className="flex flex-wrap gap-3">
+                {trendRows.pulse && (
+                  <TrendPill label="Pulse" value={formatDelta(trendRows.pulse.delta)} direction={trendRows.pulse.direction} />
+                )}
+                {trendRows.temp && (
+                  <TrendPill label="Temp" value={formatDelta(trendRows.temp.delta, 1)} direction={trendRows.temp.direction} />
+                )}
+                {trendRows.systolic && (
+                  <TrendPill label="Systolic BP" value={formatDelta(trendRows.systolic.delta)} direction={trendRows.systolic.direction} />
+                )}
+                {trendRows.spo2 && (
+                  <TrendPill label="SpO2" value={formatDelta(trendRows.spo2.delta)} direction={trendRows.spo2.direction} />
+                )}
+                {trendRows.respRate && (
+                  <TrendPill label="Resp Rate" value={formatDelta(trendRows.respRate.delta)} direction={trendRows.respRate.direction} />
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Graph Timeline View */}
           <div className="bg-bg-tertiary p-6 rounded-xl border border-border">
             <h4 className="font-bold text-text-secondary mb-6 flex items-center gap-2">
@@ -209,6 +247,23 @@ export default function VitalsTab({ patientId, readOnly }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function TrendPill({ label, value, direction }) {
+  const color =
+    direction === 'up'
+      ? 'text-warning border border-warning/20 bg-warning/10'
+      : direction === 'down'
+        ? 'text-success border border-success/20 bg-success/10'
+        : 'text-text-muted border border-border bg-bg-primary/30';
+
+  return (
+    <div className={`text-xs px-3 py-2 rounded-lg font-bold flex items-center gap-2 ${color}`}>
+      <span className="uppercase tracking-widest">{label}</span>
+      <span className="font-black">{direction}</span>
+      <span className="font-black">{value}</span>
     </div>
   );
 }

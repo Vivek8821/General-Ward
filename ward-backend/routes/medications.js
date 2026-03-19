@@ -7,22 +7,46 @@ const crypto = require('crypto');
 const VALID_ADMIN_STATUSES = ['given', 'refused', 'missed'];
 
 const validateMedicationPayload = (payload) => {
-    const { name, dosage, route, frequency } = payload;
+    const { name, dosage, route, frequency, scheduledTimes } = payload;
     if (!name || !dosage || !frequency) return false;
     // route is optional in API but we will default it if missing.
+
+    // If scheduledTimes is provided, validate a simple "HH:MM, HH:MM, ..." format.
+    if (scheduledTimes !== undefined && scheduledTimes !== null && String(scheduledTimes).trim() !== '') {
+        if (typeof scheduledTimes !== 'string') return false;
+        const parts = scheduledTimes
+            .split(',')
+            .map(p => p.trim())
+            .filter(Boolean);
+
+        if (parts.length === 0) return false;
+        for (const t of parts) {
+            if (!/^\d{2}:\d{2}$/.test(t)) return false;
+            const [hh, mm] = t.split(':').map(Number);
+            if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return false;
+        }
+    }
+
     return true;
 };
 
 const validateAdministrationPayload = (payload) => {
-    const { status } = payload;
+    const { status, notes } = payload;
     if (!status || !VALID_ADMIN_STATUSES.includes(status)) {
         return false;
+    }
+
+    // For omissions/refusals, require a human-entered reason.
+    if ((status === 'refused' || status === 'missed')) {
+        if (typeof notes !== 'string' || notes.trim().length === 0) {
+            return false;
+        }
     }
     return true;
 };
 
 // GET /api/patients/:patientId/medications/administrations
-router.get('/administrations', authenticateToken, (req, res) => {
+router.get('/administrations', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
     console.log(`[ADMIN] Fetching history. Params:`, req.params);
     const { patientId } = req.params;
     
@@ -77,7 +101,7 @@ router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
 });
 
 // GET /api/patients/:patientId/medications
-router.get('/', authenticateToken, (req, res) => {
+router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
     console.log(`[MEDS] Fetching meds for patient: ${req.params.patientId}`);
     db.all(`SELECT * FROM Medications WHERE patientId = ? ORDER BY startDate DESC`, [req.params.patientId], (err, rows) => {
         if (err) {
@@ -93,19 +117,36 @@ router.get('/', authenticateToken, (req, res) => {
 router.put('/administrations/:adminId', authenticateToken, requireRole(['doctor', 'nurse']), (req, res) => {
     const { status, notes } = req.body;
 
-    if (!validateAdministrationPayload({ status })) {
+    if (!validateAdministrationPayload({ status, notes })) {
         return res.status(400).json({
             error: 'Invalid administration status',
             code: 'VALIDATION_ERROR'
         });
     }
 
-    db.run(
-        `UPDATE MedicationAdministrations SET status = ?, notes = ? WHERE id = ? AND patientId = ?`,
-        [status, notes, req.params.adminId, req.params.patientId],
-        function(err) {
+    const reasonCode = status === 'given' ? null : status;
+
+    db.get(
+        `SELECT m.dosage AS medDosage
+         FROM MedicationAdministrations ma
+         JOIN Medications m ON ma.medicationId = m.id
+         WHERE ma.id = ? AND ma.patientId = ?`,
+        [req.params.adminId, req.params.patientId],
+        (err, row) => {
             if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: 'Administration record updated' });
+
+            const doseActuallyGiven = status === 'given' ? (row?.medDosage || null) : null;
+
+            db.run(
+                `UPDATE MedicationAdministrations
+                 SET status = ?, notes = ?, doseActuallyGiven = ?, reasonCode = ?
+                 WHERE id = ? AND patientId = ?`,
+                [status, notes, doseActuallyGiven, reasonCode, req.params.adminId, req.params.patientId],
+                function(updateErr) {
+                    if (updateErr) return res.status(500).json({ error: updateErr.message });
+                    res.json({ message: 'Administration record updated' });
+                }
+            );
         }
     );
 });
@@ -141,25 +182,40 @@ router.post('/:medId/administer', authenticateToken, requireRole(['doctor', 'nur
     const { patientId, medId } = req.params;
     const id = crypto.randomUUID();
 
-    if (!validateAdministrationPayload({ status })) {
+    if (!validateAdministrationPayload({ status, notes })) {
         return res.status(400).json({
             error: 'Invalid administration status',
             code: 'VALIDATION_ERROR'
         });
     }
 
-    const query = timestamp 
-        ? `INSERT INTO MedicationAdministrations (id, medicationId, patientId, status, notes, administeredBy, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)`
-        : `INSERT INTO MedicationAdministrations (id, medicationId, patientId, status, notes, administeredBy) VALUES (?, ?, ?, ?, ?, ?)`;
-    
-    const params = timestamp
-        ? [id, medId, patientId, status, notes, req.user.name, timestamp]
-        : [id, medId, patientId, status, notes, req.user.name];
+    const reasonCode = status === 'given' ? null : status;
 
-    db.run(query, params, function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.status(201).json({ id, message: "Dose recorded" });
-    });
+    // Fetch medication dosage so we can persist what was actually given (or scheduled).
+    db.get(
+        `SELECT dosage FROM Medications WHERE id = ? AND patientId = ?`,
+        [medId, patientId],
+        (err, medRow) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            const doseActuallyGiven = status === 'given' ? (medRow?.dosage || null) : null;
+
+            const query = timestamp
+                ? `INSERT INTO MedicationAdministrations (id, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+                : `INSERT INTO MedicationAdministrations (id, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+            const params = timestamp
+                ? [id, medId, patientId, status, notes, doseActuallyGiven, reasonCode, req.user.name, timestamp]
+                : [id, medId, patientId, status, notes, doseActuallyGiven, reasonCode, req.user.name];
+
+            db.run(query, params, function(insertErr) {
+                if (insertErr) return res.status(500).json({ error: insertErr.message });
+                res.status(201).json({ id, message: "Dose recorded" });
+            });
+        }
+    );
 });
 
 module.exports = router;

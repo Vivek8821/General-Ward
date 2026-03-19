@@ -16,6 +16,7 @@ async function seed() {
             db.run('DELETE FROM Escalations');
             db.run('DELETE FROM DailyStats');
             db.run('DELETE FROM Medications');
+            db.run('DELETE FROM HandoverNotes');
             db.run('DELETE FROM Patients');
             db.run('DELETE FROM Users');
             
@@ -54,6 +55,16 @@ async function seed() {
             // Escalations
             db.run(`INSERT INTO Escalations (id, patientId, reason, escalatedBy, status) VALUES (?, ?, ?, ?, 'pending')`,
                 [crypto.randomUUID(), 'u3', 'Patient reporting continuous chest pain despite nitro.', 'Nurse Johnson']);
+
+            // Handover Notes (shift-based)
+            db.run(
+                `INSERT INTO HandoverNotes (id, patientId, shift, note, tags, createdBy) VALUES (?, ?, ?, ?, ?, ?)`,
+                [crypto.randomUUID(), 'u3', 'morning', 'Overnight: monitor chest pain frequency. Review response to nitro and vitals trend.', 'sepsis,cardiac', 'Nurse Johnson']
+            );
+            db.run(
+                `INSERT INTO HandoverNotes (id, patientId, shift, note, tags, createdBy) VALUES (?, ?, ?, ?, ?, ?)`,
+                [crypto.randomUUID(), 'u4', 'night', 'Sepsis watch: ensure fluid balance and recheck temperature; follow up labs in the morning.', 'infection', 'Dr. Smith']
+            );
             
             db.run('PRAGMA foreign_keys = ON;', () => {
                 console.log('Database seeded successfully.');

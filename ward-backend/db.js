@@ -89,6 +89,10 @@ const initDb = () => {
         db.run(`ALTER TABLE Medications ADD COLUMN timestamp DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {});
         db.run(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`, (err) => {});
 
+        // Medication administration extensions (reason + dose capture).
+        db.run(`ALTER TABLE MedicationAdministrations ADD COLUMN doseActuallyGiven TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE MedicationAdministrations ADD COLUMN reasonCode TEXT`, (err) => { /* Ignore duplicate column error */ });
+
         // Dynamically patch existing DB for MedsTab fix
         db.run(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`, (err) => { /* Ignore duplicate column error */ });
 
@@ -121,6 +125,38 @@ const initDb = () => {
           )
         `);
 
+        // Tasks Table (shift/workflow tasks for clinicians)
+        db.run(`
+          CREATE TABLE IF NOT EXISTS Tasks (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL,
+            type TEXT NOT NULL CHECK(type IN ('vital', 'assessment', 'followup')),
+            dueAt DATETIME NOT NULL,
+            status TEXT CHECK(status IN ('open', 'completed', 'cancelled')) DEFAULT 'open',
+            assignee TEXT,
+            notes TEXT,
+            createdBy TEXT,
+            completedBy TEXT,
+            completedAt DATETIME,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+
+        // Handover Notes Table (shift-based clinical notes)
+        db.run(`
+          CREATE TABLE IF NOT EXISTS HandoverNotes (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL,
+            shift TEXT NOT NULL,
+            note TEXT NOT NULL,
+            tags TEXT,
+            createdBy TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+
         // Audit Logs Table
         db.run(`
           CREATE TABLE IF NOT EXISTS AuditLogs (
@@ -134,12 +170,24 @@ const initDb = () => {
           )
         `);
 
+        // Extend AuditLogs with additional attributes for stronger traceability.
+        // Safe to run multiple times (errors ignored if columns already exist).
+        db.run(`ALTER TABLE AuditLogs ADD COLUMN statusCode INTEGER`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE AuditLogs ADD COLUMN success INTEGER`, (err) => { /* Ignore duplicate column error */ });
+
         // Production Indexes for query performance and cascading speed
         db.run(`CREATE INDEX IF NOT EXISTS idx_dailystats_patient ON DailyStats(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_medications_patient ON Medications(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_escalations_patient ON Escalations(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_discharges_patient ON DischargeSummaries(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_auditlogs_timestamp ON AuditLogs(timestamp);`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_patient ON Tasks(patientId);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON Tasks(assignee);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_status ON Tasks(status);`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_handovernots_patient ON HandoverNotes(patientId);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_handovernots_timestamp ON HandoverNotes(timestamp);`);
         
         resolve();
       } catch (err) {
