@@ -3,6 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+// Tenant enforcement for observations is done inside the handler because `patientId` is in the request body.
 
 // Validation shared with in-hospital vital validation.
 const validateVitalData = (data) => {
@@ -70,6 +71,19 @@ router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin
     const id = crypto.randomUUID();
     const recordedBy = req.user.name;
     const tenantId = req.user.tenantId || 'tenant-default';
+
+    // Enforce tenant scoping for the referenced patient (patientId is in the request body).
+    const patientInTenant = await new Promise((resolve, reject) => {
+      db.get(
+        `SELECT id FROM Patients WHERE id = ? AND tenantId = ?`,
+        [patientId, tenantId],
+        (err, row) => (err ? reject(err) : resolve(Boolean(row)))
+      );
+    });
+
+    if (!patientInTenant) {
+      return res.status(403).json({ error: 'Access denied by tenant scope.' });
+    }
 
     const enrichedData = {
       ...data,

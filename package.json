@@ -7,7 +7,10 @@
     "start-backend": "npm start --prefix ward-backend",
     "start-frontend": "npm run dev --prefix ward-frontend",
     "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
-    "build": "npm run build --prefix ward-frontend"
+    "build": "npm run build --prefix ward-frontend",
+    "codemap:inventory": "node codemap/generate-codemap-index.mjs",
+    "codemap:md": "node codemap/build-codemap-md.mjs",
+    "codemap": "npm run codemap:inventory && npm run codemap:md"
   },
   "dependencies": {
     "concurrently": "^8.2.2"

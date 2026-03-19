@@ -17,6 +17,7 @@ jest.mock('../../middleware/auth', () => {
 });
 
 const patientService = require('../../services/PatientService');
+const { initDb, db } = require('../../db');
 
 jest.mock('../../services/PatientService', () => ({
   createPatient: jest.fn(),
@@ -31,6 +32,19 @@ jest.mock('../../services/PatientService', () => ({
 const patientRoutes = require('../../controllers/PatientController');
 
 describe('RBAC enforcement (Phase 3)', () => {
+  beforeAll(async () => {
+    await initDb();
+    // Seed a patient so tenant-scoped middleware can validate patientId.
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT OR IGNORE INTO Patients (id, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+        ['p1', 'Test Patient', 'MRN-TEST-1', '1A', '1990-01-01', 'Test dx', 'None', 1],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+  });
+
   beforeEach(() => {
     patientService.getDischargeSummary.mockReset();
   });

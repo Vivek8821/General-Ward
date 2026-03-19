@@ -30,32 +30,32 @@ class PatientService {
         return await patientRepository.create(newPatient);
     }
 
-    async getAllPatients() {
-        return await patientRepository.findAll();
+    async getAllPatients(tenantId) {
+        return await patientRepository.findAll(tenantId);
     }
 
-    async getArchivedPatients() {
-        return await patientRepository.findArchived();
+    async getArchivedPatients(tenantId) {
+        return await patientRepository.findArchived(tenantId);
     }
 
-    async getPatientById(id) {
-        const patient = await patientRepository.findById(id);
+    async getPatientById(id, tenantId) {
+        const patient = await patientRepository.findById(id, tenantId);
         if (!patient) {
             throw new Error('Patient not found');
         }
         return patient;
     }
 
-    async getDischargeSummary(patientId) {
-        const summary = await patientRepository.findDischargeSummary(patientId);
+    async getDischargeSummary(patientId, tenantId) {
+        const summary = await patientRepository.findDischargeSummary(patientId, tenantId);
         if (!summary) {
             throw new Error('Summary not found');
         }
         return summary;
     }
 
-    async updatePatient(id, data) {
-        const changes = await patientRepository.update(id, data);
+    async updatePatient(id, data, tenantId) {
+        const changes = await patientRepository.update(id, data, tenantId);
         if (changes === 0) {
             throw new Error('Patient not found');
         }

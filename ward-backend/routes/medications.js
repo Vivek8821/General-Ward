@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const {
+    requireTenantPatient,
+    requireTenantMedication,
+    requireTenantMedicationAdministration
+} = require('../middleware/tenant');
 const crypto = require('crypto');
 
 const VALID_ADMIN_STATUSES = ['given', 'refused', 'missed'];
@@ -46,9 +51,10 @@ const validateAdministrationPayload = (payload) => {
 };
 
 // GET /api/patients/:patientId/medications/administrations
-router.get('/administrations', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
+router.get('/administrations', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
     console.log(`[ADMIN] Fetching history. Params:`, req.params);
     const { patientId } = req.params;
+    const tenantId = req.user.tenantId || 'tenant-default';
     
     if (!patientId) {
         console.error('[ADMIN ERROR] No patientId in params');
@@ -58,10 +64,10 @@ router.get('/administrations', authenticateToken, requireRole(['doctor', 'nurse'
     db.all(
         `SELECT ma.*, m.name as medName, m.dosage, m.route
          FROM MedicationAdministrations ma
-         JOIN Medications m ON ma.medicationId = m.id
-         WHERE ma.patientId = ?
+         JOIN Medications m ON ma.medicationId = m.id AND m.tenantId = ?
+         WHERE ma.patientId = ? AND ma.tenantId = ?
          ORDER BY ma.timestamp DESC`,
-        [patientId],
+        [tenantId, patientId, tenantId],
         (err, rows) => {
             if (err) {
                 console.error('[ADMIN ERROR]', err);
@@ -74,7 +80,7 @@ router.get('/administrations', authenticateToken, requireRole(['doctor', 'nurse'
 });
 
 // POST /api/patients/:patientId/medications (Doctor only)
-router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
+router.post('/', authenticateToken, requireRole(['doctor']), requireTenantPatient('patientId'), (req, res) => {
     const { patientId } = req.params;
     let { name, dosage, route, frequency, scheduledTimes, prn, startDate } = req.body;
     const id = crypto.randomUUID();
@@ -102,21 +108,32 @@ router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
 });
 
 // GET /api/patients/:patientId/medications
-router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
+router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
     console.log(`[MEDS] Fetching meds for patient: ${req.params.patientId}`);
-    db.all(`SELECT * FROM Medications WHERE patientId = ? ORDER BY startDate DESC`, [req.params.patientId], (err, rows) => {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    db.all(
+        `SELECT * FROM Medications WHERE patientId = ? AND tenantId = ? ORDER BY startDate DESC`,
+        [req.params.patientId, tenantId],
+        (err, rows) => {
         if (err) {
             console.error('[MEDS ERROR]', err);
             return res.status(500).json({ error: err.message });
         }
         console.log(`[MEDS] Found ${rows.length} records`);
         res.json(rows);
-    });
+        }
+    );
 });
 
 // PUT /api/patients/:patientId/medications/administrations/:adminId (Doctor or Nurse)
-router.put('/administrations/:adminId', authenticateToken, requireRole(['doctor', 'nurse']), (req, res) => {
+router.put(
+    '/administrations/:adminId',
+    authenticateToken,
+    requireRole(['doctor', 'nurse']),
+    requireTenantMedicationAdministration('adminId', 'patientId'),
+    (req, res) => {
     const { status, notes } = req.body;
+    const tenantId = req.user.tenantId || 'tenant-default';
 
     if (!validateAdministrationPayload({ status, notes })) {
         return res.status(400).json({
@@ -130,9 +147,9 @@ router.put('/administrations/:adminId', authenticateToken, requireRole(['doctor'
     db.get(
         `SELECT m.dosage AS medDosage
          FROM MedicationAdministrations ma
-         JOIN Medications m ON ma.medicationId = m.id
-         WHERE ma.id = ? AND ma.patientId = ?`,
-        [req.params.adminId, req.params.patientId],
+         JOIN Medications m ON ma.medicationId = m.id AND m.tenantId = ?
+         WHERE ma.id = ? AND ma.patientId = ? AND ma.tenantId = ?`,
+        [tenantId, req.params.adminId, req.params.patientId, tenantId],
         (err, row) => {
             if (err) return res.status(500).json({ error: err.message });
 
@@ -141,8 +158,8 @@ router.put('/administrations/:adminId', authenticateToken, requireRole(['doctor'
             db.run(
                 `UPDATE MedicationAdministrations
                  SET status = ?, notes = ?, doseActuallyGiven = ?, reasonCode = ?
-                 WHERE id = ? AND patientId = ?`,
-                [status, notes, doseActuallyGiven, reasonCode, req.params.adminId, req.params.patientId],
+                 WHERE id = ? AND patientId = ? AND tenantId = ?`,
+                [status, notes, doseActuallyGiven, reasonCode, req.params.adminId, req.params.patientId, tenantId],
                 function(updateErr) {
                     if (updateErr) return res.status(500).json({ error: updateErr.message });
                     res.json({ message: 'Administration record updated' });
@@ -153,10 +170,16 @@ router.put('/administrations/:adminId', authenticateToken, requireRole(['doctor'
 });
 
 // DELETE /api/patients/:patientId/medications/administrations/:adminId (Doctor only)
-router.delete('/administrations/:adminId', authenticateToken, requireRole(['doctor']), (req, res) => {
+router.delete(
+    '/administrations/:adminId',
+    authenticateToken,
+    requireRole(['doctor']),
+    requireTenantMedicationAdministration('adminId', 'patientId'),
+    (req, res) => {
+    const tenantId = req.user.tenantId || 'tenant-default';
     db.run(
-        `DELETE FROM MedicationAdministrations WHERE id = ? AND patientId = ?`,
-        [req.params.adminId, req.params.patientId],
+        `DELETE FROM MedicationAdministrations WHERE id = ? AND patientId = ? AND tenantId = ?`,
+        [req.params.adminId, req.params.patientId, tenantId],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ message: 'Administration record deleted' });
@@ -165,11 +188,17 @@ router.delete('/administrations/:adminId', authenticateToken, requireRole(['doct
 });
 
 // PUT /api/patients/:patientId/medications/:medId (Doctor only)
-router.put('/:medId', authenticateToken, requireRole(['doctor']), (req, res) => {
+router.put(
+    '/:medId',
+    authenticateToken,
+    requireRole(['doctor']),
+    requireTenantMedication('medId', 'patientId'),
+    (req, res) => {
     const { status } = req.body;
+    const tenantId = req.user.tenantId || 'tenant-default';
     db.run(
-        `UPDATE Medications SET status = ? WHERE id = ? AND patientId = ?`,
-        [status, req.params.medId, req.params.patientId],
+        `UPDATE Medications SET status = ? WHERE id = ? AND patientId = ? AND tenantId = ?`,
+        [status, req.params.medId, req.params.patientId, tenantId],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ message: 'Medication status updated successfully' });
@@ -178,7 +207,12 @@ router.put('/:medId', authenticateToken, requireRole(['doctor']), (req, res) => 
 });
 
 // POST /api/patients/:patientId/medications/:medId/administer (Nurse or Doctor)
-router.post('/:medId/administer', authenticateToken, requireRole(['doctor', 'nurse']), (req, res) => {
+router.post(
+    '/:medId/administer',
+    authenticateToken,
+    requireRole(['doctor', 'nurse']),
+    requireTenantMedication('medId', 'patientId'),
+    (req, res) => {
     const { status, notes, timestamp } = req.body;
     const { patientId, medId } = req.params;
     const id = crypto.randomUUID();
@@ -195,8 +229,8 @@ router.post('/:medId/administer', authenticateToken, requireRole(['doctor', 'nur
 
     // Fetch medication dosage so we can persist what was actually given (or scheduled).
     db.get(
-        `SELECT dosage FROM Medications WHERE id = ? AND patientId = ?`,
-        [medId, patientId],
+        `SELECT dosage FROM Medications WHERE id = ? AND patientId = ? AND tenantId = ?`,
+        [medId, patientId, tenantId],
         (err, medRow) => {
             if (err) return res.status(500).json({ error: err.message });
 
@@ -204,7 +238,7 @@ router.post('/:medId/administer', authenticateToken, requireRole(['doctor', 'nur
 
             const query = timestamp
                 ? `INSERT INTO MedicationAdministrations (id, tenantId, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy, timestamp)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
                 : `INSERT INTO MedicationAdministrations (id, tenantId, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
@@ -212,10 +246,26 @@ router.post('/:medId/administer', authenticateToken, requireRole(['doctor', 'nur
                 ? [id, tenantId, medId, patientId, status, notes, doseActuallyGiven, reasonCode, req.user.name, timestamp]
                 : [id, tenantId, medId, patientId, status, notes, doseActuallyGiven, reasonCode, req.user.name];
 
-            db.run(query, params, function(insertErr) {
-                if (insertErr) return res.status(500).json({ error: insertErr.message });
-                res.status(201).json({ id, message: "Dose recorded" });
-            });
+            const MAX_RETRIES = 3;
+            const RETRY_DELAY_MS = 50;
+            const isLockError = (err) => {
+                if (!err) return false;
+                const code = err.code;
+                const msg = String(err.message || '').toLowerCase();
+                return code === 'SQLITE_BUSY' || code === 'SQLITE_LOCKED' || msg.includes('locked') || msg.includes('busy');
+            };
+
+            const attemptInsert = (retriesLeft) => {
+                db.run(query, params, function(insertErr) {
+                    if (insertErr && retriesLeft > 0 && isLockError(insertErr)) {
+                        return setTimeout(() => attemptInsert(retriesLeft - 1), RETRY_DELAY_MS);
+                    }
+                    if (insertErr) return res.status(500).json({ error: insertErr.message });
+                    res.status(201).json({ id, message: "Dose recorded" });
+                });
+            };
+
+            attemptInsert(MAX_RETRIES);
         }
     );
 });

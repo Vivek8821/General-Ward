@@ -28,16 +28,20 @@ class HandoverNotesService {
     });
   }
 
-  async listNotes(patientId, query) {
+  async listNotes(patientId, tenantId, query) {
     if (!patientId) throw new Error('Patient ID is required');
     const { shift, from, to, limit } = query || {};
 
-    return await handoverNotesRepository.listByPatient(patientId, {
-      shift: shift && ALLOWED_SHIFTS.includes(shift) ? shift : null,
-      from: from || null,
-      to: to || null,
-      limit: limit ? Math.max(1, Math.min(200, Number(limit))) : 50
-    });
+    return await handoverNotesRepository.listByPatient(
+      patientId,
+      tenantId,
+      {
+        shift: shift && ALLOWED_SHIFTS.includes(shift) ? shift : null,
+        from: from || null,
+        to: to || null,
+        limit: limit ? Math.max(1, Math.min(200, Number(limit))) : 50
+      }
+    );
   }
 }
 

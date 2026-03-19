@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router({ mergeParams: true }); 
 const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { requireTenantPatient } = require('../middleware/tenant');
 const crypto = require('crypto');
 const scoringService = require('../services/ScoringService');
 
@@ -120,7 +121,7 @@ const computeStaleness = (row) => {
 };
 
 // POST /api/patients/:patientId/stats
-router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), (req, res) => {
+router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), requireTenantPatient('patientId'), (req, res) => {
     const { patientId } = req.params;
     const { type, data } = req.body;
     const id = crypto.randomUUID();
@@ -160,12 +161,13 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), (req, res)
 });
 
 // GET /api/patients/:patientId/stats
-router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
+router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
     const { patientId } = req.params;
     const { type, limit } = req.query; // optional filter by type
+    const tenantId = req.user.tenantId || 'tenant-default';
     
-    let query = `SELECT * FROM DailyStats WHERE patientId = ?`;
-    const params = [patientId];
+    let query = `SELECT * FROM DailyStats WHERE patientId = ? AND tenantId = ?`;
+    const params = [patientId, tenantId];
     
     if (type) {
         query += ` AND type = ?`;
@@ -211,12 +213,13 @@ router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (r
 
 // GET /api/patients/:patientId/stats/ews/latest
 // Returns the most recent vital entry with its computed early warning score.
-router.get('/ews/latest', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
+router.get('/ews/latest', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
     const { patientId } = req.params;
+    const tenantId = req.user.tenantId || 'tenant-default';
 
     db.get(
-        `SELECT * FROM DailyStats WHERE patientId = ? AND type = 'vital' ORDER BY timestamp DESC LIMIT 1`,
-        [patientId],
+        `SELECT * FROM DailyStats WHERE patientId = ? AND tenantId = ? AND type = 'vital' ORDER BY timestamp DESC LIMIT 1`,
+        [patientId, tenantId],
         (err, row) => {
             if (err) return res.status(500).json({ error: err.message });
             if (!row) {
@@ -256,15 +259,16 @@ router.get('/ews/latest', authenticateToken, requireRole(['doctor', 'nurse', 'ad
 
 // GET /api/patients/:patientId/stats/trends
 // Computes simple trend directions from the latest two vital sign entries.
-router.get('/trends', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
+router.get('/trends', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
     const { patientId } = req.params;
+    const tenantId = req.user.tenantId || 'tenant-default';
 
     db.all(
         `SELECT * FROM DailyStats
-         WHERE patientId = ? AND type = 'vital'
+         WHERE patientId = ? AND tenantId = ? AND type = 'vital'
          ORDER BY timestamp DESC
          LIMIT 2`,
-        [patientId],
+        [patientId, tenantId],
         (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
             if (!rows || rows.length < 2) {

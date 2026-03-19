@@ -3,9 +3,10 @@ const router = express.Router({ mergeParams: true });
 const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const crypto = require('crypto');
+const { requireTenantPatient } = require('../middleware/tenant');
 
 // POST /api/patients/:patientId/history (Doctor only)
-router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
+router.post('/', authenticateToken, requireRole(['doctor']), requireTenantPatient('patientId'), (req, res) => {
     const { patientId } = req.params;
     const { conditions, familyHistory, pastSurgeries, socialHistory, notes } = req.body;
     const id = crypto.randomUUID();
@@ -23,10 +24,11 @@ router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
 });
 
 // GET /api/patients/:patientId/history
-router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), (req, res) => {
+router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
+    const tenantId = req.user.tenantId || 'tenant-default';
     db.get(
-        `SELECT * FROM DailyStats WHERE patientId = ? AND type = 'history' ORDER BY timestamp DESC LIMIT 1`,
-        [req.params.patientId],
+        `SELECT * FROM DailyStats WHERE patientId = ? AND tenantId = ? AND type = 'history' ORDER BY timestamp DESC LIMIT 1`,
+        [req.params.patientId, tenantId],
         (err, row) => {
             if (err) return res.status(500).json({ error: err.message });
             if (!row) return res.json({ data: null });

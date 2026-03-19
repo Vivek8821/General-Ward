@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { requireTenantPatient } = require('../middleware/tenant');
 const patientService = require('../services/PatientService');
 const medicationRoutes = require('../routes/medications');
 const historyRoutes = require('../routes/history');
@@ -31,7 +32,8 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req
 // Get all patients
 router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
     try {
-        const patients = await patientService.getAllPatients();
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const patients = await patientService.getAllPatients(tenantId);
         res.json(patients);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -41,7 +43,8 @@ router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), as
 // Get archived (discharged) patients
 router.get('/archives', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
     try {
-        const patients = await patientService.getArchivedPatients();
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const patients = await patientService.getArchivedPatients(tenantId);
         res.json(patients);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -49,9 +52,10 @@ router.get('/archives', authenticateToken, requireRole(['doctor', 'nurse', 'admi
 });
 
 // Get patient by ID
-router.get('/:id', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
+router.get('/:id', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('id'), async (req, res) => {
     try {
-        const patient = await patientService.getPatientById(req.params.id);
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const patient = await patientService.getPatientById(req.params.id, tenantId);
         res.json(patient);
     } catch (error) {
         if (error.message === 'Patient not found') {
@@ -62,9 +66,10 @@ router.get('/:id', authenticateToken, requireRole(['doctor', 'nurse', 'admin']),
 });
 
 // Get discharge summary
-router.get('/:id/discharge-summary', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
+router.get('/:id/discharge-summary', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('id'), async (req, res) => {
     try {
-        const summary = await patientService.getDischargeSummary(req.params.id);
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const summary = await patientService.getDischargeSummary(req.params.id, tenantId);
         res.json(summary);
     } catch (error) {
         if (error.message === 'Summary not found') {
@@ -75,9 +80,10 @@ router.get('/:id/discharge-summary', authenticateToken, requireRole(['doctor', '
 });
 
 // Update patient
-router.put('/:id', authenticateToken, requireRole(['doctor', 'nurse']), async (req, res) => {
+router.put('/:id', authenticateToken, requireRole(['doctor', 'nurse']), requireTenantPatient('id'), async (req, res) => {
     try {
-        const result = await patientService.updatePatient(req.params.id, req.body);
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const result = await patientService.updatePatient(req.params.id, req.body, tenantId);
         res.json(result);
     } catch (error) {
         if (error.message === 'Patient not found') {
@@ -88,7 +94,7 @@ router.put('/:id', authenticateToken, requireRole(['doctor', 'nurse']), async (r
 });
 
 // Discharge patient (Doctor only)
-router.post('/:id/discharge', authenticateToken, requireRole(['doctor']), async (req, res) => {
+router.post('/:id/discharge', authenticateToken, requireRole(['doctor']), requireTenantPatient('id'), async (req, res) => {
     try {
         const dischargedBy = req.user.name || 'Doctor';
         const tenantId = req.user.tenantId || 'tenant-default';

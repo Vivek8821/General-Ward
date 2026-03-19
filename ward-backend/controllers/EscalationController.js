@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { requireTenantPatient, requireTenantEscalation } = require('../middleware/tenant');
 const escalationService = require('../services/EscalationService');
 
 // POST /api/patients/:patientId/escalations (Nurse or Doctor)
-router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req, res) => {
+router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), requireTenantPatient('patientId'), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await escalationService.createEscalation(req.params.patientId, req.body.reason, req.user.name, tenantId);
@@ -17,7 +18,8 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req
 // GET /api/escalations/all (Global triage endpoint)
 router.get('/all', authenticateToken, requireRole(['doctor']), async (req, res) => {
     try {
-        const escalations = await escalationService.getPendingEscalations();
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const escalations = await escalationService.getPendingEscalations(tenantId);
         res.json(escalations);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -25,9 +27,10 @@ router.get('/all', authenticateToken, requireRole(['doctor']), async (req, res) 
 });
 
 // Mark as reviewed (Doctor only)
-router.post('/:escalationId/review', authenticateToken, requireRole(['doctor']), async (req, res) => {
+router.post('/:escalationId/review', authenticateToken, requireRole(['doctor']), requireTenantEscalation('escalationId'), async (req, res) => {
     try {
-        const result = await escalationService.reviewEscalation(req.params.escalationId);
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const result = await escalationService.reviewEscalation(req.params.escalationId, tenantId);
         res.json(result);
     } catch (error) {
         if (error.message === 'Escalation not found') {

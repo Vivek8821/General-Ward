@@ -23,14 +23,15 @@ class HandoverNotesRepository {
     });
   }
 
-  listByPatient(patientId, { shift, from, to, limit = 50 }) {
+  listByPatient(patientId, tenantId, { shift, from, to, limit = 50 }) {
     return new Promise((resolve, reject) => {
+      const tenant = tenantId || 'tenant-default';
       let query = `
         SELECT *
         FROM HandoverNotes
-        WHERE patientId = ?
+        WHERE patientId = ? AND tenantId = ?
       `;
-      const params = [patientId];
+      const params = [patientId, tenant];
 
       if (shift) {
         query += ` AND shift = ?`;

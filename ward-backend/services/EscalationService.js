@@ -19,16 +19,16 @@ class EscalationService {
         return await escalationRepository.createEscalationWithStatusUpdate(escalationData);
     }
 
-    async getPendingEscalations() {
-        return await escalationRepository.findAllPending();
+    async getPendingEscalations(tenantId) {
+        return await escalationRepository.findAllPending(tenantId);
     }
 
-    async reviewEscalation(escalationId) {
+    async reviewEscalation(escalationId, tenantId) {
         if (!escalationId) {
             throw new Error('Escalation ID is required');
         }
 
-        return await escalationRepository.reviewEscalationWithStatusUpdate(escalationId);
+        return await escalationRepository.reviewEscalationWithStatusUpdate(escalationId, tenantId);
     }
 }
 

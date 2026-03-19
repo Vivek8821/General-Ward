@@ -1,8 +1,8 @@
 {
-  "lastPhase": "phase1",
-  "lastStep": "phase1-tenant-schema+auth-tenant-claim",
-  "startedAt": "2026-03-19T15:11:14Z",
-  "finishedAt": "2026-03-19T15:19:34Z",
+  "lastPhase": "phase2",
+  "lastStep": "phase2-stress-hardening-sqlite+meds-administer",
+  "startedAt": "2026-03-19T15:19:34Z",
+  "finishedAt": "2026-03-19T16:05:48Z",
   "notes": [
     "Created Phase 0 crash-resume state file (IMPLEMENTATION_STATE.json). No existing file found before creation.",
     "Schema assumption check: ward-backend/db.js initDb() currently creates core tables without tenant concepts (no Tenants table; no tenantId columns).",
@@ -14,11 +14,23 @@
     "Phase 1 implemented: added Tenants + tenantId columns (idempotent ALTERs + default backfill) in ward-backend/db.js.",
     "Phase 1 implemented: included tenantId in JWT payload + AuthService response user payload; /api/auth/me returns req.user containing tenantId.",
     "Phase 1 implemented: added tenantId into AuditLogs insert and all write/ingest paths (patients, tasks, escalations, notes, meds, stats/history/observations) so new rows are tenant-scoped going forward.",
-    "Re-ran backend Jest after Phase 1: 11/11 test suites passed; 26/26 tests passed."
+    "Re-ran backend Jest after Phase 1: 11/11 test suites passed; 26/26 tests passed.",
+    "Phase 2 implemented: added tenant-aware middleware (`ward-backend/middleware/tenant.js`) and tenantId-scoped reads/updates across patient-bound routes (patients, stats, history, notes, meds, tasks, escalations) plus observations ingest tenant check in handler (patientId is in request body).",
+    "Fixed edge cases for test compatibility: seeded missing Patients/Medications in affected integration tests and corrected HandoverNotesService->HandoverNotesRepository argument order bug.",
+    "Re-ran backend Jest after Phase 2: 11/11 test suites passed; 26/26 tests passed.",
+    "Ran backend linter checks on modified Phase 2 files: no linter errors."
+    ,
+    "Stress test fix: added SQLite explicit-transaction queue/mutex in `ward-backend/db.js` and refactored transactional repos (`EscalationRepository`, `PatientRepository.discharge`) to use `withTransaction` to prevent nested-transaction crashes under concurrency.",
+    "Stress test fix: enabled WAL + `busy_timeout` in `ward-backend/db.js` to improve concurrent DB behavior for reads/writes.",
+    "Stress test fix: corrected `POST /api/patients/:patientId/medications/:medId/administer` insert placeholder count and added best-effort retry for SQLITE_BUSY/LOCKED to prevent transient 500s.",
+    "Verification after stress-hardening: backend Jest still passes (11/11 suites; 26/26 tests).",
+    "Verification after meds/stress hardening: initial stress runner reported `server5xx: 0`. However, the runner’s DB seeding (while the backend was running) later caused `SQLITE_CORRUPT` during a subsequent Jest run. We restored the DB from git and confirmed Jest passes again.",
+    "Stress verification (safe mode): updated `ward-backend/stressEverything.js` to refuse DB seeding while `/health` is reachable; reran stress with seeding disabled (`CONCURRENCY=12`, `DURATION_SEC=18`) and confirmed `server5xx: 0`. Re-ran backend Jest (`npm test`) and confirmed all tests pass."
   ],
   "artifacts": [
     "ward-backend:npm-test:passed",
     "ward-frontend:eslint:warnings:9",
-    "ward-backend:phase1:tenant-schema-migration+tenantJwtClaim:passed"
+    "ward-backend:phase1:tenant-schema-migration+tenantJwtClaim:passed",
+    "ward-backend:phase2:tenant-scoped-reads+authz:passed"
   ]
 }

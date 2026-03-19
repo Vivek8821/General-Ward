@@ -1,91 +1,67 @@
-const { db } = require('../db');
+const { db, withTransaction } = require('../db');
 
 class EscalationRepository {
     createEscalationWithStatusUpdate(escalationData) {
-        return new Promise((resolve, reject) => {
-            const tenantId = escalationData.tenantId || 'tenant-default';
-            db.serialize(() => {
-                db.run('BEGIN TRANSACTION');
-                
-                db.run(
-                    `INSERT INTO Escalations (id, tenantId, patientId, reason, escalatedBy) VALUES (?, ?, ?, ?, ?)`,
-                    [escalationData.id, tenantId, escalationData.patientId, escalationData.reason, escalationData.escalatedBy],
-                    function(err) {
-                        if (err) {
-                            db.run('ROLLBACK');
-                            return reject(err);
-                        }
-                        
-                        db.run(
-                            `UPDATE Patients SET status = 'escalated' WHERE id = ?`,
-                            [escalationData.patientId],
-                            function(err) {
-                                if (err) {
-                                    db.run('ROLLBACK');
-                                    return reject(err);
-                                }
-                                
-                                db.run('COMMIT', () => {
-                                    resolve({ ...escalationData, tenantId, status: 'pending' });
-                                });
-                            }
-                        );
-                    }
-                );
-            });
+        const tenantId = escalationData.tenantId || 'tenant-default';
+        return withTransaction(async ({ runAsync }) => {
+            await runAsync(
+                `INSERT INTO Escalations (id, tenantId, patientId, reason, escalatedBy) VALUES (?, ?, ?, ?, ?)`,
+                [escalationData.id, tenantId, escalationData.patientId, escalationData.reason, escalationData.escalatedBy]
+            );
+
+            const upd = await runAsync(
+                `UPDATE Patients SET status = 'escalated' WHERE id = ? AND tenantId = ?`,
+                [escalationData.patientId, tenantId]
+            );
+
+            if (!upd || upd.changes === 0) {
+                throw new Error('Patient not found');
+            }
+
+            return { ...escalationData, tenantId, status: 'pending' };
         });
     }
 
-    findAllPending() {
+    findAllPending(tenantId) {
+        const tenant = tenantId || 'tenant-default';
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM Escalations WHERE status = 'pending' ORDER BY timestamp DESC`, [], (err, rows) => {
+            db.all(
+                `SELECT * FROM Escalations WHERE tenantId = ? AND status = 'pending' ORDER BY timestamp DESC`,
+                [tenant],
+                (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows);
-            });
+                }
+            );
         });
     }
 
-    reviewEscalationWithStatusUpdate(escalationId) {
-        return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run('BEGIN TRANSACTION');
-                
-                db.run(`UPDATE Escalations SET status = 'reviewed' WHERE id = ?`, [escalationId], function(err) {
-                    if (err) {
-                        db.run('ROLLBACK');
-                        return reject(err);
-                    }
-                    
-                    if (this.changes === 0) {
-                        db.run('ROLLBACK');
-                        return reject(new Error('Escalation not found'));
-                    }
-                    
-                    db.get(`SELECT patientId FROM Escalations WHERE id = ?`, [escalationId], (err, row) => {
-                        if (err) {
-                            db.run('ROLLBACK');
-                            return reject(err);
-                        }
-                        
-                        if (row) {
-                            db.run(`UPDATE Patients SET status = 'active' WHERE id = ? AND status = 'escalated'`, [row.patientId], function(err) {
-                                if (err) {
-                                    db.run('ROLLBACK');
-                                    return reject(err);
-                                }
-                                
-                                db.run('COMMIT', () => {
-                                    resolve({ message: 'Escalation marked as reviewed' });
-                                });
-                            });
-                        } else {
-                            db.run('COMMIT', () => {
-                                resolve({ message: 'Escalation marked as reviewed (Patient not found to update)' });
-                            });
-                        }
-                    });
-                });
-            });
+    reviewEscalationWithStatusUpdate(escalationId, tenantId) {
+        const tenant = tenantId || 'tenant-default';
+        return withTransaction(async ({ runAsync, getAsync }) => {
+            const updEsc = await runAsync(
+                `UPDATE Escalations SET status = 'reviewed' WHERE id = ? AND tenantId = ?`,
+                [escalationId, tenant]
+            );
+
+            if (!updEsc || updEsc.changes === 0) {
+                throw new Error('Escalation not found');
+            }
+
+            const row = await getAsync(
+                `SELECT patientId FROM Escalations WHERE id = ? AND tenantId = ?`,
+                [escalationId, tenant]
+            );
+
+            if (row?.patientId) {
+                await runAsync(
+                    `UPDATE Patients SET status = 'active' WHERE id = ? AND status = 'escalated' AND tenantId = ?`,
+                    [row.patientId, tenant]
+                );
+                return { message: 'Escalation marked as reviewed' };
+            }
+
+            return { message: 'Escalation marked as reviewed (Patient not found to update)' };
         });
     }
 }

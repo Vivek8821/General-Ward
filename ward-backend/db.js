@@ -5,10 +5,67 @@ const dbPath = path.resolve(__dirname, 'ward.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (!err) {
         db.run('PRAGMA foreign_keys = ON;'); // Crucial for cascading deletes in SQLite
+        // Better concurrency characteristics under load.
+        // WAL lets readers proceed while a writer is active.
+        db.run('PRAGMA journal_mode = WAL;');
+        db.run('PRAGMA synchronous = NORMAL;');
+        // Avoid immediate failures while the DB is locked by another writer.
+        db.run('PRAGMA busy_timeout = 5000;');
     }
 });
 
 const DEFAULT_TENANT_ID = 'tenant-default';
+
+// SQLite is single-writer and the `sqlite3` Database instance is shared across requests.
+// Manual `BEGIN TRANSACTION` blocks can overlap under concurrent load, causing
+// "cannot start a transaction within a transaction". This queue ensures only one
+// explicit transaction runs at a time.
+let transactionChain = Promise.resolve();
+
+const runAsync = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      if (err) return reject(err);
+      resolve({ changes: this.changes, lastID: this.lastID });
+    });
+  });
+
+const getAsync = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) return reject(err);
+      resolve(row);
+    });
+  });
+
+const allAsync = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+
+function withTransaction(work) {
+  // Chain onto the last transaction promise.
+  transactionChain = transactionChain.then(async () => {
+    await runAsync('BEGIN IMMEDIATE;');
+    try {
+      const result = await work({ runAsync, getAsync, allAsync });
+      await runAsync('COMMIT;');
+      return result;
+    } catch (err) {
+      try {
+        await runAsync('ROLLBACK;');
+      } catch (_) {
+        // ignore rollback errors
+      }
+      throw err;
+    }
+  });
+
+  return transactionChain;
+}
 
 const initDb = () => {
   return new Promise((resolve, reject) => {
@@ -219,6 +276,36 @@ const initDb = () => {
         db.run(`UPDATE HandoverNotes SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
         db.run(`UPDATE AuditLogs SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
 
+        // Enforce a safe default tenant for any legacy/explicit inserts that omit tenantId.
+        // This prevents tenant-scoped reads from "losing" rows seeded by tests or older code.
+        const tenantDefault = DEFAULT_TENANT_ID;
+        const createDefaultTenantTrigger = (table) => {
+          const triggerName = `trg_${table}_tenant_default`;
+          // SQLite does not support CREATE TRIGGER IF NOT EXISTS; ignore duplicate-trigger errors.
+          // Use AFTER INSERT + UPDATE because SQLite doesn't allow direct NEW.column assignment in triggers.
+          db.run(`
+            CREATE TRIGGER ${triggerName}
+            AFTER INSERT ON ${table}
+            FOR EACH ROW
+            WHEN NEW.tenantId IS NULL
+            BEGIN
+              UPDATE ${table} SET tenantId = '${tenantDefault}' WHERE id = NEW.id;
+            END
+          `, () => { /* ignore errors (e.g. trigger exists) */ });
+        };
+        [
+          'Users',
+          'Patients',
+          'DailyStats',
+          'Medications',
+          'MedicationAdministrations',
+          'Escalations',
+          'DischargeSummaries',
+          'Tasks',
+          'HandoverNotes',
+          'AuditLogs'
+        ].forEach(createDefaultTenantTrigger);
+
         // Extend AuditLogs with additional attributes for stronger traceability.
         // Safe to run multiple times (errors ignored if columns already exist).
         db.run(`ALTER TABLE AuditLogs ADD COLUMN statusCode INTEGER`, (err) => { /* Ignore duplicate column error */ });
@@ -249,4 +336,4 @@ const initDb = () => {
 // Auto-init on load for normal server runs
 initDb();
 
-module.exports = { db, initDb };
+module.exports = { db, initDb, withTransaction, runAsync, getAsync, allAsync };

@@ -42,6 +42,15 @@ const getLatestAuditForResource = (userId, resource) => {
 describe('Audit logging enhancements (Phase 3)', () => {
   beforeAll(async () => {
     await initDb();
+    // Seed patient so tenant-scoped middleware can validate patientId.
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT OR IGNORE INTO Patients (id, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+        ['p1', 'Test Patient', 'MRN-TEST-1', '1A', '1990-01-01', 'Test dx', 'None', 1],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
   });
 
   beforeEach(async () => {

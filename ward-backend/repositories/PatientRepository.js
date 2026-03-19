@@ -1,4 +1,4 @@
-const { db } = require('../db');
+const { db, withTransaction } = require('../db');
 
 class PatientRepository {
     create(patientData) {
@@ -16,47 +16,66 @@ class PatientRepository {
         });
     }
 
-    findAll() {
+    findAll(tenantId) {
+        const tenant = tenantId || 'tenant-default';
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM Patients WHERE status IN ('active', 'escalated')`, [], (err, rows) => {
+            db.all(
+              `SELECT * FROM Patients WHERE tenantId = ? AND status IN ('active', 'escalated')`,
+              [tenant],
+              (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows);
-            });
+              }
+            );
         });
     }
 
-    findArchived() {
+    findArchived(tenantId) {
+        const tenant = tenantId || 'tenant-default';
         return new Promise((resolve, reject) => {
-            db.all(`SELECT * FROM Patients WHERE status = 'discharged'`, [], (err, rows) => {
+            db.all(
+              `SELECT * FROM Patients WHERE tenantId = ? AND status = 'discharged'`,
+              [tenant],
+              (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows);
-            });
+              }
+            );
         });
     }
 
-    findById(id) {
+    findById(id, tenantId) {
+        const tenant = tenantId || 'tenant-default';
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM Patients WHERE id = ?`, [id], (err, row) => {
+            db.get(`SELECT * FROM Patients WHERE id = ? AND tenantId = ?`, [id, tenant], (err, row) => {
                 if (err) return reject(err);
                 resolve(row);
             });
         });
     }
 
-    findDischargeSummary(patientId) {
+    findDischargeSummary(patientId, tenantId) {
+        const tenant = tenantId || 'tenant-default';
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM DischargeSummaries WHERE patientId = ? ORDER BY timestamp DESC LIMIT 1`, [patientId], (err, row) => {
+            db.get(
+              `SELECT * FROM DischargeSummaries WHERE patientId = ? AND tenantId = ? ORDER BY timestamp DESC LIMIT 1`,
+              [patientId, tenant],
+              (err, row) => {
                 if (err) return reject(err);
                 resolve(row);
-            });
+              }
+            );
         });
     }
 
-    update(id, patientData) {
+    update(id, patientData, tenantId) {
+        const tenant = tenantId || 'tenant-default';
         return new Promise((resolve, reject) => {
             db.run(
-                `UPDATE Patients SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ? WHERE id = ?`,
-                [patientData.name, patientData.bedNumber, patientData.dob, patientData.diagnosis, patientData.allergies, patientData.careIntensity, id],
+                `UPDATE Patients
+                 SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ?
+                 WHERE id = ? AND tenantId = ?`,
+                [patientData.name, patientData.bedNumber, patientData.dob, patientData.diagnosis, patientData.allergies, patientData.careIntensity, id, tenant],
                 function(err) {
                     if (err) return reject(err);
                     resolve(this.changes);
@@ -76,50 +95,41 @@ class PatientRepository {
 
     discharge(patientId, data, dischargedBy, tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run("BEGIN TRANSACTION;");
+        return withTransaction(async ({ runAsync }) => {
+            const upd = await runAsync(
+                `UPDATE Patients SET status = 'discharged' WHERE id = ? AND tenantId = ?`,
+                [patientId, tenant]
+            );
 
-                // 1. Mark patient as discharged
-                db.run(`UPDATE Patients SET status = 'discharged' WHERE id = ?`, [patientId], function(err) {
-                    if (err) {
-                        db.run("ROLLBACK;");
-                        return reject(err);
-                    }
-                    if (this.changes === 0) {
-                        db.run("ROLLBACK;");
-                        return reject(new Error('Patient not found'));
-                    }
-                });
+            if (!upd || upd.changes === 0) {
+                throw new Error('Patient not found');
+            }
 
-                // 2. Insert into DischargeSummaries
-                const summaryId = require('crypto').randomUUID();
-                const vitals = data.dischargeVitals ? JSON.stringify(data.dischargeVitals) : '{}';
-                
-                db.run(`
+            const summaryId = require('crypto').randomUUID();
+            const vitals = data.dischargeVitals ? JSON.stringify(data.dischargeVitals) : '{}';
+
+            await runAsync(
+                `
                     INSERT INTO DischargeSummaries (
-                        id, tenantId, patientId, reasonForAdmission, duration, 
-                        medicationsDuringAdmission, dischargeVitals, 
+                        id, tenantId, patientId, reasonForAdmission, duration,
+                        medicationsDuringAdmission, dischargeVitals,
                         dischargeRecommendations, dischargedBy
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        summaryId, tenant, patientId, data.reasonForAdmission, data.duration,
-                        data.medicationsDuringAdmission, vitals,
-                        data.dischargeRecommendations, dischargedBy
-                    ],
-                    function(err) {
-                        if (err) {
-                            db.run("ROLLBACK;");
-                            return reject(err);
-                        }
-                    }
-                );
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `,
+                [
+                    summaryId,
+                    tenant,
+                    patientId,
+                    data.reasonForAdmission,
+                    data.duration,
+                    data.medicationsDuringAdmission,
+                    vitals,
+                    data.dischargeRecommendations,
+                    dischargedBy
+                ]
+            );
 
-                db.run("COMMIT;", (err) => {
-                    if (err) return reject(err);
-                    resolve({ message: 'Patient discharged successfully', summaryId });
-                });
-            });
+            return { message: 'Patient discharged successfully', summaryId };
         });
     }
 }
