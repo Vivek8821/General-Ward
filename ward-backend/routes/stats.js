@@ -4,20 +4,118 @@ const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const crypto = require('crypto');
 
+// Physiological and data-quality validation for different stat types.
+// These ranges are deliberately conservative and can be tuned with clinical input.
 const validateStats = (type, data) => {
     if (typeof data !== 'object' || data === null) return false;
+
     switch (type) {
-        case 'vital':
-            return !!(data.bpSystolic && data.bpDiastolic && data.temp && data.pulse);
-        case 'diet':
-            return !!(data.mealType && data.consumedPercentage);
-        case 'sleep':
-            return !!(data.hoursSlept && data.quality);
-        case 'symptom':
-            return !!(data.severity && data.description);
-        default:
+        case 'vital': {
+            const {
+                bpSystolic,
+                bpDiastolic,
+                temp,
+                pulse,
+                respRate,
+                spo2
+            } = data;
+
+            // All primary vital fields must be present
+            if (
+                bpSystolic === undefined ||
+                bpDiastolic === undefined ||
+                temp === undefined ||
+                pulse === undefined
+            ) {
+                return false;
+            }
+
+            const sys = Number(bpSystolic);
+            const dia = Number(bpDiastolic);
+            const temperature = Number(temp);
+            const heartRate = Number(pulse);
+            const rr = respRate !== undefined ? Number(respRate) : null;
+            const oxygen = spo2 !== undefined ? Number(spo2) : null;
+
+            if (
+                !Number.isFinite(sys) ||
+                !Number.isFinite(dia) ||
+                !Number.isFinite(temperature) ||
+                !Number.isFinite(heartRate)
+            ) {
+                return false;
+            }
+
+            // Reasonable general-ward physiological ranges
+            if (sys < 50 || sys > 260) return false;
+            if (dia < 30 || dia > 150) return false;
+            if (temperature < 30 || temperature > 43) return false;
+            if (heartRate < 20 || heartRate > 250) return false;
+
+            if (rr !== null) {
+                if (!Number.isFinite(rr) || rr < 4 || rr > 60) return false;
+            }
+
+            if (oxygen !== null) {
+                if (!Number.isFinite(oxygen) || oxygen < 50 || oxygen > 100) return false;
+            }
+
             return true;
+        }
+        case 'diet': {
+            const { mealType, consumedPercentage } = data;
+            if (!mealType) return false;
+            const consumed = Number(consumedPercentage);
+            if (!Number.isFinite(consumed) || consumed < 0 || consumed > 100) return false;
+            return true;
+        }
+        case 'sleep': {
+            const { hoursSlept, quality } = data;
+            const hours = Number(hoursSlept);
+            if (!Number.isFinite(hours) || hours < 0 || hours > 24) return false;
+            if (!quality) return false;
+            return true;
+        }
+        case 'symptom': {
+            const { severity, description } = data;
+            if (!description) return false;
+            const sev = Number(severity);
+            if (!Number.isFinite(sev) || sev < 0 || sev > 10) return false;
+            return true;
+        }
+        default:
+            return false;
     }
+};
+
+// Thresholds (in minutes) for considering stats "stale".
+const STALE_THRESHOLDS_MINUTES = {
+    vital: 240,   // 4 hours
+    diet: 480,    // 8 hours
+    sleep: 1440,  // 24 hours
+    symptom: 720  // 12 hours
+};
+
+const computeStaleness = (row) => {
+    const type = row.type;
+    const thresholdMinutes = STALE_THRESHOLDS_MINUTES[type];
+    if (!thresholdMinutes) {
+        return { isStale: false, ageMinutes: null };
+    }
+
+    const recordedAt = new Date(row.timestamp);
+    if (Number.isNaN(recordedAt.getTime())) {
+        return { isStale: false, ageMinutes: null };
+    }
+
+    const now = new Date();
+    const ageMs = now.getTime() - recordedAt.getTime();
+    const ageMinutes = Math.floor(ageMs / 60000);
+
+    return {
+        isStale: ageMinutes > thresholdMinutes,
+        ageMinutes
+    };
 };
 
 // POST /api/patients/:patientId/stats
@@ -26,9 +124,19 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), (req, res)
     const { type, data } = req.body;
     const id = crypto.randomUUID();
     
+    if (!type) {
+        return res.status(400).json({
+            error: 'Stat type is required',
+            code: 'VALIDATION_ERROR'
+        });
+    }
+
     // validate type and content
     if (!['vital', 'symptom', 'diet', 'sleep'].includes(type) || !validateStats(type, data)) {
-        return res.status(400).json({ error: 'Invalid stat type or malformed data structure' });
+        return res.status(400).json({
+            error: 'Invalid stat type or malformed/physiologically invalid data',
+            code: 'VALIDATION_ERROR'
+        });
     }
 
     const dataString = typeof data === 'object' ? JSON.stringify(data) : data;
@@ -38,7 +146,13 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), (req, res)
         [id, patientId, type, dataString, req.user.name],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
-            res.status(201).json({ id, patientId, type, data: dataString, recordedBy: req.user.name });
+            res.status(201).json({
+                id,
+                patientId,
+                type,
+                data,
+                recordedBy: req.user.name
+            });
         }
     );
 });
@@ -49,7 +163,7 @@ router.get('/', authenticateToken, (req, res) => {
     const { type } = req.query; // optional filter by type
     
     let query = `SELECT * FROM DailyStats WHERE patientId = ?`;
-    let params = [patientId];
+    const params = [patientId];
     
     if (type) {
         query += ` AND type = ?`;
@@ -60,13 +174,25 @@ router.get('/', authenticateToken, (req, res) => {
     
     db.all(query, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(rows.map(row => {
+        const enriched = rows.map(row => {
+            let parsedData = row.data;
             try {
-                return { ...row, data: JSON.parse(row.data) };
-            } catch(e) {
-                return row;
+                parsedData = JSON.parse(row.data);
+            } catch (e) {
+                // leave as-is if not valid JSON
             }
-        }));
+
+            const { isStale, ageMinutes } = computeStaleness(row);
+
+            return {
+                ...row,
+                data: parsedData,
+                isStale,
+                ageMinutes
+            };
+        });
+
+        res.json(enriched);
     });
 });
 

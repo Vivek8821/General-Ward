@@ -61,10 +61,17 @@ class PatientService {
     }
 
     async dischargePatient(id, data, dischargedBy) {
-        if (!data.reasonForAdmission || !data.duration || !data.dischargeVitals) {
-             throw new Error("Missing required discharge fields");
+        if (!data || !data.reasonForAdmission || !data.duration || !data.dischargeVitals) {
+            throw new Error('Missing required discharge fields');
         }
-        return await patientRepository.discharge(id, data, dischargedBy);
+
+        const result = await patientRepository.discharge(id, data, dischargedBy);
+
+        if (!result || result.updated === 0 || result.message === 'Patient not found') {
+            throw new Error('Patient not found');
+        }
+
+        return result;
     }
 }
 

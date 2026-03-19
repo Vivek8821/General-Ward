@@ -4,6 +4,23 @@ const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const crypto = require('crypto');
 
+const VALID_ADMIN_STATUSES = ['given', 'refused', 'missed'];
+
+const validateMedicationPayload = (payload) => {
+    const { name, dosage, route, frequency } = payload;
+    if (!name || !dosage || !frequency) return false;
+    // route is optional in API but we will default it if missing.
+    return true;
+};
+
+const validateAdministrationPayload = (payload) => {
+    const { status } = payload;
+    if (!status || !VALID_ADMIN_STATUSES.includes(status)) {
+        return false;
+    }
+    return true;
+};
+
 // GET /api/patients/:patientId/medications/administrations
 router.get('/administrations', authenticateToken, (req, res) => {
     console.log(`[ADMIN] Fetching history. Params:`, req.params);
@@ -37,6 +54,13 @@ router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
     const { patientId } = req.params;
     let { name, dosage, route, frequency, scheduledTimes, prn, startDate } = req.body;
     const id = crypto.randomUUID();
+
+    if (!validateMedicationPayload({ name, dosage, route, frequency })) {
+        return res.status(400).json({
+            error: 'Missing or invalid medication fields (name, dosage, frequency are required)',
+            code: 'VALIDATION_ERROR'
+        });
+    }
     
     if (!route) route = 'Oral / Default';
     if (!startDate) startDate = new Date().toISOString().split('T')[0];
@@ -68,6 +92,14 @@ router.get('/', authenticateToken, (req, res) => {
 // PUT /api/patients/:patientId/medications/administrations/:adminId (Doctor or Nurse)
 router.put('/administrations/:adminId', authenticateToken, requireRole(['doctor', 'nurse']), (req, res) => {
     const { status, notes } = req.body;
+
+    if (!validateAdministrationPayload({ status })) {
+        return res.status(400).json({
+            error: 'Invalid administration status',
+            code: 'VALIDATION_ERROR'
+        });
+    }
+
     db.run(
         `UPDATE MedicationAdministrations SET status = ?, notes = ? WHERE id = ? AND patientId = ?`,
         [status, notes, req.params.adminId, req.params.patientId],
@@ -108,6 +140,13 @@ router.post('/:medId/administer', authenticateToken, requireRole(['doctor', 'nur
     const { status, notes, timestamp } = req.body;
     const { patientId, medId } = req.params;
     const id = crypto.randomUUID();
+
+    if (!validateAdministrationPayload({ status })) {
+        return res.status(400).json({
+            error: 'Invalid administration status',
+            code: 'VALIDATION_ERROR'
+        });
+    }
 
     const query = timestamp 
         ? `INSERT INTO MedicationAdministrations (id, medicationId, patientId, status, notes, administeredBy, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)`

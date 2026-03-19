@@ -43,17 +43,37 @@ describe('PatientService', () => {
     });
 
     describe('dischargePatient', () => {
-        it('should throw an error if patient is not found in database', async () => {
-            patientRepository.updateStatus.mockResolvedValue(0); // 0 rows changed implies not found
+        const validDischargePayload = {
+            reasonForAdmission: 'Pneumonia',
+            duration: '3 days',
+            dischargeVitals: {
+                hr: '80',
+                bp: '120/70',
+                o2: '98%',
+                temp: '37'
+            },
+            dischargeRecommendations: 'Follow up in clinic'
+        };
 
-            await expect(patientService.dischargePatient('invalid-id')).rejects.toThrow('Patient not found');
-            expect(patientRepository.updateStatus).toHaveBeenCalledWith('invalid-id', 'discharged');
+        it('should throw an error if missing required discharge fields', async () => {
+            await expect(patientService.dischargePatient('any-id', {}, 'Dr. Test'))
+                .rejects
+                .toThrow('Missing required discharge fields');
+            expect(patientRepository.discharge).not.toHaveBeenCalled();
+        });
+
+        it('should throw an error if patient is not found in database', async () => {
+            patientRepository.discharge.mockResolvedValue({ updated: 0, message: 'Patient not found' });
+
+            await expect(
+                patientService.dischargePatient('invalid-id', validDischargePayload, 'Dr. Test')
+            ).rejects.toThrow('Patient not found');
         });
 
         it('should update the patient status to discharged', async () => {
-            patientRepository.updateStatus.mockResolvedValue(1); // 1 row changed implies success
+            patientRepository.discharge.mockResolvedValue({ updated: 1, message: 'Patient discharged successfully' });
 
-            const result = await patientService.dischargePatient('valid-id');
+            const result = await patientService.dischargePatient('valid-id', validDischargePayload, 'Dr. Test');
             expect(result.message).toBe('Patient discharged successfully');
         });
     });
