@@ -8,7 +8,8 @@ const { requireTenantTask } = require('../middleware/tenant');
 router.get('/my', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const tasks = await taskService.listMyOpenTasks(req.user.name, tenantId);
+    const { limit, cursor } = req.query;
+    const tasks = await taskService.listMyOpenTasks(req.user.name, tenantId, { limit, cursor });
     res.json(tasks);
   } catch (error) {
     res.status(400).json({ error: error.message, code: 'VALIDATION_ERROR' });

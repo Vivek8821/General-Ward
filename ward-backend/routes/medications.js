@@ -55,28 +55,48 @@ router.get('/administrations', authenticateToken, requireRole(['doctor', 'nurse'
     console.log(`[ADMIN] Fetching history. Params:`, req.params);
     const { patientId } = req.params;
     const tenantId = req.user.tenantId || 'tenant-default';
+    const { limit, cursor } = req.query;
     
     if (!patientId) {
         console.error('[ADMIN ERROR] No patientId in params');
         return res.status(400).json({ error: 'Patient ID is required' });
     }
 
-    db.all(
-        `SELECT ma.*, m.name as medName, m.dosage, m.route
-         FROM MedicationAdministrations ma
-         JOIN Medications m ON ma.medicationId = m.id AND m.tenantId = ?
-         WHERE ma.patientId = ? AND ma.tenantId = ?
-         ORDER BY ma.timestamp DESC`,
-        [tenantId, patientId, tenantId],
-        (err, rows) => {
-            if (err) {
-                console.error('[ADMIN ERROR]', err);
-                return res.status(500).json({ error: err.message });
-            }
-            console.log(`[ADMIN] Found ${rows.length} records for ${patientId}`);
-            res.json(rows);
+    let query = `
+      SELECT ma.*, m.name as medName, m.dosage, m.route
+      FROM MedicationAdministrations ma
+      JOIN Medications m ON ma.medicationId = m.id AND m.tenantId = ?
+      WHERE ma.patientId = ? AND ma.tenantId = ?
+    `;
+    const params = [tenantId, patientId, tenantId];
+
+    // Cursor pagination (descending timestamp):
+    // cursor format: "<timestampISO>|<id>"
+    if (cursor && typeof cursor === 'string') {
+        const parts = cursor.split('|');
+        if (parts.length === 2 && parts[0] && parts[1]) {
+            const cursorTimestamp = parts[0];
+            const cursorId = parts[1];
+            query += ` AND (ma.timestamp < ? OR (ma.timestamp = ? AND ma.id < ?))`;
+            params.push(cursorTimestamp, cursorTimestamp, cursorId);
         }
-    );
+    }
+
+    query += ` ORDER BY ma.timestamp DESC, ma.id DESC`;
+    const parsedLimit = limit !== undefined ? Number(limit) : 200;
+    if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
+        query += ` LIMIT ?`;
+        params.push(parsedLimit);
+    }
+
+    db.all(query, params, (err, rows) => {
+        if (err) {
+            console.error('[ADMIN ERROR]', err);
+            return res.status(500).json({ error: err.message });
+        }
+        console.log(`[ADMIN] Found ${rows.length} records for ${patientId}`);
+        res.json(rows);
+    });
 });
 
 // POST /api/patients/:patientId/medications (Doctor only)

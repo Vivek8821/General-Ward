@@ -21,9 +21,9 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), r
 // GET /api/patients/:patientId/tasks?status=open|completed|cancelled
 router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), async (req, res) => {
   try {
-    const { status = 'open' } = req.query;
+    const { status = 'open', limit, cursor } = req.query;
     const tenantId = req.user.tenantId || 'tenant-default';
-    const tasks = await taskService.listPatientTasks(req.params.patientId, status, tenantId);
+    const tasks = await taskService.listPatientTasks(req.params.patientId, status, tenantId, { limit, cursor });
     res.json(tasks);
   } catch (error) {
     res.status(400).json({

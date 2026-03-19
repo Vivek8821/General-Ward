@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
@@ -52,9 +53,20 @@ const validateVitalData = (data) => {
   return true;
 };
 
-router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
+// Enterprise rate limiting hardening for ingest writes.
+// Keep thresholds high enough to not interfere with safe retries (idempotency).
+const ingestLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // allow bursts but throttle abusive clients
+  message: { error: 'Too many observation ingest requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+router.post('/ingest', ingestLimiter, authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
   try {
     const { patientId, measurementType, data, timestamp, units, source } = req.body || {};
+    const idempotencyKey = req.get('Idempotency-Key');
 
     if (!patientId) {
       return res.status(400).json({ error: 'patientId is required', code: 'VALIDATION_ERROR' });
@@ -71,6 +83,8 @@ router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin
     const id = crypto.randomUUID();
     const recordedBy = req.user.name;
     const tenantId = req.user.tenantId || 'tenant-default';
+    const userId = req.user.id;
+    const endpoint = 'observations/ingest';
 
     // Enforce tenant scoping for the referenced patient (patientId is in the request body).
     const patientInTenant = await new Promise((resolve, reject) => {
@@ -83,6 +97,60 @@ router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin
 
     if (!patientInTenant) {
       return res.status(403).json({ error: 'Access denied by tenant scope.' });
+    }
+
+    // Idempotency handling: if Idempotency-Key is supplied, repeat requests return the same response.
+    if (idempotencyKey) {
+      const existing = await new Promise((resolve, reject) => {
+        db.get(
+          `SELECT status, responseStatus, responseJson
+           FROM IdempotencyKeys
+           WHERE idempotencyKey = ? AND tenantId = ? AND userId = ? AND patientId = ? AND endpoint = ?`,
+          [idempotencyKey, tenantId, userId, patientId, endpoint],
+          (err, row) => (err ? reject(err) : resolve(row))
+        );
+      });
+
+      if (existing?.responseJson && existing?.responseStatus) {
+        return res.status(existing.responseStatus).json(JSON.parse(existing.responseJson));
+      }
+
+      // If it's already being processed, fail fast to avoid duplicate inserts.
+      if (existing?.status === 'processing') {
+        return res.status(409).json({ error: 'Idempotency request is already being processed', code: 'IDEMPOTENCY_IN_PROGRESS' });
+      }
+
+      // Mark as processing so concurrent requests don't both write.
+      // `INSERT OR IGNORE` lets the "losing" concurrent request detect that it shouldn't proceed.
+      const inserted = await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT OR IGNORE INTO IdempotencyKeys (idempotencyKey, tenantId, userId, patientId, endpoint, status)
+           VALUES (?, ?, ?, ?, ?, 'processing')`,
+          [idempotencyKey, tenantId, userId, patientId, endpoint],
+          function (err) {
+            if (err) return reject(err);
+            resolve(this.changes);
+          }
+        );
+      });
+
+      if (inserted === 0) {
+        const afterInsert = await new Promise((resolve, reject) => {
+          db.get(
+            `SELECT status, responseStatus, responseJson
+             FROM IdempotencyKeys
+             WHERE idempotencyKey = ? AND tenantId = ? AND userId = ? AND patientId = ? AND endpoint = ?`,
+            [idempotencyKey, tenantId, userId, patientId, endpoint],
+            (err, row) => (err ? reject(err) : resolve(row))
+          );
+        });
+
+        if (afterInsert?.responseJson && afterInsert?.responseStatus) {
+          return res.status(afterInsert.responseStatus).json(JSON.parse(afterInsert.responseJson));
+        }
+
+        return res.status(409).json({ error: 'Idempotency request is already being processed', code: 'IDEMPOTENCY_IN_PROGRESS' });
+      }
     }
 
     const enrichedData = {
@@ -108,8 +176,32 @@ router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [id, tenantId, patientId, 'vital', dataString, recordedBy, timestampToStore],
         function (err) {
-          if (err) return res.status(500).json({ error: err.message });
-          return res.status(201).json({ id, patientId, type: 'vital' });
+          if (err) {
+            if (idempotencyKey) {
+              db.run(
+                `DELETE FROM IdempotencyKeys
+                 WHERE idempotencyKey = ? AND tenantId = ? AND userId = ? AND patientId = ? AND endpoint = ?`,
+                [idempotencyKey, tenantId, userId, patientId, endpoint]
+              );
+            }
+            return res.status(500).json({ error: err.message });
+          }
+
+          const responsePayload = { id, patientId, type: 'vital' };
+          if (idempotencyKey) {
+            db.run(
+              `UPDATE IdempotencyKeys
+               SET status = 'completed', responseStatus = ?, responseJson = ?, updatedAt = CURRENT_TIMESTAMP
+               WHERE idempotencyKey = ? AND tenantId = ? AND userId = ? AND patientId = ? AND endpoint = ?`,
+              [201, JSON.stringify(responsePayload), idempotencyKey, tenantId, userId, patientId, endpoint],
+              function () {
+                return res.status(201).json(responsePayload);
+              }
+            );
+            return;
+          }
+
+          return res.status(201).json(responsePayload);
         }
       );
     } else {
@@ -118,8 +210,32 @@ router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin
          VALUES (?, ?, ?, ?, ?, ?)`,
         [id, tenantId, patientId, 'vital', dataString, recordedBy],
         function (err) {
-          if (err) return res.status(500).json({ error: err.message });
-          return res.status(201).json({ id, patientId, type: 'vital' });
+          if (err) {
+            if (idempotencyKey) {
+              db.run(
+                `DELETE FROM IdempotencyKeys
+                 WHERE idempotencyKey = ? AND tenantId = ? AND userId = ? AND patientId = ? AND endpoint = ?`,
+                [idempotencyKey, tenantId, userId, patientId, endpoint]
+              );
+            }
+            return res.status(500).json({ error: err.message });
+          }
+
+          const responsePayload = { id, patientId, type: 'vital' };
+          if (idempotencyKey) {
+            db.run(
+              `UPDATE IdempotencyKeys
+               SET status = 'completed', responseStatus = ?, responseJson = ?, updatedAt = CURRENT_TIMESTAMP
+               WHERE idempotencyKey = ? AND tenantId = ? AND userId = ? AND patientId = ? AND endpoint = ?`,
+              [201, JSON.stringify(responsePayload), idempotencyKey, tenantId, userId, patientId, endpoint],
+              function () {
+                return res.status(201).json(responsePayload);
+              }
+            );
+            return;
+          }
+
+          return res.status(201).json(responsePayload);
         }
       );
     }

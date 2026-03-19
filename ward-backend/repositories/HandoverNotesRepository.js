@@ -23,7 +23,7 @@ class HandoverNotesRepository {
     });
   }
 
-  listByPatient(patientId, tenantId, { shift, from, to, limit = 50 }) {
+  listByPatient(patientId, tenantId, { shift, from, to, limit = 50, cursor } = {}) {
     return new Promise((resolve, reject) => {
       const tenant = tenantId || 'tenant-default';
       let query = `
@@ -48,7 +48,19 @@ class HandoverNotesRepository {
         params.push(to);
       }
 
-      query += ` ORDER BY timestamp DESC LIMIT ?`;
+      // Cursor pagination (descending timestamp):
+      // cursor format: "<timestampISO>|<id>"
+      if (cursor && typeof cursor === 'string') {
+        const parts = cursor.split('|');
+        if (parts.length === 2 && parts[0] && parts[1]) {
+          const cursorTimestamp = parts[0];
+          const cursorId = parts[1];
+          query += ` AND (timestamp < ? OR (timestamp = ? AND id < ?))`;
+          params.push(cursorTimestamp, cursorTimestamp, cursorId);
+        }
+      }
+
+      query += ` ORDER BY timestamp DESC, id DESC LIMIT ?`;
       params.push(limit);
 
       db.all(query, params, (err, rows) => {

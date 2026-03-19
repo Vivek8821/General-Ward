@@ -39,15 +39,15 @@ class TaskService {
     });
   }
 
-  async listPatientTasks(patientId, status = 'open', tenantId) {
+  async listPatientTasks(patientId, status = 'open', tenantId, options = {}) {
     if (!patientId) throw new Error('Patient ID is required');
     const tenant = tenantId || 'tenant-default';
-    return await taskRepository.listByPatient(patientId, tenant, status);
+    return await taskRepository.listByPatient(patientId, tenant, status, options);
   }
 
-  async listMyOpenTasks(assignee, tenantId) {
+  async listMyOpenTasks(assignee, tenantId, options = {}) {
     if (!assignee) throw new Error('Assignee is required');
-    return await taskRepository.listMyOpenTasks(assignee, tenantId);
+    return await taskRepository.listMyOpenTasks(assignee, tenantId, options);
   }
 
   async completeTask(taskId, completedBy, tenantId) {

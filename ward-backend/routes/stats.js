@@ -163,7 +163,7 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), requireTen
 // GET /api/patients/:patientId/stats
 router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
     const { patientId } = req.params;
-    const { type, limit } = req.query; // optional filter by type
+    const { type, limit, cursor } = req.query; // optional filter by type + cursor pagination
     const tenantId = req.user.tenantId || 'tenant-default';
     
     let query = `SELECT * FROM DailyStats WHERE patientId = ? AND tenantId = ?`;
@@ -173,8 +173,22 @@ router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), re
         query += ` AND type = ?`;
         params.push(type);
     }
-    
-    query += ` ORDER BY timestamp DESC`;
+
+    // Cursor pagination (descending timestamp):
+    // cursor format: "<timestampISO>|<id>"
+    if (cursor && typeof cursor === 'string') {
+        const parts = cursor.split('|');
+        if (parts.length === 2) {
+            const cursorTimestamp = parts[0];
+            const cursorId = parts[1];
+            if (cursorTimestamp && cursorId) {
+                query += ` AND (timestamp < ? OR (timestamp = ? AND id < ?))`;
+                params.push(cursorTimestamp, cursorTimestamp, cursorId);
+            }
+        }
+    }
+
+    query += ` ORDER BY timestamp DESC, id DESC`;
 
     const parsedLimit = limit !== undefined ? Number(limit) : 200;
     if (Number.isFinite(parsedLimit) && parsedLimit > 0) {

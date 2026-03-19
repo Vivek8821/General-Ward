@@ -82,5 +82,38 @@ describe('Observation ingestion endpoint (Phase 5.3 backend)', () => {
     expect(inserted).toBeTruthy();
     expect(inserted.type).toBe('vital');
   });
+
+  it('is idempotent when Idempotency-Key header is reused', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/observations', observationsRoutes);
+
+    const due = new Date(Date.now() - 8 * 60 * 1000).toISOString();
+    const idempotencyKey = 'idem-obs-1';
+
+    const payload = {
+      patientId: 'p1',
+      measurementType: 'vital',
+      timestamp: due,
+      source: 'device:simulator',
+      units: { temp: 'C' },
+      data: {
+        bpSystolic: 121,
+        bpDiastolic: 71,
+        temp: 37,
+        pulse: 79,
+        respRate: 16,
+        spo2: 98
+      }
+    };
+
+    const res1 = await request(app).post('/api/observations/ingest').set('Idempotency-Key', idempotencyKey).send(payload);
+    expect(res1.status).toBe(201);
+    expect(res1.body.id).toBeTruthy();
+
+    const res2 = await request(app).post('/api/observations/ingest').set('Idempotency-Key', idempotencyKey).send(payload);
+    expect(res2.status).toBe(201);
+    expect(res2.body.id).toBe(res1.body.id);
+  });
 });
 

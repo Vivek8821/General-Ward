@@ -26,23 +26,41 @@ class TaskRepository {
     });
   }
 
-  listByPatient(patientId, tenantId, status = 'open') {
+  listByPatient(patientId, tenantId, status = 'open', { limit, cursor } = {}) {
     return new Promise((resolve, reject) => {
       const tenant = tenantId || 'tenant-default';
       const query = `
         SELECT *
         FROM Tasks
         WHERE patientId = ? AND tenantId = ? AND status = ?
-        ORDER BY dueAt ASC, timestamp DESC
+        ${cursor && typeof cursor === 'string' ? 'AND (dueAt > ? OR (dueAt = ? AND id > ?))' : ''}
+        ORDER BY dueAt ASC, timestamp DESC, id ASC
       `;
-      db.all(query, [patientId, tenant, status], (err, rows) => {
+      const params = [patientId, tenant, status];
+
+      if (cursor && typeof cursor === 'string') {
+        // cursor format: "<dueAtISO>|<id>"
+        const parts = cursor.split('|');
+        if (parts.length === 2 && parts[0] && parts[1]) {
+          params.push(parts[0], parts[0], parts[1]);
+        }
+      }
+
+      let finalQuery = query;
+      const parsedLimit = limit !== undefined ? Number(limit) : null;
+      if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
+        finalQuery = `${query} LIMIT ?`;
+        params.push(parsedLimit);
+      }
+
+      db.all(finalQuery, params, (err, rows) => {
         if (err) return reject(err);
         resolve(rows);
       });
     });
   }
 
-  listMyOpenTasks(assignee, tenantId) {
+  listMyOpenTasks(assignee, tenantId, { limit, cursor } = {}) {
     return new Promise((resolve, reject) => {
       const tenant = tenantId || 'tenant-default';
       const query = `
@@ -53,10 +71,26 @@ class TaskRepository {
         FROM Tasks t
         JOIN Patients p ON t.patientId = p.id AND p.tenantId = t.tenantId
         WHERE t.assignee = ? AND t.status = 'open' AND t.tenantId = ?
-        ORDER BY t.dueAt ASC, t.timestamp DESC
+        ${cursor && typeof cursor === 'string' ? 'AND (t.dueAt > ? OR (t.dueAt = ? AND t.id > ?))' : ''}
+        ORDER BY t.dueAt ASC, t.timestamp DESC, t.id ASC
       `;
 
-      db.all(query, [assignee, tenant], (err, rows) => {
+      const params = [assignee, tenant];
+      let finalQuery = query;
+      if (cursor && typeof cursor === 'string') {
+        const parts = cursor.split('|');
+        if (parts.length === 2 && parts[0] && parts[1]) {
+          params.push(parts[0], parts[0], parts[1]);
+        }
+      }
+
+      const parsedLimit = limit !== undefined ? Number(limit) : null;
+      if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
+        finalQuery = `${query} LIMIT ?`;
+        params.push(parsedLimit);
+      }
+
+      db.all(finalQuery, params, (err, rows) => {
         if (err) return reject(err);
         resolve(rows);
       });

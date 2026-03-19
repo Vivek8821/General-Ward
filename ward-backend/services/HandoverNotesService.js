@@ -30,7 +30,7 @@ class HandoverNotesService {
 
   async listNotes(patientId, tenantId, query) {
     if (!patientId) throw new Error('Patient ID is required');
-    const { shift, from, to, limit } = query || {};
+    const { shift, from, to, limit, cursor } = query || {};
 
     return await handoverNotesRepository.listByPatient(
       patientId,
@@ -39,7 +39,8 @@ class HandoverNotesService {
         shift: shift && ALLOWED_SHIFTS.includes(shift) ? shift : null,
         from: from || null,
         to: to || null,
-        limit: limit ? Math.max(1, Math.min(200, Number(limit))) : 50
+        limit: limit ? Math.max(1, Math.min(200, Number(limit))) : 50,
+        cursor: typeof cursor === 'string' ? cursor : null
       }
     );
   }

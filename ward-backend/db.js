@@ -257,6 +257,24 @@ const initDb = () => {
           )
         `);
 
+        // Idempotency keys for write endpoints (e.g., observations ingest).
+        // This prevents duplicate rows when clients retry safely.
+        db.run(`
+          CREATE TABLE IF NOT EXISTS IdempotencyKeys (
+            idempotencyKey TEXT NOT NULL,
+            tenantId TEXT NOT NULL,
+            userId TEXT NOT NULL,
+            patientId TEXT NOT NULL,
+            endpoint TEXT NOT NULL,
+            status TEXT NOT NULL CHECK(status IN ('processing', 'completed')) DEFAULT 'processing',
+            responseStatus INTEGER,
+            responseJson TEXT,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (idempotencyKey, tenantId, userId, patientId, endpoint)
+          )
+        `);
+
         // Auth lockout state for enterprise hardening.
         // Tracks consecutive failed login attempts for a (username, ipAddress) pair.
         db.run(`
