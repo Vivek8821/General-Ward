@@ -1,5 +1,16 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-production';
+const JWT_SECRET_ENV = process.env.JWT_SECRET;
+let JWT_SECRET;
+if (JWT_SECRET_ENV) {
+  JWT_SECRET = JWT_SECRET_ENV;
+} else if (process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET must be set in production');
+} else {
+  // Local/test fallback only. Do not use in production.
+  JWT_SECRET = 'super-secret-key-change-in-production';
+  // eslint-disable-next-line no-console
+  console.warn('[auth] JWT_SECRET not set; using insecure fallback (non-production only).');
+}
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];

@@ -27,6 +27,8 @@
     "Verification after meds/stress hardening: initial stress runner reported `server5xx: 0`. However, the runner’s DB seeding (while the backend was running) later caused `SQLITE_CORRUPT` during a subsequent Jest run. We restored the DB from git and confirmed Jest passes again.",
     "Stress verification (safe mode): updated `ward-backend/stressEverything.js` to refuse DB seeding while `/health` is reachable; reran stress with seeding disabled (`CONCURRENCY=12`, `DURATION_SEC=18`) and confirmed `server5xx: 0`. Re-ran backend Jest (`npm test`) and confirmed all tests pass.",
     "History endpoint fix: aligned `routes/history.js` with SQLite `DailyStats.type` CHECK constraints (persisted history under an allowed type) and added `tests/integration/history.test.js` to verify tenant scoping for history writes/reads; updated `withTransaction()` to recover after transactional failures."
+    ,
+    "Enterprise auth hardening: implemented DB-backed login lockouts (`AuthLoginAttempts`) keyed by username + client IP; updated `POST /api/auth/login` to enforce DB lockouts (429 on locked attempts) and reset on successful login; removed in-memory rate-limiter dependency for lockout enforcement. Updated `server.js` to set `trust proxy` so IP-based throttling/lockout works correctly behind reverse proxies. Tightened `middleware/auth.js` so missing `JWT_SECRET` fails in production. Verified via `ward-backend npm test` (auth rate limiting test still passes)."
   ],
   "artifacts": [
     "ward-backend:npm-test:passed",

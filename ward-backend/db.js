@@ -257,6 +257,19 @@ const initDb = () => {
           )
         `);
 
+        // Auth lockout state for enterprise hardening.
+        // Tracks consecutive failed login attempts for a (username, ipAddress) pair.
+        db.run(`
+          CREATE TABLE IF NOT EXISTS AuthLoginAttempts (
+            username TEXT NOT NULL,
+            ipAddress TEXT NOT NULL,
+            attemptCount INTEGER NOT NULL,
+            firstAttemptAt DATETIME NOT NULL,
+            lockedUntil DATETIME,
+            PRIMARY KEY (username, ipAddress)
+          )
+        `);
+
         // Additional tenant column backfills for legacy DBs.
         db.run(`ALTER TABLE Escalations ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
         db.run(`ALTER TABLE DischargeSummaries ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });

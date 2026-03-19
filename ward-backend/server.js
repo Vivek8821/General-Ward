@@ -20,6 +20,8 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
+// Needed so `req.ip` and related rate-limiting/lockout logic work correctly behind proxies.
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(helmet());
 app.use(express.json());

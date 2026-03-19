@@ -1,16 +1,22 @@
 const request = require('supertest');
 const express = require('express');
 const authRoutes = require('../../controllers/AuthController');
+const { initDb, db } = require('../../db');
 
 describe('Auth Integration & Rate Limiting', () => {
     let app;
 
     beforeAll(() => {
+        return initDb().then(() => {
         app = express();
         app.use(express.json());
         // Trust proxy is required for express-rate-limit if behind a proxy
         app.set('trust proxy', 1);
         app.use('/api/auth', authRoutes);
+        return new Promise((resolve, reject) => {
+          db.run(`DELETE FROM AuthLoginAttempts`, (err) => (err ? reject(err) : resolve()));
+        });
+        });
     });
 
     it('should block excessive login attempts via Rate Limiting (HTTP 429)', async () => {
