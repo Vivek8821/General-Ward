@@ -3,6 +3,7 @@ const router = express.Router({ mergeParams: true });
 const { db } = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const crypto = require('crypto');
+const scoringService = require('../services/ScoringService');
 
 // Physiological and data-quality validation for different stat types.
 // These ranges are deliberately conservative and can be tuned with clinical input.
@@ -183,17 +184,67 @@ router.get('/', authenticateToken, (req, res) => {
             }
 
             const { isStale, ageMinutes } = computeStaleness(row);
+            let ews = null;
+            if (row.type === 'vital') {
+                ews = scoringService.calculateFromVital(parsedData, row.timestamp);
+            }
 
             return {
                 ...row,
                 data: parsedData,
                 isStale,
-                ageMinutes
+                ageMinutes,
+                earlyWarningScore: ews
             };
         });
 
         res.json(enriched);
     });
+});
+
+// GET /api/patients/:patientId/stats/ews/latest
+// Returns the most recent vital entry with its computed early warning score.
+router.get('/ews/latest', authenticateToken, (req, res) => {
+    const { patientId } = req.params;
+
+    db.get(
+        `SELECT * FROM DailyStats WHERE patientId = ? AND type = 'vital' ORDER BY timestamp DESC LIMIT 1`,
+        [patientId],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!row) {
+                return res.status(404).json({ error: 'No vitals found for patient' });
+            }
+
+            let parsedData = row.data;
+            try {
+                parsedData = JSON.parse(row.data);
+            } catch (e) {
+                // leave as-is
+            }
+
+            const { isStale, ageMinutes } = computeStaleness(row);
+            const ews = scoringService.calculateFromVital(parsedData, row.timestamp);
+
+            if (!ews) {
+                return res.status(400).json({
+                    error: 'Unable to compute early warning score from stored vitals',
+                    code: 'SCORING_ERROR'
+                });
+            }
+
+            res.json({
+                patientId,
+                vital: {
+                    ...row,
+                    data: parsedData,
+                    isStale,
+                    ageMinutes
+                },
+                score: ews
+            });
+        }
+    );
 });
 
 module.exports = router;

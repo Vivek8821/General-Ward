@@ -1,0 +1,51 @@
+const scoringService = require('../../services/ScoringService');
+
+describe('ScoringService.calculateFromVital', () => {
+  it('returns null when required fields are missing', () => {
+    expect(scoringService.calculateFromVital(null)).toBeNull();
+    expect(scoringService.calculateFromVital({ bpSystolic: 120 })).toBeNull();
+  });
+
+  it('produces a low-risk score for normal vitals', () => {
+    const result = scoringService.calculateFromVital({
+      bpSystolic: 120,
+      bpDiastolic: 70,
+      temp: 37,
+      pulse: 80,
+      respRate: 16,
+      spo2: 98
+    });
+
+    expect(result).not.toBeNull();
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.risk === 'low' || result.risk === 'medium').toBe(true);
+  });
+
+  it('assigns high points and critical risk for extreme derangements', () => {
+    const result = scoringService.calculateFromVital({
+      bpSystolic: 70,
+      bpDiastolic: 40,
+      temp: 40.5,
+      pulse: 150,
+      respRate: 35,
+      spo2: 85
+    });
+
+    expect(result.score).toBeGreaterThanOrEqual(7);
+    expect(result.risk).toBe('critical');
+    expect(result.hasRedFlag).toBe(true);
+  });
+
+  it('marks missing optional parameters correctly', () => {
+    const result = scoringService.calculateFromVital({
+      bpSystolic: 110,
+      bpDiastolic: 70,
+      temp: 36.5,
+      pulse: 75
+    });
+
+    expect(result.components.respRate.missing).toBe(true);
+    expect(result.components.spo2.missing).toBe(true);
+  });
+});
+
