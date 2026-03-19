@@ -35,7 +35,7 @@ export default function PatientDetail() {
 
   async function fetchPatientTasks() {
     try {
-      const tasks = await api.get(`/patients/${id}/tasks?status=open`);
+      const tasks = await api.get(`/patients/${id}/tasks?status=open&limit=50`);
       setPatientTasks(Array.isArray(tasks) ? tasks : []);
     } catch (err) {
       console.error(err);

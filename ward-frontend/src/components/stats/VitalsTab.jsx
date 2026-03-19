@@ -26,7 +26,7 @@ export default function VitalsTab({ patientId, readOnly }) {
   const fetchVitals = async () => {
     try {
       const [data, trendData] = await Promise.all([
-        api.get(`/patients/${patientId}/stats?type=vital`),
+        api.get(`/patients/${patientId}/stats?type=vital&limit=50`),
         api.get(`/patients/${patientId}/stats/trends`)
       ]);
       setVitals(data);

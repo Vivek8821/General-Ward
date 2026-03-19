@@ -33,7 +33,7 @@ export default function MedsTab({ patientId, readOnly }) {
       setLoading(true);
       const [meds, admins] = await Promise.all([
         api.get(`/patients/${patientId}/medications`),
-        api.get(`/patients/${patientId}/medications/administrations`)
+        api.get(`/patients/${patientId}/medications/administrations?limit=50`)
       ]);
       setMedications(meds);
       setAdministrations(admins);

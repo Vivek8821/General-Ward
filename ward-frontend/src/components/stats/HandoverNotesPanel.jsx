@@ -43,6 +43,7 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
       const params = new URLSearchParams();
       if (shiftFilter !== 'all') params.set('shift', shiftFilter);
       if (rangeFromIso) params.set('from', rangeFromIso);
+      params.set('limit', '50');
 
       const qs = params.toString();
       const endpoint = qs

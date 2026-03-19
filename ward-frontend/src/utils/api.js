@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 const API_BASE = 'http://localhost:3001/api';
 
 export const api = {
@@ -19,11 +20,17 @@ export const api = {
     });
 
     if (response.status === 401 || response.status === 403) {
+      const errBody = await response.json().catch(() => ({}));
+      const msg = errBody?.error || errBody?.message || 'Access denied';
       if (window.location.pathname !== '/login') {
+        toast.error(msg);
         localStorage.removeItem('ward_token');
         localStorage.removeItem('ward_user');
         window.location.href = '/login';
+      } else {
+        toast.error(msg);
       }
+      return;
     }
 
     if (!response.ok) {

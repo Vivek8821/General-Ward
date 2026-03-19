@@ -12,7 +12,7 @@ export default function Tasks() {
   const fetchMyTasks = async () => {
     try {
       setLoading(true);
-      const data = await api.get('/tasks/my');
+      const data = await api.get('/tasks/my?limit=50');
       setTasks(data || []);
     } catch (err) {
       console.error(err);

@@ -25,8 +25,10 @@ export default function SleepTab({ patientId, readOnly }) {
 
   const fetchSleepLogs = async () => {
     try {
-      const data = await api.get(`/patients/${patientId}/stats?type=sleep`);
-      setSleepLogs(data);
+      // Page windowing for enterprise-scale data sets.
+      // Backend supports `limit`; using it reduces payload size and improves perceived performance.
+      const dataLimited = await api.get(`/patients/${patientId}/stats?type=sleep&limit=50`);
+      setSleepLogs(dataLimited);
     } catch (err) {
       toast.error("Failed to load sleep records: " + err.message);
       console.error(err);

@@ -24,7 +24,7 @@ export default function DietTab({ patientId, readOnly }) {
 
   const fetchDiets = async () => {
     try {
-      const data = await api.get(`/patients/${patientId}/stats?type=diet`);
+      const data = await api.get(`/patients/${patientId}/stats?type=diet&limit=50`);
       setDiets(data);
     } catch (err) {
       toast.error("Failed to load diet records: " + err.message);
