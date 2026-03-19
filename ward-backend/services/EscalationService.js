@@ -2,16 +2,18 @@ const escalationRepository = require('../repositories/EscalationRepository');
 const crypto = require('crypto');
 
 class EscalationService {
-    async createEscalation(patientId, reason, escalatedBy) {
+    async createEscalation(patientId, reason, escalatedBy, tenantId) {
         if (!patientId || !reason) {
             throw new Error('Patient ID and reason are required');
         }
 
+        const tenantIdValue = tenantId || 'tenant-default';
         const escalationData = {
             id: crypto.randomUUID(),
             patientId,
             reason,
-            escalatedBy
+            escalatedBy,
+            tenantId: tenantIdValue
         };
 
         return await escalationRepository.createEscalationWithStatusUpdate(escalationData);

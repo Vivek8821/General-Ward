@@ -1,0 +1,129 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const repoRoot = path.resolve(__dirname, '..');
+const codemapDir = path.resolve(repoRoot, 'codemap');
+
+const argv = process.argv.slice(2);
+const getArg = (name, defaultValue) => {
+  const i = argv.indexOf(`--${name}`);
+  if (i === -1) return defaultValue;
+  return argv[i + 1] ?? defaultValue;
+};
+
+const outputPath = path.resolve(codemapDir, getArg('out', 'file-inventory.json'));
+const includeCodemapDir = getArg('includeCodemapDir', 'false') === 'true';
+
+// Skips dirs that are either guaranteed huge or would recurse into our own output.
+const SKIP_DIRS = new Set([
+  '.git',
+  ...(includeCodemapDir ? [] : ['codemap']),
+]);
+
+function getNodeModulesPackageName(relPath) {
+  // relPath like: ward-backend/node_modules/@scope/name/dist/index.js
+  const parts = relPath.split(path.sep);
+  const nmIdx = parts.lastIndexOf('node_modules');
+  if (nmIdx === -1) return null;
+  const first = parts[nmIdx + 1];
+  const second = parts[nmIdx + 2];
+  if (!first) return null;
+  if (first.startsWith('@') && second) return `${first}/${second}`;
+  return first || null;
+}
+
+function classifyFile(relPath) {
+  // relPath uses OS separator. Keep rules simple and deterministic.
+  const normalized = relPath.split(path.sep).join('/');
+
+  if (normalized.endsWith('/ward.db') || normalized.endsWith('.db')) {
+    return 'data';
+  }
+
+  // Handle both `.../node_modules/...` and root-level `node_modules/...`.
+  if (normalized === 'node_modules' || normalized.startsWith('node_modules/') || normalized.includes('/node_modules/')) {
+    return 'thirdParty';
+  }
+
+  // Treat common build output as thirdParty-minimal to avoid huge explanations.
+  if (
+    normalized.includes('/dist/') ||
+    normalized.includes('/build/') ||
+    normalized.endsWith('/dist') ||
+    normalized.endsWith('/build')
+  ) {
+    return 'thirdParty';
+  }
+
+  // Everything else in the repository is firstParty.
+  return 'firstParty';
+}
+
+const fileMeta = [];
+let counts = { firstParty: 0, thirdParty: 0, data: 0 };
+
+function walkDir(absDir) {
+  const dirEntries = fs.readdirSync(absDir, { withFileTypes: true });
+  for (const entry of dirEntries) {
+    const absPath = path.join(absDir, entry.name);
+    const relPath = path.relative(repoRoot, absPath);
+
+    if (entry.isDirectory()) {
+      if (SKIP_DIRS.has(entry.name)) continue;
+      walkDir(absPath);
+      continue;
+    }
+
+    if (!entry.isFile()) continue;
+
+    // Avoid re-scanning JSON outputs created by us unless user opts in.
+    if (!includeCodemapDir && relPath.startsWith('codemap' + path.sep)) continue;
+
+    let stat;
+    try {
+      stat = fs.statSync(absPath);
+    } catch {
+      continue;
+    }
+
+    const category = classifyFile(relPath);
+    const size = stat.size;
+    const mtimeMs = stat.mtimeMs;
+
+    const packageName = category === 'thirdParty' ? getNodeModulesPackageName(relPath) : null;
+
+    fileMeta.push({
+      path: relPath,
+      category,
+      size,
+      mtimeMs,
+      packageName,
+    });
+
+    counts[category] += 1;
+  }
+}
+
+walkDir(repoRoot);
+
+const payload = {
+  generatedAt: new Date().toISOString(),
+  repoRoot,
+  codemapDir,
+  counts,
+  totals: Object.values(counts).reduce((a, b) => a + b, 0),
+  files: fileMeta,
+};
+
+fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+fs.writeFileSync(outputPath, JSON.stringify(payload, null, 2), 'utf8');
+
+// eslint-disable-next-line no-console
+console.log(
+  `Codemap inventory written to ${path.relative(repoRoot, outputPath)} (total ${payload.totals} files)`
+);
+

@@ -8,6 +8,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
+const DEFAULT_TENANT_ID = 'tenant-default';
+
 const initDb = () => {
   return new Promise((resolve, reject) => {
     db.serialize(() => {
@@ -18,14 +20,27 @@ const initDb = () => {
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             role TEXT CHECK(role IN ('doctor', 'nurse', 'admin')) NOT NULL,
+            tenantId TEXT,
             passwordHash TEXT NOT NULL
           )
         `);
+
+        // Tenants Table
+        db.run(`
+          CREATE TABLE IF NOT EXISTS Tenants (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL
+          )
+        `);
+
+        // Ensure there's always a default tenant for legacy/backfill rows.
+        db.run(`INSERT OR IGNORE INTO Tenants (id, name) VALUES (?, ?)`, [DEFAULT_TENANT_ID, 'Default Tenant']);
 
         // Patients Table
         db.run(`
           CREATE TABLE IF NOT EXISTS Patients (
             id TEXT PRIMARY KEY,
+            tenantId TEXT,
             name TEXT NOT NULL,
             mrn TEXT UNIQUE NOT NULL,
             bedNumber TEXT NOT NULL,
@@ -43,6 +58,7 @@ const initDb = () => {
           CREATE TABLE IF NOT EXISTS DailyStats (
             id TEXT PRIMARY KEY,
             patientId TEXT NOT NULL,
+            tenantId TEXT,
             type TEXT CHECK(type IN ('vital', 'symptom', 'diet', 'sleep')) NOT NULL,
             data TEXT NOT NULL,
             recordedBy TEXT NOT NULL,
@@ -56,6 +72,7 @@ const initDb = () => {
           CREATE TABLE IF NOT EXISTS Medications (
             id TEXT PRIMARY KEY,
             patientId TEXT NOT NULL,
+            tenantId TEXT,
             name TEXT NOT NULL,
             dosage TEXT NOT NULL,
             route TEXT NOT NULL,
@@ -76,6 +93,7 @@ const initDb = () => {
             id TEXT PRIMARY KEY,
             medicationId TEXT NOT NULL,
             patientId TEXT NOT NULL,
+            tenantId TEXT,
             status TEXT CHECK(status IN ('given', 'refused', 'missed')) NOT NULL,
             notes TEXT,
             administeredBy TEXT NOT NULL,
@@ -96,11 +114,19 @@ const initDb = () => {
         // Dynamically patch existing DB for MedsTab fix
         db.run(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`, (err) => { /* Ignore duplicate column error */ });
 
+        // Tenant-aware schema: add tenantId columns idempotently for legacy databases.
+        db.run(`ALTER TABLE Users ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE Patients ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE DailyStats ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE Medications ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE MedicationAdministrations ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+
         // Escalations Table
         db.run(`
           CREATE TABLE IF NOT EXISTS Escalations (
             id TEXT PRIMARY KEY,
             patientId TEXT NOT NULL,
+            tenantId TEXT,
             reason TEXT NOT NULL,
             escalatedBy TEXT NOT NULL,
             status TEXT CHECK(status IN ('pending', 'reviewed')) DEFAULT 'pending',
@@ -114,6 +140,7 @@ const initDb = () => {
           CREATE TABLE IF NOT EXISTS DischargeSummaries (
             id TEXT PRIMARY KEY,
             patientId TEXT NOT NULL,
+            tenantId TEXT,
             reasonForAdmission TEXT NOT NULL,
             duration TEXT NOT NULL,
             medicationsDuringAdmission TEXT,
@@ -130,6 +157,7 @@ const initDb = () => {
           CREATE TABLE IF NOT EXISTS Tasks (
             id TEXT PRIMARY KEY,
             patientId TEXT NOT NULL,
+            tenantId TEXT,
             type TEXT NOT NULL CHECK(type IN ('vital', 'assessment', 'followup')),
             dueAt DATETIME NOT NULL,
             status TEXT CHECK(status IN ('open', 'completed', 'cancelled')) DEFAULT 'open',
@@ -148,6 +176,7 @@ const initDb = () => {
           CREATE TABLE IF NOT EXISTS HandoverNotes (
             id TEXT PRIMARY KEY,
             patientId TEXT NOT NULL,
+            tenantId TEXT,
             shift TEXT NOT NULL,
             note TEXT NOT NULL,
             tags TEXT,
@@ -163,12 +192,32 @@ const initDb = () => {
             id TEXT PRIMARY KEY,
             userId TEXT NOT NULL,
             userRole TEXT NOT NULL,
+            tenantId TEXT,
             action TEXT NOT NULL,
             resource TEXT NOT NULL,
             ipAddress TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
           )
         `);
+
+        // Additional tenant column backfills for legacy DBs.
+        db.run(`ALTER TABLE Escalations ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE DischargeSummaries ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE Tasks ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE HandoverNotes ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        db.run(`ALTER TABLE AuditLogs ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+
+        // Backfill any existing rows that predate tenant support.
+        db.run(`UPDATE Users SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE Patients SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE DailyStats SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE Medications SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE MedicationAdministrations SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE Escalations SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE DischargeSummaries SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE Tasks SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE HandoverNotes SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE AuditLogs SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
 
         // Extend AuditLogs with additional attributes for stronger traceability.
         // Safe to run multiple times (errors ignored if columns already exist).

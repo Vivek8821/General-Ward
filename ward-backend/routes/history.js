@@ -9,11 +9,12 @@ router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
     const { patientId } = req.params;
     const { conditions, familyHistory, pastSurgeries, socialHistory, notes } = req.body;
     const id = crypto.randomUUID();
+    const tenantId = req.user.tenantId || 'tenant-default';
     
     // Simplistic schema: Create if not exist, or just insert new record
     db.run(
-        `INSERT INTO DailyStats (id, patientId, type, data, recordedBy) VALUES (?, ?, 'history', ?, ?)`,
-        [id, patientId, JSON.stringify({ conditions, familyHistory, pastSurgeries, socialHistory, notes }), req.user.name],
+        `INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy) VALUES (?, ?, ?, 'history', ?, ?)`,
+        [id, tenantId, patientId, JSON.stringify({ conditions, familyHistory, pastSurgeries, socialHistory, notes }), req.user.name],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.status(201).json({ id, message: "History updated" });

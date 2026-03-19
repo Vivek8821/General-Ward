@@ -19,9 +19,11 @@ class PatientService {
             throw new Error('Invalid Date of Birth');
         }
         
+        const tenantId = data.tenantId || 'tenant-default';
         const newPatient = {
             id: crypto.randomUUID(),
             ...data,
+            tenantId,
             careIntensity: Math.max(1, Math.min(4, careIntensity || 1))
         };
         
@@ -60,12 +62,13 @@ class PatientService {
         return { message: 'Patient updated successfully' };
     }
 
-    async dischargePatient(id, data, dischargedBy) {
+    async dischargePatient(id, data, dischargedBy, tenantId) {
         if (!data || !data.reasonForAdmission || !data.duration || !data.dischargeVitals) {
             throw new Error('Missing required discharge fields');
         }
 
-        const result = await patientRepository.discharge(id, data, dischargedBy);
+        const tenant = tenantId || 'tenant-default';
+        const result = await patientRepository.discharge(id, data, dischargedBy, tenant);
 
         if (!result || result.updated === 0 || result.message === 'Patient not found') {
             throw new Error('Patient not found');

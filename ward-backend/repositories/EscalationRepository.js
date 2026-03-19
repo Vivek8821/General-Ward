@@ -3,12 +3,13 @@ const { db } = require('../db');
 class EscalationRepository {
     createEscalationWithStatusUpdate(escalationData) {
         return new Promise((resolve, reject) => {
+            const tenantId = escalationData.tenantId || 'tenant-default';
             db.serialize(() => {
                 db.run('BEGIN TRANSACTION');
                 
                 db.run(
-                    `INSERT INTO Escalations (id, patientId, reason, escalatedBy) VALUES (?, ?, ?, ?)`,
-                    [escalationData.id, escalationData.patientId, escalationData.reason, escalationData.escalatedBy],
+                    `INSERT INTO Escalations (id, tenantId, patientId, reason, escalatedBy) VALUES (?, ?, ?, ?, ?)`,
+                    [escalationData.id, tenantId, escalationData.patientId, escalationData.reason, escalationData.escalatedBy],
                     function(err) {
                         if (err) {
                             db.run('ROLLBACK');
@@ -25,7 +26,7 @@ class EscalationRepository {
                                 }
                                 
                                 db.run('COMMIT', () => {
-                                    resolve({ ...escalationData, status: 'pending' });
+                                    resolve({ ...escalationData, tenantId, status: 'pending' });
                                 });
                             }
                         );

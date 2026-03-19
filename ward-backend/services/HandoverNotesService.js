@@ -4,7 +4,7 @@ const handoverNotesRepository = require('../repositories/HandoverNotesRepository
 const ALLOWED_SHIFTS = ['morning', 'afternoon', 'night'];
 
 class HandoverNotesService {
-  async createNote(patientId, payload, createdBy) {
+  async createNote(patientId, payload, createdBy, tenantId) {
     if (!patientId) throw new Error('Patient ID is required');
     const { shift, note, tags } = payload || {};
 
@@ -16,8 +16,10 @@ class HandoverNotesService {
     }
 
     const id = crypto.randomUUID();
+    const tenant = tenantId || 'tenant-default';
     return await handoverNotesRepository.create({
       id,
+      tenantId: tenant,
       patientId,
       shift,
       note,

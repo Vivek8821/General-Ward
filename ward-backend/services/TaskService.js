@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const ALLOWED_TASK_TYPES = ['vital', 'assessment', 'followup'];
 
 class TaskService {
-  async createTask(patientId, payload, createdBy) {
+  async createTask(patientId, payload, createdBy, tenantId) {
     if (!patientId) throw new Error('Patient ID is required');
 
     const { type, dueAt, notes } = payload || {};
@@ -24,9 +24,11 @@ class TaskService {
 
     const id = crypto.randomUUID();
     const assignee = createdBy; // default assignment to creator for now
+    const tenant = tenantId || 'tenant-default';
 
     return await taskRepository.create({
       id,
+      tenantId: tenant,
       patientId,
       type,
       dueAt: due.toISOString(),

@@ -6,7 +6,8 @@ const taskService = require('../services/TaskService');
 // POST /api/patients/:patientId/tasks
 router.post('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
   try {
-    const result = await taskService.createTask(req.params.patientId, req.body, req.user.name);
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await taskService.createTask(req.params.patientId, req.body, req.user.name, tenantId);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({

@@ -69,6 +69,7 @@ router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin
 
     const id = crypto.randomUUID();
     const recordedBy = req.user.name;
+    const tenantId = req.user.tenantId || 'tenant-default';
 
     const enrichedData = {
       ...data,
@@ -89,9 +90,9 @@ router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin
 
     if (timestampToStore) {
       db.run(
-        `INSERT INTO DailyStats (id, patientId, type, data, recordedBy, timestamp)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, patientId, 'vital', dataString, recordedBy, timestampToStore],
+        `INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, tenantId, patientId, 'vital', dataString, recordedBy, timestampToStore],
         function (err) {
           if (err) return res.status(500).json({ error: err.message });
           return res.status(201).json({ id, patientId, type: 'vital' });
@@ -99,9 +100,9 @@ router.post('/ingest', authenticateToken, requireRole(['doctor', 'nurse', 'admin
       );
     } else {
       db.run(
-        `INSERT INTO DailyStats (id, patientId, type, data, recordedBy)
-         VALUES (?, ?, ?, ?, ?)`,
-        [id, patientId, 'vital', dataString, recordedBy],
+        `INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, tenantId, patientId, 'vital', dataString, recordedBy],
         function (err) {
           if (err) return res.status(500).json({ error: err.message });
           return res.status(201).json({ id, patientId, type: 'vital' });

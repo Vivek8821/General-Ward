@@ -20,7 +20,8 @@ router.use('/:patientId/notes', patientNotesRoutes);
 // Create a patient (Doctor or Nurse)
 router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req, res) => {
     try {
-        const result = await patientService.createPatient(req.body);
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const result = await patientService.createPatient({ ...req.body, tenantId });
         res.status(201).json(result);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -90,7 +91,8 @@ router.put('/:id', authenticateToken, requireRole(['doctor', 'nurse']), async (r
 router.post('/:id/discharge', authenticateToken, requireRole(['doctor']), async (req, res) => {
     try {
         const dischargedBy = req.user.name || 'Doctor';
-        const result = await patientService.dischargePatient(req.params.id, req.body, dischargedBy);
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const result = await patientService.dischargePatient(req.params.id, req.body, dischargedBy, tenantId);
         res.json(result);
     } catch (error) {
         if (error.message === 'Patient not found') {

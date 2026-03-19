@@ -1,8 +1,8 @@
 {
-  "lastPhase": "phase0",
-  "lastStep": "phase0-baseline-tests",
+  "lastPhase": "phase1",
+  "lastStep": "phase1-tenant-schema+auth-tenant-claim",
   "startedAt": "2026-03-19T15:11:14Z",
-  "finishedAt": "2026-03-19T15:12:55Z",
+  "finishedAt": "2026-03-19T15:19:34Z",
   "notes": [
     "Created Phase 0 crash-resume state file (IMPLEMENTATION_STATE.json). No existing file found before creation.",
     "Schema assumption check: ward-backend/db.js initDb() currently creates core tables without tenant concepts (no Tenants table; no tenantId columns).",
@@ -10,9 +10,15 @@
     "Baseline integration tests present under ward-backend/tests/integration/: audit.test.js, trends.test.js, rbac.test.js, tasks.test.js, stats.test.js, medications.test.js, auth.test.js, ingest.test.js, notes.test.js.",
     "Ran backend Jest (ward-backend `npm test`): 11 test suites passed; 26 tests passed; no snapshots.",
     "Ran frontend eslint (ward-frontend `npm run lint`): 0 errors; 9 warnings (hook dependency warnings + unused eslint-disable directives)."
+    ,
+    "Phase 1 implemented: added Tenants + tenantId columns (idempotent ALTERs + default backfill) in ward-backend/db.js.",
+    "Phase 1 implemented: included tenantId in JWT payload + AuthService response user payload; /api/auth/me returns req.user containing tenantId.",
+    "Phase 1 implemented: added tenantId into AuditLogs insert and all write/ingest paths (patients, tasks, escalations, notes, meds, stats/history/observations) so new rows are tenant-scoped going forward.",
+    "Re-ran backend Jest after Phase 1: 11/11 test suites passed; 26/26 tests passed."
   ],
   "artifacts": [
     "ward-backend:npm-test:passed",
-    "ward-frontend:eslint:warnings:9"
+    "ward-frontend:eslint:warnings:9",
+    "ward-backend:phase1:tenant-schema-migration+tenantJwtClaim:passed"
   ]
 }

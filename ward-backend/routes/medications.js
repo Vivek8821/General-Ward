@@ -78,6 +78,7 @@ router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
     const { patientId } = req.params;
     let { name, dosage, route, frequency, scheduledTimes, prn, startDate } = req.body;
     const id = crypto.randomUUID();
+    const tenantId = req.user.tenantId || 'tenant-default';
 
     if (!validateMedicationPayload({ name, dosage, route, frequency })) {
         return res.status(400).json({
@@ -90,9 +91,9 @@ router.post('/', authenticateToken, requireRole(['doctor']), (req, res) => {
     if (!startDate) startDate = new Date().toISOString().split('T')[0];
     
     db.run(
-        `INSERT INTO Medications (id, patientId, name, dosage, route, frequency, scheduledTimes, prn, startDate, status, prescribedBy)
+        `INSERT INTO Medications (id, tenantId, patientId, name, dosage, route, frequency, scheduledTimes, prn, startDate, status, prescribedBy)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
-        [id, patientId, name, dosage, route, frequency, scheduledTimes, prn ? 1 : 0, startDate, req.user.name],
+        [id, tenantId, patientId, name, dosage, route, frequency, scheduledTimes, prn ? 1 : 0, startDate, req.user.name],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.status(201).json({ id, name, dosage, route });
@@ -181,6 +182,7 @@ router.post('/:medId/administer', authenticateToken, requireRole(['doctor', 'nur
     const { status, notes, timestamp } = req.body;
     const { patientId, medId } = req.params;
     const id = crypto.randomUUID();
+    const tenantId = req.user.tenantId || 'tenant-default';
 
     if (!validateAdministrationPayload({ status, notes })) {
         return res.status(400).json({
@@ -201,14 +203,14 @@ router.post('/:medId/administer', authenticateToken, requireRole(['doctor', 'nur
             const doseActuallyGiven = status === 'given' ? (medRow?.dosage || null) : null;
 
             const query = timestamp
-                ? `INSERT INTO MedicationAdministrations (id, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy, timestamp)
+                ? `INSERT INTO MedicationAdministrations (id, tenantId, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy, timestamp)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-                : `INSERT INTO MedicationAdministrations (id, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                : `INSERT INTO MedicationAdministrations (id, tenantId, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
             const params = timestamp
-                ? [id, medId, patientId, status, notes, doseActuallyGiven, reasonCode, req.user.name, timestamp]
-                : [id, medId, patientId, status, notes, doseActuallyGiven, reasonCode, req.user.name];
+                ? [id, tenantId, medId, patientId, status, notes, doseActuallyGiven, reasonCode, req.user.name, timestamp]
+                : [id, tenantId, medId, patientId, status, notes, doseActuallyGiven, reasonCode, req.user.name];
 
             db.run(query, params, function(insertErr) {
                 if (insertErr) return res.status(500).json({ error: insertErr.message });

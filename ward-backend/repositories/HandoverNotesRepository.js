@@ -1,15 +1,17 @@
 const { db } = require('../db');
 
 class HandoverNotesRepository {
-  create({ id, patientId, shift, note, tags, createdBy }) {
+  create({ id, tenantId, patientId, shift, note, tags, createdBy }) {
     return new Promise((resolve, reject) => {
+      const tenant = tenantId || 'tenant-default';
       db.run(
-        `INSERT INTO HandoverNotes (id, patientId, shift, note, tags, createdBy) VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, patientId, shift, note, tags || null, createdBy],
+        `INSERT INTO HandoverNotes (id, tenantId, patientId, shift, note, tags, createdBy) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, tenant, patientId, shift, note, tags || null, createdBy],
         function (err) {
           if (err) return reject(err);
           resolve({
             id,
+            tenantId: tenant,
             patientId,
             shift,
             note,

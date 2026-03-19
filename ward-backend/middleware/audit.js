@@ -20,10 +20,11 @@ function auditLog(req, res, next) {
         const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
         const statusCode = res.statusCode;
         const success = statusCode >= 200 && statusCode < 400 ? 1 : 0;
+        const tenantId = req.user.tenantId || 'tenant-default';
 
         db.run(
-            `INSERT INTO AuditLogs (id, userId, userRole, action, resource, ipAddress, statusCode, success) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, userId, userRole, action, path, ipAddress, statusCode, success],
+            `INSERT INTO AuditLogs (id, userId, userRole, tenantId, action, resource, ipAddress, statusCode, success) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, userId, userRole, tenantId, action, path, ipAddress, statusCode, success],
             (err) => {
                 if (err) {
                     console.error('Audit Log Error:', err.message);

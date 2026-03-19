@@ -19,11 +19,16 @@ class AuthService {
             throw new Error('Invalid credentials');
         }
 
-        const token = jwt.sign({ id: user.id, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+        const tenantId = user.tenantId || 'tenant-default';
+        const token = jwt.sign(
+            { id: user.id, name: user.name, role: user.role, tenantId },
+            JWT_SECRET,
+            { expiresIn: '8h' }
+        );
         
         return {
             token,
-            user: { id: user.id, name: user.name, role: user.role }
+            user: { id: user.id, name: user.name, role: user.role, tenantId }
         };
     }
 }

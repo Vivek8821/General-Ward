@@ -6,7 +6,8 @@ const escalationService = require('../services/EscalationService');
 // POST /api/patients/:patientId/escalations (Nurse or Doctor)
 router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req, res) => {
     try {
-        const result = await escalationService.createEscalation(req.params.patientId, req.body.reason, req.user.name);
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const result = await escalationService.createEscalation(req.params.patientId, req.body.reason, req.user.name, tenantId);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });

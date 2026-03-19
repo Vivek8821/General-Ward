@@ -6,7 +6,8 @@ const handoverNotesService = require('../services/HandoverNotesService');
 // POST /api/patients/:patientId/notes
 router.post('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
   try {
-    const result = await handoverNotesService.createNote(req.params.patientId, req.body, req.user.name);
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await handoverNotesService.createNote(req.params.patientId, req.body, req.user.name, tenantId);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ error: error.message, code: 'VALIDATION_ERROR' });

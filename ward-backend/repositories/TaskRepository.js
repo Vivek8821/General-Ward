@@ -1,16 +1,18 @@
 const { db } = require('../db');
 
 class TaskRepository {
-  create({ id, patientId, type, dueAt, status, assignee, notes, createdBy }) {
+  create({ id, tenantId, patientId, type, dueAt, status, assignee, notes, createdBy }) {
     return new Promise((resolve, reject) => {
+      const tenant = tenantId || 'tenant-default';
       db.run(
-        `INSERT INTO Tasks (id, patientId, type, dueAt, status, assignee, notes, createdBy)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, patientId, type, dueAt, status || 'open', assignee, notes || null, createdBy],
+        `INSERT INTO Tasks (id, tenantId, patientId, type, dueAt, status, assignee, notes, createdBy)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, tenant, patientId, type, dueAt, status || 'open', assignee, notes || null, createdBy],
         function (err) {
           if (err) return reject(err);
           resolve({
             id,
+            tenantId: tenant,
             patientId,
             type,
             dueAt,

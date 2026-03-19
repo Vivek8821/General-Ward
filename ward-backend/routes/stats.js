@@ -124,6 +124,7 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), (req, res)
     const { patientId } = req.params;
     const { type, data } = req.body;
     const id = crypto.randomUUID();
+    const tenantId = req.user.tenantId || 'tenant-default';
     
     if (!type) {
         return res.status(400).json({
@@ -143,8 +144,8 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), (req, res)
     const dataString = typeof data === 'object' ? JSON.stringify(data) : data;
 
     db.run(
-        `INSERT INTO DailyStats (id, patientId, type, data, recordedBy) VALUES (?, ?, ?, ?, ?)`,
-        [id, patientId, type, dataString, req.user.name],
+        `INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy) VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, tenantId, patientId, type, dataString, req.user.name],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.status(201).json({

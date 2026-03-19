@@ -3,10 +3,11 @@ const { db } = require('../db');
 class PatientRepository {
     create(patientData) {
         return new Promise((resolve, reject) => {
+            const tenantId = patientData.tenantId || 'tenant-default';
             db.run(
-                `INSERT INTO Patients (id, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
-                [patientData.id, patientData.name, patientData.mrn, patientData.bedNumber, patientData.dob, patientData.diagnosis, patientData.allergies, patientData.careIntensity || 1],
+                `INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+                [patientData.id, tenantId, patientData.name, patientData.mrn, patientData.bedNumber, patientData.dob, patientData.diagnosis, patientData.allergies, patientData.careIntensity || 1],
                 function(err) {
                     if (err) return reject(err);
                     resolve({ ...patientData, status: 'active' });
@@ -73,7 +74,8 @@ class PatientRepository {
         });
     }
 
-    discharge(patientId, data, dischargedBy) {
+    discharge(patientId, data, dischargedBy, tenantId) {
+        const tenant = tenantId || 'tenant-default';
         return new Promise((resolve, reject) => {
             db.serialize(() => {
                 db.run("BEGIN TRANSACTION;");
@@ -96,12 +98,12 @@ class PatientRepository {
                 
                 db.run(`
                     INSERT INTO DischargeSummaries (
-                        id, patientId, reasonForAdmission, duration, 
+                        id, tenantId, patientId, reasonForAdmission, duration, 
                         medicationsDuringAdmission, dischargeVitals, 
                         dischargeRecommendations, dischargedBy
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
-                        summaryId, patientId, data.reasonForAdmission, data.duration,
+                        summaryId, tenant, patientId, data.reasonForAdmission, data.duration,
                         data.medicationsDuringAdmission, vitals,
                         data.dischargeRecommendations, dischargedBy
                     ],
