@@ -118,7 +118,7 @@ router.post('/', authenticateToken, requireRole(['doctor']), requireTenantPatien
     
     db.run(
         `INSERT INTO Medications (id, tenantId, patientId, name, dosage, route, frequency, scheduledTimes, prn, startDate, status, prescribedBy)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
         [id, tenantId, patientId, name, dosage, route, frequency, scheduledTimes, prn ? 1 : 0, startDate, req.user.name],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
