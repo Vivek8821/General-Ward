@@ -1,4 +1,4 @@
-import { Outlet, Navigate, useNavigate } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Moon, Sun, Hospital } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
@@ -67,6 +67,15 @@ export const ProtectedLayout = ({ allowedRoles }) => {
               </span>
             </div>
             
+            {user.role === 'admin' && (
+              <Link
+                to="/admin/audit"
+                className="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 whitespace-nowrap"
+              >
+                Audit log
+              </Link>
+            )}
+
             <button onClick={handleLogout} className="btn btn-secondary !py-2 !px-4 text-sm">
               <LogOut className="w-4 h-4" /> Logout
             </button>

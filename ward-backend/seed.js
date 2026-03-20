@@ -5,9 +5,10 @@ const crypto = require('crypto');
 async function seed() {
     console.log('Seeding database...');
     
-    // Hash passwords
+    // Hash passwords (dev/demo only)
     const drHash = await bcrypt.hash('1234', 10);
     const nurseHash = await bcrypt.hash('5678', 10);
+    const adminHash = await bcrypt.hash('9999', 10);
 
     // Disable FKs temporarily during seed to be 100% safe
     db.run('PRAGMA foreign_keys = OFF;', async () => {
@@ -23,9 +24,11 @@ async function seed() {
             // Re-init tables (ensures schema is up to date)
             await initDb();
             
-            // Users
-            db.run(`INSERT INTO Users (id, name, role, passwordHash) VALUES (?, ?, ?, ?)`, ['u1', 'Dr. Smith', 'doctor', drHash]);
-            db.run(`INSERT INTO Users (id, name, role, passwordHash) VALUES (?, ?, ?, ?)`, ['u2', 'Nurse Johnson', 'nurse', nurseHash]);
+            // Users (tenant-default matches JWT / tenant middleware defaults)
+            const tid = 'tenant-default';
+            db.run(`INSERT INTO Users (id, name, role, tenantId, passwordHash) VALUES (?, ?, ?, ?, ?)`, ['u1', 'Dr. Smith', 'doctor', tid, drHash]);
+            db.run(`INSERT INTO Users (id, name, role, tenantId, passwordHash) VALUES (?, ?, ?, ?, ?)`, ['u2', 'Nurse Johnson', 'nurse', tid, nurseHash]);
+            db.run(`INSERT INTO Users (id, name, role, tenantId, passwordHash) VALUES (?, ?, ?, ?, ?)`, ['admin-1', 'Ward Admin', 'admin', tid, adminHash]);
 
             // Patients
             const mockPatients = [

@@ -15,6 +15,7 @@ const escalationRoutes = require('./controllers/EscalationController');
 const historyRoutes = require('./routes/history');
 const tasksRoutes = require('./routes/tasks');
 const observationsRoutes = require('./routes/observations');
+const adminAuditRoutes = require('./routes/adminAudit');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,6 +37,7 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/escalations', escalationRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/observations', observationsRoutes);
+app.use('/api/admin', adminAuditRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

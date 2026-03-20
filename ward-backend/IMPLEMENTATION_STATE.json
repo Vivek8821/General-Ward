@@ -39,6 +39,8 @@
     ,
     "Phase 5.1 tenant isolation tests: added `tests/integration/tenantIsolation.test.js` to validate same-tenant success and cross-tenant 403 behavior across stats, medications, tasks, notes, observations ingest, and escalations global triage; fixed `POST /api/patients/:patientId/medications` SQL placeholder mismatch uncovered by these tests. Verified with `ward-backend npm test` passing (including new suite).",
     "Phase 5.2 crash-resilience validation: set `lastStep` to `phase5-2-crash-recovery-validation` and simulated a crash (short Node process exit(1)). Next ran `ward-backend npm test` to confirm resume-ready behavior."
+    ,
+    "Enterprise product compliance: added `idx_auditlogs_tenant_timestamp`, admin routes `ward-backend/routes/adminAudit.js` (list JSON, CSV export, tenant-scoped purge with dryRun), mounted at `/api/admin` in `server.js`. Integration tests `tests/integration/adminAudit.test.js`. Seed user Ward Admin (`admin-1`, PIN 9999, tenant-default). Frontend `AdminAudit.jsx`, route `/admin/audit`, Layout link. Docs: `README.md`, `docs/COMPLIANCE.md`, `ward-backend/.env.example`. Verified `ward-backend npm test` (44 tests), `ward-frontend` build, `npm run codemap`, stress `server5xx: 0` (12s, concurrency 8)."
   ],
   "artifacts": [
     "ward-backend:npm-test:passed",

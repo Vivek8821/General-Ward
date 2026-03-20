@@ -156,10 +156,15 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ## First-party file inventory
 
-**80** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**90** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
 
 <a id="fp-cursorrules-md"></a>
 ### `cursorrules.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-docs-compliance-md"></a>
+### `docs/COMPLIANCE.md`
 
 Documentation file that explains how to work with this repo/subsystem.
 
@@ -177,6 +182,11 @@ JSON configuration/state file used by the app or tooling.
 ### `README.md`
 
 Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-ward-backend-env-example"></a>
+### `ward-backend/.env.example`
+
+First-party file (open to inspect exact behavior).
 
 <a id="fp-ward-backend-codenav-md"></a>
 ### `ward-backend/CODENAV.md`
@@ -238,6 +248,11 @@ JSON configuration/state file used by the app or tooling.
 
 JSON configuration/state file used by the app or tooling.
 
+<a id="fp-ward-backend-repositories-authlockoutrepository-js"></a>
+### `ward-backend/repositories/AuthLockoutRepository.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-repositories-authrepository-js"></a>
 ### `ward-backend/repositories/AuthRepository.js`
 
@@ -260,6 +275,11 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-repositories-taskrepository-js"></a>
 ### `ward-backend/repositories/TaskRepository.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-routes-adminaudit-js"></a>
+### `ward-backend/routes/adminAudit.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -358,6 +378,11 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-tests-integration-adminaudit-test-js"></a>
+### `ward-backend/tests/integration/adminAudit.test.js`
+
+Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
 <a id="fp-ward-backend-tests-integration-audit-test-js"></a>
 ### `ward-backend/tests/integration/audit.test.js`
 
@@ -365,6 +390,11 @@ Integration test validating service/routes behavior (run via `npm test` in `ward
 
 <a id="fp-ward-backend-tests-integration-auth-test-js"></a>
 ### `ward-backend/tests/integration/auth.test.js`
+
+Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
+<a id="fp-ward-backend-tests-integration-history-test-js"></a>
+### `ward-backend/tests/integration/history.test.js`
 
 Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
 
@@ -398,6 +428,11 @@ Integration test validating service/routes behavior (run via `npm test` in `ward
 
 Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
 
+<a id="fp-ward-backend-tests-integration-tenantisolation-test-js"></a>
+### `ward-backend/tests/integration/tenantIsolation.test.js`
+
+Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
 <a id="fp-ward-backend-tests-integration-trends-test-js"></a>
 ### `ward-backend/tests/integration/trends.test.js`
 
@@ -412,6 +447,16 @@ Unit test validating service/routes behavior (run via `npm test` in `ward-backen
 ### `ward-backend/tests/services/ScoringService.test.js`
 
 Unit test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
+<a id="fp-ward-backend-ward-db-shm"></a>
+### `ward-backend/ward.db-shm`
+
+SQLite database artifact (runtime/generated data).
+
+<a id="fp-ward-backend-ward-db-wal"></a>
+### `ward-backend/ward.db-wal`
+
+SQLite database artifact (runtime/generated data).
 
 <a id="fp-ward-frontend-gitignore"></a>
 ### `ward-frontend/.gitignore`
@@ -528,6 +573,11 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-frontend-src-views-adminaudit-jsx"></a>
+### `ward-frontend/src/views/AdminAudit.jsx`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-frontend-src-views-dashboard-jsx"></a>
 ### `ward-frontend/src/views/Dashboard.jsx`
 
@@ -560,6 +610,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 80**, **thirdParty 30997**, **data 1**, total 31078.
+- Inventory counts: **firstParty 90**, **thirdParty 30997**, **data 1**, total 31088.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.

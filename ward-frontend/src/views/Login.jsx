@@ -75,12 +75,15 @@ export default function Login() {
             />
           </div>
 
-          <div className="flex gap-3 mt-4">
-             <button type="button" onClick={() => { setUsername('Dr. Smith'); setPassword('1234'); }} className="flex-1 btn bg-warning/20 text-warning hover:bg-warning/30 !py-2 !px-4 text-xs font-bold border border-warning/30">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+             <button type="button" onClick={() => { setUsername('Dr. Smith'); setPassword('1234'); }} className="btn bg-warning/20 text-warning hover:bg-warning/30 !py-2 !px-4 text-xs font-bold border border-warning/30">
                Autofill Doctor
              </button>
-             <button type="button" onClick={() => { setUsername('Nurse Johnson'); setPassword('5678'); }} className="flex-1 btn bg-info/20 text-info hover:bg-info/30 !py-2 !px-4 text-xs font-bold border border-info/30">
+             <button type="button" onClick={() => { setUsername('Nurse Johnson'); setPassword('5678'); }} className="btn bg-info/20 text-info hover:bg-info/30 !py-2 !px-4 text-xs font-bold border border-info/30">
                Autofill Nurse
+             </button>
+             <button type="button" onClick={() => { setUsername('Ward Admin'); setPassword('9999'); }} className="btn bg-bg-tertiary text-text-secondary hover:bg-hover !py-2 !px-4 text-xs font-bold border border-border">
+               Autofill Admin
              </button>
           </div>
 

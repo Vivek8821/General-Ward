@@ -7,6 +7,7 @@ import Login from './views/Login';
 import Dashboard from './views/Dashboard';
 import PatientDetail from './views/PatientDetail';
 import Tasks from './views/Tasks';
+import AdminAudit from './views/AdminAudit';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -20,6 +21,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="/" element={<Dashboard />} />
             <Route path="/patient/:id" element={<PatientDetail />} />
             <Route path="/tasks" element={<Tasks />} />
+          </Route>
+
+          <Route element={<ProtectedLayout allowedRoles={['admin']} />}>
+            <Route path="/admin/audit" element={<AdminAudit />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
