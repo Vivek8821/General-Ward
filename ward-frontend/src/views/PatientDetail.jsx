@@ -11,6 +11,8 @@ import SleepTab from '../components/stats/SleepTab';
 import MedsTab from '../components/stats/MedsTab';
 import DischargeSummaryTab from '../components/stats/DischargeSummaryTab';
 import { Archive } from 'lucide-react';
+import { allergiesHasRisk, formatAllergiesMutedLabel } from '../utils/patientDisplay';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 
 export default function PatientDetail() {
   const { id } = useParams();
@@ -84,6 +86,13 @@ export default function PatientDetail() {
     fetchPatientTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user?.role]);
+
+  useEffect(() => {
+    if (!patient) return;
+    if (patient.status !== 'discharged' && activeTab === 'discharge') {
+      setActiveTab('history');
+    }
+  }, [patient, patient?.status, patient?.id, activeTab]);
 
   const handleCompleteTask = async (taskId) => {
     try {
@@ -186,27 +195,62 @@ export default function PatientDetail() {
       {/* Patient Header Block */}
       <div className="card p-6 md:p-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-border stagger-slide-up">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-primary mb-1 flex items-center gap-3">
-              {patient.name}
-              <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full text-white ${
-                patient.status === 'discharged' ? 'bg-secondary' :
-                patient.careIntensity === 4 ? 'bg-danger' : 
-                patient.careIntensity === 3 ? 'bg-warning' : 
-                patient.careIntensity === 2 ? 'bg-info' : 'bg-success'
-              }`}>
-                {patient.status === 'discharged' ? 'ARCHIVED' : `Level ${patient.careIntensity}`}
-              </span>
-            </h1>
-            <div className="flex flex-wrap gap-3 text-sm mt-3">
-              <span className="bg-bg-tertiary px-3 py-1 rounded-full border border-border"><strong>MRN:</strong> {patient.mrn}</span>
-              <span className="bg-primary text-white px-3 py-1 rounded-full font-semibold">Bed {patient.bedNumber}</span>
-              <span className="bg-danger/10 text-danger px-3 py-1 rounded-full font-semibold">Allergies: {patient.allergies}</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-baseline gap-2 gap-y-1">
+              <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
+                {patient.name}
+              </h1>
+              {patient.status === 'discharged' && (
+                <span className="text-xs font-semibold uppercase tracking-wide rounded-md px-2 py-0.5 bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-600">
+                  Archived
+                </span>
+              )}
+              {patient.status !== 'discharged' && patient.careIntensity >= 3 && (
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide rounded-md px-2 py-0.5 border ${
+                    patient.careIntensity === 4
+                      ? 'bg-red-950/50 text-red-200 border-red-800'
+                      : 'bg-amber-950/40 text-amber-200 border-amber-700/50'
+                  }`}
+                >
+                  Level {patient.careIntensity}
+                </span>
+              )}
             </div>
-            <p className="mt-4 text-text-secondary"><strong>Diagnosis:</strong> {patient.diagnosis}</p>
+            <div
+              className="mt-3 text-sm text-slate-600 dark:text-slate-400 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-900/50 px-3 py-2 font-medium"
+              aria-label="Patient identifiers"
+            >
+              <span className="whitespace-normal break-words">
+                <span className="text-slate-500 dark:text-slate-500">MRN:</span> {patient.mrn}
+                <span className="mx-2 text-slate-400 dark:text-slate-600" aria-hidden>
+                  |
+                </span>
+                <span className="text-slate-500 dark:text-slate-500">Bed</span> {patient.bedNumber}
+                <span className="mx-2 text-slate-400 dark:text-slate-600" aria-hidden>
+                  |
+                </span>
+                <span className="text-slate-500 dark:text-slate-500">Level</span> {patient.careIntensity}
+              </span>
+            </div>
+            <div className="mt-2 text-sm">
+              {allergiesHasRisk(patient.allergies) ? (
+                <span className="inline-flex items-center rounded-md border border-red-800 bg-red-950/45 px-2.5 py-1 font-semibold text-red-200">
+                  Allergies: {String(patient.allergies).trim()}
+                </span>
+              ) : (
+                <p className="text-slate-500 dark:text-slate-400">
+                  <span className="font-medium text-slate-600 dark:text-slate-500">Allergies:</span>{' '}
+                  {formatAllergiesMutedLabel(patient.allergies)}
+                </p>
+              )}
+            </div>
+            <p className="mt-4 text-text-secondary">
+              <strong>Diagnosis:</strong> {patient.diagnosis}
+            </p>
           </div>
 
-          <div className="flex flex-wrap md:flex-col gap-3">
+          <div className="flex flex-wrap md:flex-col gap-3 shrink-0">
             {patient.status !== 'discharged' && (
                <>
                  <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 w-full md:w-auto">Edit Info</button>
@@ -216,7 +260,7 @@ export default function PatientDetail() {
                    </button>
                  )}
                  {user.role === 'doctor' && (
-                   <button onClick={prepareDischarge} className="btn btn-warning !py-2 w-full md:w-auto">Discharge</button>
+                   <button onClick={prepareDischarge} className="btn btn-primary !py-2 w-full md:w-auto">Discharge</button>
                  )}
                </>
             )}
@@ -232,8 +276,8 @@ export default function PatientDetail() {
         {patientTasks.length > 0 && (
           <div className="mt-6 bg-bg-tertiary border border-border rounded-xl p-4">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="font-bold text-primary flex items-center gap-2">
-                <Clock className="w-4 h-4" /> Tasks Due
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-500 dark:text-slate-400" /> Tasks Due
               </h3>
               <div className="text-xs uppercase tracking-widest font-bold text-text-muted">
                 Open: {patientTasks.length}
@@ -314,7 +358,7 @@ export default function PatientDetail() {
                          <div className="col-span-2">
                              <label className="block text-sm font-bold mb-1 flex items-center justify-between">
                                  <span className="text-text-secondary">Diagnosis</span>
-                                 {user.role === 'nurse' && <span className="text-xs text-warning border border-warning/50 px-2 py-0.5 rounded-full">Doctors Only</span>}
+                                 {user.role === 'nurse' && <span className="text-xs text-warning border border-warning/50 px-2 py-0.5 rounded-md">Doctors Only</span>}
                              </label>
                              <textarea 
                                 className={`input-field min-h-[80px] ${user.role === 'nurse' ? 'bg-bg-tertiary opacity-70 cursor-not-allowed' : ''}`} 
@@ -337,12 +381,12 @@ export default function PatientDetail() {
         {/* Discharge Modal / Form Overlay */}
         {isDischarging && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 overflow-y-auto">
-               <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-2xl border border-warning/50 my-8">
-                  <div className="p-6 border-b border-warning/30 bg-warning/10 rounded-t-2xl">
-                     <h2 className="text-2xl font-black text-warning flex items-center gap-3">
-                         <AlertTriangle className="w-6 h-6" /> Official Patient Discharge
+               <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-2xl border border-border my-8">
+                  <div className="p-6 border-b border-border bg-bg-tertiary rounded-t-2xl">
+                     <h2 className="text-2xl font-bold text-text-primary flex items-center gap-3">
+                         <FileText className="w-6 h-6 text-slate-500 dark:text-slate-400" aria-hidden /> Official Patient Discharge
                      </h2>
-                     <p className="text-warning/80 text-sm mt-1">Please completely fill out the clinical discharge summary for {patient.name}.</p>
+                     <p className="text-text-muted text-sm mt-1">Please completely fill out the clinical discharge summary for {patient.name}.</p>
                   </div>
                   <form onSubmit={handleDischargeCase} className="p-6 space-y-6">
                      
@@ -394,55 +438,58 @@ export default function PatientDetail() {
 
                      <div className="flex justify-end gap-3 pt-4">
                          <button type="button" onClick={() => setIsDischarging(false)} className="btn btn-secondary !py-3 !px-6">Cancel</button>
-                        <button type="submit" className="btn btn-warning !py-3 !px-6">Submit Discharge</button>
+                        <button type="submit" className="btn btn-primary !py-3 !px-6">Submit Discharge</button>
                      </div>
                   </form>
                </div>
             </div>
         )}
 
-        {/* Navigation Tabs */}
-        <div className="flex gap-2 overflow-x-auto pt-1 pb-5 border-b-2 border-border mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {patient.status === 'discharged' && (
-             <TabButton active={activeTab === 'discharge'} onClick={() => setActiveTab('discharge')} icon={<Archive size={18}/>}>Discharge Summary</TabButton>
-          )}
-          <TabButton active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<FileText size={18}/>}>Profile & History</TabButton>
-          <TabButton active={activeTab === 'vitals'} onClick={() => setActiveTab('vitals')} icon={<Activity size={18}/>}>Vitals & Symptoms</TabButton>
-          <TabButton active={activeTab === 'diet'} onClick={() => setActiveTab('diet')} icon={<Apple size={18}/>}>Diet & Nutrition</TabButton>
-          <TabButton active={activeTab === 'sleep'} onClick={() => setActiveTab('sleep')} icon={<Moon size={18}/>}>Sleep Log</TabButton>
-          <TabButton active={activeTab === 'meds'} onClick={() => setActiveTab('meds')} icon={<ClipboardList size={18}/>}>Medications</TabButton>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList aria-label="Patient chart sections">
+            {patient.status === 'discharged' && (
+              <TabsTrigger value="discharge">
+                <Archive size={18} aria-hidden /> Discharge Summary
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="history">
+              <FileText size={18} aria-hidden /> Profile &amp; History
+            </TabsTrigger>
+            <TabsTrigger value="vitals">
+              <Activity size={18} aria-hidden /> Vitals &amp; Symptoms
+            </TabsTrigger>
+            <TabsTrigger value="diet">
+              <Apple size={18} aria-hidden /> Diet &amp; Nutrition
+            </TabsTrigger>
+            <TabsTrigger value="sleep">
+              <Moon size={18} aria-hidden /> Sleep Log
+            </TabsTrigger>
+            <TabsTrigger value="meds">
+              <ClipboardList size={18} aria-hidden /> Medications
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Tab Contents */}
-        <div className="min-h-[150px] relative transition-all duration-300">
-          {activeTab === 'discharge' && patient.status === 'discharged' && <DischargeSummaryTab patientId={id} />}
-          {activeTab === 'history' && (
-            <>
-              <HistoryTab patientId={id} readOnly={patient.status === 'discharged'} />
-              <HandoverNotesPanel patientId={id} readOnly={patient.status === 'discharged'} />
-            </>
-          )}
-          {activeTab === 'vitals' && <VitalsTab patientId={id} readOnly={patient.status === 'discharged'} />}
-          {activeTab === 'diet' && <DietTab patientId={id} readOnly={patient.status === 'discharged'} />}
-          {activeTab === 'sleep' && <SleepTab patientId={id} readOnly={patient.status === 'discharged'} />}
-          {activeTab === 'meds' && <MedsTab patientId={id} readOnly={patient.status === 'discharged'} />}
-        </div>
+          <TabsContent value="discharge">
+            {patient.status === 'discharged' && <DischargeSummaryTab patientId={id} />}
+          </TabsContent>
+          <TabsContent value="history">
+            <HistoryTab patientId={id} readOnly={patient.status === 'discharged'} />
+            <HandoverNotesPanel patientId={id} readOnly={patient.status === 'discharged'} />
+          </TabsContent>
+          <TabsContent value="vitals">
+            <VitalsTab patientId={id} readOnly={patient.status === 'discharged'} />
+          </TabsContent>
+          <TabsContent value="diet">
+            <DietTab patientId={id} readOnly={patient.status === 'discharged'} />
+          </TabsContent>
+          <TabsContent value="sleep">
+            <SleepTab patientId={id} readOnly={patient.status === 'discharged'} />
+          </TabsContent>
+          <TabsContent value="meds">
+            <MedsTab patientId={id} readOnly={patient.status === 'discharged'} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
-  );
-}
-
-function TabButton({ children, active, onClick, icon }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-6 py-3 font-semibold text-sm transition-all whitespace-nowrap flex items-center gap-2 rounded-t-lg ${
-        active 
-        ? 'text-primary bg-primary/5' 
-        : 'text-text-secondary hover:text-primary hover:bg-hover'
-      }`}
-    >
-      {icon} {children}
-    </button>
   );
 }

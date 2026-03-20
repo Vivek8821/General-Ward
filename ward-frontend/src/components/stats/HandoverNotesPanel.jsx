@@ -54,7 +54,6 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
       setNotes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      // If backend route isn't found (common during deploy/refresh), treat it as empty.
       if (err?.status === 404) {
         setNotes([]);
       } else {
@@ -91,8 +90,8 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
     <div className="animate-in fade-in pt-4 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold flex items-center gap-2">
-            <Clock className="text-secondary" size={18} /> Handover Notes
+          <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-50">
+            <Clock className="text-slate-500 dark:text-slate-400 shrink-0" size={18} aria-hidden /> Handover Notes
           </h3>
           <p className="text-sm text-text-muted mt-1">
             Shift-based notes to support clinical handover and accountability.
@@ -105,7 +104,7 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
               Shift
             </label>
             <select
-              className="input-field !py-2 !text-sm"
+              className="input-field !py-2 !text-sm !rounded-md"
               value={shiftFilter}
               onChange={(e) => setShiftFilter(e.target.value)}
             >
@@ -121,7 +120,7 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
               Range
             </label>
             <select
-              className="input-field !py-2 !text-sm"
+              className="input-field !py-2 !text-sm !rounded-md"
               value={range}
               onChange={(e) => setRange(e.target.value)}
             >
@@ -136,14 +135,14 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
       </div>
 
       {canCreate && !readOnly && (
-        <form onSubmit={handleCreate} className="bg-bg-tertiary p-5 rounded-xl border border-border space-y-4">
+        <form onSubmit={handleCreate} className="bg-bg-tertiary p-5 rounded-md border border-border space-y-4">
           <div className="flex flex-col md:flex-row md:items-start gap-4">
             <div className="min-w-[160px]">
               <label className="block text-xs font-bold mb-1 text-text-secondary uppercase tracking-widest">
                 Shift
               </label>
               <select
-                className="input-field !py-2"
+                className="input-field !py-2 !rounded-md"
                 value={createShift}
                 onChange={(e) => setCreateShift(e.target.value)}
               >
@@ -160,7 +159,7 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
                 Note
               </label>
               <textarea
-                className="input-field min-h-[90px]"
+                className="input-field min-h-[90px] !rounded-md"
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="e.g., Overnight observation, response to treatment, outstanding items..."
@@ -175,7 +174,7 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
             </label>
             <input
               type="text"
-              className="input-field !py-2"
+              className="input-field !py-2 !rounded-md"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="Comma-separated (e.g., sepsis, falls)"
@@ -200,11 +199,11 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
       ) : (
         <div className="space-y-4">
           {notes.map((n) => (
-            <div key={n.id} className="bg-bg-tertiary p-5 rounded-xl border border-border">
+            <div key={n.id} className="bg-bg-tertiary p-5 rounded-md border border-border">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20`}>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-md bg-primary/10 text-primary border border-primary/20">
                       {n.shift}
                     </span>
                     <span className="text-sm text-text-muted">
@@ -236,4 +235,3 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
     </div>
   );
 }
-

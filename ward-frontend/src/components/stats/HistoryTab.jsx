@@ -60,7 +60,7 @@ export default function HistoryTab({ patientId, readOnly }) {
   return (
     <div className="animate-in fade-in pt-4">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold flex items-center gap-2"><FileText className="text-secondary"/> Extensive Medical History</h3>
+        <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-50"><FileText className="text-slate-500 dark:text-slate-400 shrink-0" aria-hidden /> Extensive Medical History</h3>
         
         {isDoctor && !isEditing && !readOnly && (
           <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 !px-4 text-sm">
@@ -75,8 +75,8 @@ export default function HistoryTab({ patientId, readOnly }) {
           <p className="font-medium">Loading medical history...</p>
         </div>
       ) : isEditing ? (
-        <form onSubmit={handleSubmit} className="bg-bg-tertiary p-6 rounded-xl border border-border mt-4 animate-in fade-in">
-          <h4 className="font-bold mb-4 text-primary flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="bg-bg-tertiary p-6 rounded-md border border-border mt-4 animate-in fade-in">
+          <h4 className="font-bold mb-4 text-text-primary flex items-center gap-2">
              <FileText className="w-5 h-5"/> Edit Medical History
           </h4>
           
@@ -109,10 +109,20 @@ export default function HistoryTab({ patientId, readOnly }) {
           </div>
         </form>
       ) : !history ? (
-        <div className="text-center p-10 bg-bg-tertiary rounded-2xl border-2 border-dashed border-border text-text-muted flex flex-col items-center justify-center gap-3 mt-4">
-          <FileText size={48} className="opacity-20" />
-          <p className="font-semibold">No extensive medical history profile has been established yet.</p>
-          {isDoctor && <p className="text-sm">Click "Create Profile" to begin.</p>}
+        <div className="text-center p-10 mt-4 flex flex-col items-center justify-center gap-4 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900/50 text-text-muted">
+          <FileText size={48} className="opacity-25 text-slate-400 dark:text-slate-600 shrink-0" aria-hidden />
+          <p className="font-semibold text-text-secondary max-w-md">No extensive medical history profile has been established yet.</p>
+          {isDoctor && !readOnly && (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="btn btn-secondary !py-2 !px-5 text-sm"
+              >
+                <Edit2 className="w-4 h-4" /> Create Profile
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="card p-6 border-l-4 border-l-secondary">

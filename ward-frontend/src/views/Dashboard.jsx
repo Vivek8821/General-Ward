@@ -4,15 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { Users, Bed, Activity, AlertTriangle, Plus, Search, Archive } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-function patientSeverityBorder(patient, viewMode) {
-  if (viewMode === 'archived') return 'border-l-slate-500';
-  if (patient.status === 'escalated') return 'border-l-red-500';
-  if (patient.careIntensity === 4) return 'border-l-red-600';
-  if (patient.careIntensity === 3) return 'border-l-amber-500';
-  if (patient.careIntensity === 2) return 'border-l-sky-500';
-  return 'border-l-emerald-500';
-}
-
 export default function Dashboard() {
   const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
   const [patients, setPatients] = useState([]);
@@ -237,7 +228,7 @@ export default function Dashboard() {
               <div 
                 key={patient.id} 
                 onClick={() => window.location.href = `/patient/${patient.id}`}
-                className={`card p-6 cursor-pointer hover:-translate-y-0.5 flex flex-col justify-between h-full group transition-all duration-300 border-l-4 ${patientSeverityBorder(patient, viewMode)}`}
+                className="card p-6 cursor-pointer hover:-translate-y-0.5 flex flex-col justify-between h-full group transition-all duration-300"
               >
                 <div>
                   <div className="flex items-baseline justify-between gap-2 mb-3">
