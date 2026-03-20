@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Hospital } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -29,8 +30,23 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-bg-primary to-bg-tertiary p-4">
       <div className="card p-12 text-center max-w-[420px] w-full animate-in fade-in slide-in-from-bottom-5 duration-500">
-        <h1 className="text-primary text-3xl font-bold mb-2">🏥 General Ward</h1>
-        <p className="text-text-secondary mb-8 text-lg">Sign in to your account</p>
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-bg-tertiary text-slate-600 dark:text-slate-400"
+            aria-hidden
+          >
+            <Hospital className="h-6 w-6" strokeWidth={1.75} />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+              General Ward
+            </h1>
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 mt-1">
+              Clinical operations
+            </p>
+          </div>
+          <p className="text-text-secondary text-base pt-1">Sign in to your account</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 text-left">
           {error && <div className="text-danger bg-danger/10 p-3 rounded-lg text-sm font-semibold text-center">{error}</div>}

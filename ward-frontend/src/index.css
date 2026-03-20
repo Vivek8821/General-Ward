@@ -186,13 +186,13 @@ body {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   }
   
-  /* OLED Smooth Deep Cards */
+  /* Dark cards: depth from border, not hover bloom */
   .dark .card {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   }
-  
+
   .dark .card:hover {
-     box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   }
   
   /* Inputs */

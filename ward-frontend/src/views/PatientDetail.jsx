@@ -169,15 +169,15 @@ export default function PatientDetail() {
 
       {/* Escalation Banner for Doctors */}
       {user.role === 'doctor' && patient.status === 'escalated' && escalations.length > 0 && (
-          <div className="bg-danger/10 border-l-4 border-danger p-5 rounded-r-xl shadow-sm mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="bg-red-500/10 border border-red-500/20 border-l-4 border-l-red-500 p-5 rounded-r-xl mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                  <h3 className="text-danger font-bold text-lg flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 animate-pulse" /> Action Required: Case Escalated
+                  <h3 className="text-red-400 font-semibold text-lg flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden /> Action Required: Case Escalated
                   </h3>
                   <p className="text-text-primary mt-1 font-semibold">Reason: {escalations[0].reason}</p>
                   <p className="text-xs text-text-muted mt-1">Escalated by: {escalations[0].escalatedBy}</p>
               </div>
-              <button onClick={() => handleReviewCase(escalations[0].id)} className="btn btn-danger whitespace-nowrap">
+              <button onClick={() => handleReviewCase(escalations[0].id)} className="bg-red-800 text-white hover:bg-red-900 border border-red-900 px-5 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors">
                   Mark as Reviewed
               </button>
           </div>
@@ -402,7 +402,7 @@ export default function PatientDetail() {
         )}
 
         {/* Navigation Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2 border-b-2 border-border mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2 overflow-x-auto pt-1 pb-5 border-b-2 border-border mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {patient.status === 'discharged' && (
              <TabButton active={activeTab === 'discharge'} onClick={() => setActiveTab('discharge')} icon={<Archive size={18}/>}>Discharge Summary</TabButton>
           )}
@@ -436,10 +436,10 @@ function TabButton({ children, active, onClick, icon }) {
   return (
     <button
       onClick={onClick}
-      className={`px-6 py-3 font-semibold text-sm transition-all whitespace-nowrap flex items-center gap-2 border-b-2 -mb-[22px] ${
+      className={`px-6 py-3 font-semibold text-sm transition-all whitespace-nowrap flex items-center gap-2 rounded-t-lg ${
         active 
-        ? 'text-primary border-primary bg-primary/5 rounded-t-lg' 
-        : 'text-text-secondary border-transparent hover:text-primary hover:bg-hover rounded-t-lg'
+        ? 'text-primary bg-primary/5' 
+        : 'text-text-secondary hover:text-primary hover:bg-hover'
       }`}
     >
       {icon} {children}

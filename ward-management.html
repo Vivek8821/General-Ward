@@ -23,7 +23,7 @@
             --text-secondary: #666666;
             --text-muted: #999999;
             --border-color: #e0e0e0;
-            --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.06);
             --hover-bg: #f8f9fa;
             --input-bg: #ffffff;
             --modal-overlay: rgba(0,0,0,0.5);
@@ -38,7 +38,7 @@
             --text-secondary: #cbd5e1;
             --text-muted: #94a3b8;
             --border-color: #475569;
-            --card-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.35);
             --hover-bg: #334155;
             --input-bg: #334155;
             --modal-overlay: rgba(0,0,0,0.7);
@@ -91,16 +91,51 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .login-box h1 {
-            color: var(--primary);
-            margin-bottom: 10px;
-            font-size: 32px;
-            font-weight: 700;
+        .login-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
         }
 
-        .login-box p {
+        .login-brand-mark {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
             color: var(--text-secondary);
-            margin-bottom: 35px;
+        }
+
+        .login-brand-mark svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .login-brand h1 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .login-brand .login-brand-tagline {
+            margin: 4px 0 0;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
+        }
+
+        .login-box > p.subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 28px;
             font-size: 16px;
         }
 
@@ -167,15 +202,54 @@
             align-items: center;
             margin-bottom: 30px;
             border-radius: 16px;
-            position: sticky;
-            top: 20px;
-            z-index: 100;
         }
 
-        .header h1 {
-            color: var(--primary);
-            font-size: 26px;
-            font-weight: 700;
+        .app-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .app-brand-mark {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .app-brand-mark svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .app-brand-text {
+            min-width: 0;
+        }
+
+        .app-brand-text h1 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .app-brand-tagline {
+            display: block;
+            margin-top: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
         }
 
         .user-info {
@@ -190,14 +264,15 @@
         }
 
         .user-role {
-            background: var(--primary);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.08em;
         }
 
         .theme-toggle {
@@ -312,9 +387,10 @@
             background: var(--bg-secondary);
             padding: 30px;
             border-radius: 16px;
+            border: 1px solid var(--border-color);
             box-shadow: var(--card-shadow);
             text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.2s ease, border-color 0.2s ease;
             position: relative;
             overflow: hidden;
         }
@@ -330,8 +406,12 @@
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+            border-color: var(--text-muted);
+        }
+
+        [data-theme="dark"] .stat-card:hover {
+            border-color: var(--border-color);
         }
 
         .stat-card h3 {
@@ -352,6 +432,7 @@
         .patient-list {
             background: var(--bg-secondary);
             border-radius: 16px;
+            border: 1px solid var(--border-color);
             box-shadow: var(--card-shadow);
             overflow: hidden;
         }
@@ -418,31 +499,39 @@
         }
 
         .bed-badge {
-            background: var(--primary);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 700;
-            font-size: 14px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
         }
 
         .status-badge {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 600;
             margin-left: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
         }
 
         .status-active {
-            background: rgba(39, 174, 96, 0.15);
+            border-color: rgba(39, 174, 96, 0.35);
             color: var(--success);
+            background: rgba(39, 174, 96, 0.06);
         }
 
         /* Patient Detail */
         .patient-detail {
             background: var(--bg-secondary);
             border-radius: 16px;
+            border: 1px solid var(--border-color);
             box-shadow: var(--card-shadow);
             padding: 35px;
             animation: fadeIn 0.4s ease;
@@ -856,7 +945,8 @@
 
         /* Discharged status badge */
         .status-discharged {
-            background: rgba(148, 163, 184, 0.15);
+            border-color: var(--border-color);
+            background: var(--bg-tertiary);
             color: var(--text-muted);
         }
 
@@ -881,8 +971,16 @@
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
         <div class="login-box">
-            <h1>🏥 General Ward</h1>
-            <p>Enter your PIN to continue</p>
+            <div class="login-brand">
+                <span class="login-brand-mark" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v4"/><path d="M14 8h-4"/><path d="M18 22v-6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v6"/><path d="M2 22h20"/><path d="M10 14h4"/></svg>
+                </span>
+                <div>
+                    <h1>General Ward</h1>
+                    <p class="login-brand-tagline">Clinical operations</p>
+                </div>
+            </div>
+            <p class="subtitle">Enter your PIN to continue</p>
             <div class="pin-display" id="pinDisplay">••••</div>
             <div class="pin-pad">
                 <button class="pin-btn" onclick="enterDigit('1')">1</button>
@@ -907,7 +1005,15 @@
         <div class="container">
             <!-- Header -->
             <div class="header">
-                <h1>🏥 General Ward Management</h1>
+                <div class="app-brand">
+                    <span class="app-brand-mark" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v4"/><path d="M14 8h-4"/><path d="M18 22v-6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v6"/><path d="M2 22h20"/><path d="M10 14h4"/></svg>
+                    </span>
+                    <div class="app-brand-text">
+                        <h1>General Ward</h1>
+                        <span class="app-brand-tagline">Management platform</span>
+                    </div>
+                </div>
                 <div class="user-info">
                     <div class="connection-status connection-offline" id="connectionStatus">
                         <span>●</span> <span id="connectionText">Offline</span>

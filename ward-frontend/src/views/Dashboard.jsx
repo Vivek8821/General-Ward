@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Users, Bed, Activity, AlertCircle, Plus, Search, Archive } from 'lucide-react';
+import { Users, Bed, Activity, AlertTriangle, Plus, Search, Archive } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+function patientSeverityBorder(patient, viewMode) {
+  if (viewMode === 'archived') return 'border-l-slate-500';
+  if (patient.status === 'escalated') return 'border-l-red-500';
+  if (patient.careIntensity === 4) return 'border-l-red-600';
+  if (patient.careIntensity === 3) return 'border-l-amber-500';
+  if (patient.careIntensity === 2) return 'border-l-sky-500';
+  return 'border-l-emerald-500';
+}
 
 export default function Dashboard() {
   const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
@@ -128,13 +137,13 @@ export default function Dashboard() {
       <div className="flex gap-4 border-b border-border pb-4 w-fit">
         <button 
           onClick={() => setViewMode('active')} 
-          className={`flex items-center gap-2 font-bold px-4 py-2 rounded-lg transition-all ${viewMode === 'active' ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:text-primary hover:bg-primary/10'}`}
+          className={`flex items-center gap-2 font-semibold px-4 py-2 rounded-lg border transition-colors ${viewMode === 'active' ? 'border-zinc-400 bg-zinc-200 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100' : 'border-transparent text-text-muted hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200'}`}
         >
           <Activity size={18} /> Active Ward
         </button>
         <button 
           onClick={() => setViewMode('archived')} 
-          className={`flex items-center gap-2 font-bold px-4 py-2 rounded-lg transition-all ${viewMode === 'archived' ? 'bg-secondary text-white shadow-md' : 'text-text-muted hover:text-secondary hover:bg-secondary/10'}`}
+          className={`flex items-center gap-2 font-semibold px-4 py-2 rounded-lg border transition-colors ${viewMode === 'archived' ? 'border-zinc-400 bg-zinc-200 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100' : 'border-transparent text-text-muted hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200'}`}
         >
           <Archive size={18} /> Hospital Archives
         </button>
@@ -142,14 +151,14 @@ export default function Dashboard() {
 
       {/* Escalation Alert Bar (Doctor Only) */}
       {viewMode === 'active' && user.role === 'doctor' && escalated.length > 0 && (
-        <div className="bg-danger/10 border-l-4 border-danger p-5 rounded-r-xl flex justify-between items-center shadow-sm">
-          <div className="flex items-center gap-3 text-danger font-bold text-lg">
-            <AlertCircle className="w-6 h-6 animate-pulse" />
+        <div className="bg-red-500/10 border border-red-500/20 border-l-4 border-l-red-500 p-5 rounded-r-xl flex justify-between items-center gap-4">
+          <div className="flex items-center gap-3 text-red-400 font-semibold text-lg">
+            <AlertTriangle className="w-6 h-6 shrink-0" aria-hidden />
             {escalated.length} Patient{escalated.length > 1 ? 's' : ''} Require Immediate Attention
           </div>
           <button 
             onClick={() => setIsReviewingCases(!isReviewingCases)}
-            className={`btn ${isReviewingCases ? 'bg-bg-tertiary text-danger border border-danger' : 'btn-danger'} text-sm !px-4 !py-2`}
+            className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors ${isReviewingCases ? 'btn bg-bg-tertiary text-red-400 border border-red-500/40' : 'bg-red-800 text-white hover:bg-red-900 border border-red-900'}`}
           >
             {isReviewingCases ? 'View All Patients' : 'Review Cases'}
           </button>
@@ -162,7 +171,7 @@ export default function Dashboard() {
           <StatCard title="Total Patients" value={patients.length} icon={<Users size={24} />} />
           <StatCard title="Active Beds" value={activePatients.length} icon={<Bed size={24} />} />
           <StatCard title="Critical Care (Level 4)" value={activePatients.filter(p => p.careIntensity === 4).length} icon={<Activity size={24} />} color="text-danger" />
-          <StatCard title="Escalations" value={escalatedPatients.length} icon={<AlertCircle size={24} />} color="text-warning" />
+          <StatCard title="Escalations" value={escalatedPatients.length} icon={<AlertTriangle size={22} strokeWidth={2} />} color="text-red-400" />
         </div>
       )}
 
@@ -203,7 +212,7 @@ export default function Dashboard() {
             {viewMode === 'active' && user.role === 'nurse' && escalatedPatients.length > 0 && (
               <button
                 onClick={() => setIsReviewingCases(!isReviewingCases)}
-                className={`btn ${isReviewingCases ? 'bg-bg-tertiary text-danger border border-danger' : 'btn-danger'} !px-4 whitespace-nowrap`}
+                className={`text-sm px-4 py-2.5 rounded-xl font-semibold transition-colors whitespace-nowrap ${isReviewingCases ? 'btn bg-bg-tertiary text-red-400 border border-red-500/40' : 'bg-red-800 text-white hover:bg-red-900 border border-red-900'}`}
               >
                 {isReviewingCases ? 'View All Patients' : 'Review Escalated Patients'}
               </button>
@@ -228,41 +237,33 @@ export default function Dashboard() {
               <div 
                 key={patient.id} 
                 onClick={() => window.location.href = `/patient/${patient.id}`}
-                className={`card p-6 cursor-pointer hover:-translate-y-2 flex flex-col justify-between h-full group transition-all duration-300 ${patient.status === 'escalated' ? 'border-danger/60' : ''}`}
+                className={`card p-6 cursor-pointer hover:-translate-y-0.5 flex flex-col justify-between h-full group transition-all duration-300 border-l-4 ${patientSeverityBorder(patient, viewMode)}`}
               >
                 <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="bg-bg-tertiary px-3 py-1 rounded-lg shadow-inner border border-transparent font-black text-sm text-text-secondary">
-                      {viewMode === 'active' ? `Level ${patient.careIntensity}` : 'DISCHARGED'}
-                    </div>
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg ${
-                      patient.careIntensity === 4 ? 'bg-danger' : 
-                      patient.careIntensity === 3 ? 'bg-warning' : 
-                      patient.careIntensity === 2 ? 'bg-info' : 
-                      'bg-success'
-                    }`}>
-                      {patient.bedNumber}
-                    </div>
+                  <div className="flex items-baseline justify-between gap-2 mb-3">
+                    <h3 className="text-xl font-bold text-text-primary group-hover:text-primary transition-colors min-w-0 truncate">
+                      {patient.name}
+                      <span className="font-semibold text-text-secondary whitespace-nowrap"> · Bed {patient.bedNumber}</span>
+                    </h3>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium shrink-0">
+                      {viewMode === 'active' ? `L${patient.careIntensity}` : 'Out'}
+                    </span>
+                  </div>
+                  <div className="text-slate-400 text-xs font-medium uppercase tracking-wider font-mono mb-4">
+                    MRN {patient.mrn}
                   </div>
                   
-                  <h3 className="text-xl font-bold text-primary group-hover:text-primary-dark transition-colors mb-1 truncate">
-                    {patient.name}
-                  </h3>
-                  <div className="text-sm text-text-muted font-mono mb-4">
-                    MRN: {patient.mrn}
-                  </div>
-                  
-                  <div className="bg-input rounded-xl p-4 shadow-inner min-h-[80px]">
-                     <span className="text-xs uppercase font-bold text-text-muted block mb-1 tracking-wider">Primary Diagnosis</span>
-                     <span className="text-sm font-semibold text-text-primary line-clamp-2">{patient.diagnosis}</span>
+                  <div className="bg-zinc-900 rounded-xl p-4 min-h-[80px] border border-zinc-700/80">
+                     <span className="text-slate-400 text-xs font-medium uppercase tracking-wider block mb-1.5">Primary Diagnosis</span>
+                     <span className="text-sm font-medium text-white line-clamp-2">{patient.diagnosis}</span>
                   </div>
                 </div>
                 
-                <div className="mt-6 pt-4 border-t-2 border-border/50 flex justify-between items-center">
-                  <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full ${patient.status === 'active' ? 'bg-success/20 text-success' : patient.status === 'escalated' ? 'bg-danger text-white animate-pulse' : 'bg-text-muted/20 text-text-muted'}`}>
+                <div className="mt-6 pt-4 border-t border-border/60 flex justify-between items-center">
+                  <span className={`text-xs font-semibold uppercase tracking-wide ${patient.status === 'escalated' ? 'text-red-400' : 'text-text-muted'}`}>
                     {patient.status}
                   </span>
-                  <span className="text-xs font-bold text-primary group-hover:underline flex items-center gap-1">
+                  <span className="text-xs font-semibold text-text-secondary group-hover:text-primary group-hover:underline flex items-center gap-1">
                     View Profile &rarr;
                   </span>
                 </div>
@@ -389,12 +390,14 @@ export default function Dashboard() {
 
 function StatCard({ title, value, icon, color = 'text-primary' }) {
   return (
-    <div className="card p-6 pb-4 border-t-4 border-t-primary relative overflow-hidden group flex flex-col justify-between min-h-[140px] transition-transform hover:-translate-y-1">
-      <div className={`absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity ${color} transform scale-[3]`}>
-        {icon}
+    <div className="card p-6 pb-4 border-t-4 border-t-primary relative flex flex-col justify-between min-h-[132px] transition-transform hover:-translate-y-0.5">
+      <div className="flex justify-between items-start gap-3">
+        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</h3>
+        <span className={`shrink-0 opacity-70 ${color}`} aria-hidden>
+          {icon}
+        </span>
       </div>
-      <h3 className="text-xs font-black text-text-secondary uppercase tracking-widest mb-1">{title}</h3>
-      <div className={`text-5xl font-extrabold tracking-tighter ${color} drop-shadow-sm leading-tight`}>{value}</div>
+      <div className={`text-4xl font-extrabold tracking-tight ${color} leading-tight mt-2`}>{value}</div>
     </div>
   );
 }
