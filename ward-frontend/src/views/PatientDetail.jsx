@@ -13,6 +13,11 @@ import DischargeSummaryTab from '../components/stats/DischargeSummaryTab';
 import { Archive } from 'lucide-react';
 import { allergiesHasRisk, formatAllergiesMutedLabel } from '../utils/patientDisplay';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import toast from 'react-hot-toast';
+
+function errMsg(err) {
+  return err?.message || 'Unknown error';
+}
 
 export default function PatientDetail() {
   const { id } = useParams();
@@ -32,6 +37,8 @@ export default function PatientDetail() {
   });
   const [escalations, setEscalations] = useState([]);
   const [patientTasks, setPatientTasks] = useState([]);
+  const [escalateModalOpen, setEscalateModalOpen] = useState(false);
+  const [escalateReason, setEscalateReason] = useState('');
 
   const canManageTasks = ['doctor', 'nurse', 'admin'].includes(user?.role);
 
@@ -99,31 +106,42 @@ export default function PatientDetail() {
       await api.put(`/tasks/${taskId}/complete`, {});
       await fetchPatientTasks();
     } catch (err) {
-      alert('Failed to complete task: ' + err.message);
+      toast.error('Failed to complete task: ' + errMsg(err));
     }
   };
 
   if (!patient) return <div className="p-10 text-center">Loading patient data...</div>;
 
-  const handleEscalate = async () => {
-    const reason = prompt("Enter reason for escalation to Doctor:");
-    if (!reason) return;
+  const openEscalateModal = () => {
+    setEscalateReason('');
+    setEscalateModalOpen(true);
+  };
+
+  const submitEscalation = async (e) => {
+    e.preventDefault();
+    const reason = escalateReason.trim();
+    if (!reason) {
+      toast.error('Please enter a reason for escalation.');
+      return;
+    }
     try {
       await api.post(`/patients/${id}/escalations`, { reason });
-      alert("Case escalated successfully. Doctors have been notified.");
-      fetchPatient(); // Refresh status
+      toast.success('Case escalated. Doctors have been notified.');
+      setEscalateModalOpen(false);
+      setEscalateReason('');
+      fetchPatient();
     } catch (err) {
-      alert("Failed to escalate: " + err.message);
+      toast.error('Failed to escalate: ' + errMsg(err));
     }
   };
 
   const handleReviewCase = async (escalationId) => {
       try {
           await api.post(`/escalations/${escalationId}/review`);
-          alert("Case marked as reviewed.");
+          toast.success('Case marked as reviewed.');
           fetchPatient(); // Refresh status
       } catch (err) {
-          alert("Failed to review case: " + err.message);
+          toast.error('Failed to review case: ' + errMsg(err));
       }
   };
 
@@ -133,8 +151,9 @@ export default function PatientDetail() {
           await api.put(`/patients/${id}`, editForm);
           setIsEditing(false);
           fetchPatient();
+          toast.success('Patient updated.');
       } catch (err) {
-          alert("Failed to update patient: " + err.message);
+          toast.error('Failed to update patient: ' + errMsg(err));
       }
   };
 
@@ -162,11 +181,10 @@ export default function PatientDetail() {
           await api.post(`/patients/${id}/discharge`, dischargeForm);
           setIsDischarging(false);
           fetchPatient();
-          // After successfully updating, send the user back to the dashboard or let them view the discharged state.
-          alert("Patient successfully discharged.");
+          toast.success('Patient successfully discharged.');
           navigate('/');
       } catch (err) {
-          alert("Failed to discharge patient: " + err.message);
+          toast.error('Failed to discharge patient: ' + errMsg(err));
       }
   };
 
@@ -255,7 +273,7 @@ export default function PatientDetail() {
                <>
                  <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 w-full md:w-auto">Edit Info</button>
                  {user.role === 'nurse' && patient.status !== 'escalated' && (
-                   <button onClick={handleEscalate} className="btn btn-danger !py-2 w-full md:w-auto flex justify-center">
+                   <button onClick={openEscalateModal} className="btn btn-danger !py-2 w-full md:w-auto flex justify-center">
                      <AlertTriangle className="w-4 h-4" /> Escalate Case
                    </button>
                  )}
@@ -375,6 +393,57 @@ export default function PatientDetail() {
                      </div>
                   </form>
                </div>
+            </div>
+        )}
+
+        {/* Escalate case — nurse */}
+        {escalateModalOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="escalate-dialog-title"
+            >
+              <div className="bg-bg-primary w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-border">
+                <div className="p-6 border-b border-border bg-bg-tertiary">
+                  <h2 id="escalate-dialog-title" className="text-xl font-bold flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" aria-hidden />
+                    Escalate to doctor
+                  </h2>
+                  <p className="text-sm text-text-muted mt-1">Provide a clear reason for escalation. This will be visible to the care team.</p>
+                </div>
+                <form onSubmit={submitEscalation} className="p-6 space-y-4">
+                  <div>
+                    <label htmlFor="escalate-reason" className="block text-sm font-bold mb-1 text-text-secondary">
+                      Reason
+                    </label>
+                    <textarea
+                      id="escalate-reason"
+                      className="input-field min-h-[100px]"
+                      value={escalateReason}
+                      onChange={(e) => setEscalateReason(e.target.value)}
+                      placeholder="Clinical concern, required review, etc."
+                      autoFocus
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      className="btn btn-secondary !py-2"
+                      onClick={() => {
+                        setEscalateModalOpen(false);
+                        setEscalateReason('');
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-danger !py-2">
+                      Submit escalation
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
         )}
 

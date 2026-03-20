@@ -10,6 +10,12 @@ For **authenticated** HTTP API requests, after the response completes, a row may
 
 Recorded fields include (when present): HTTP method (`action`), request path (`resource`), user id and role from the JWT, `tenantId`, client IP, HTTP status code, a success flag (2xx–3xx vs other), and timestamp.
 
+### Domain change log (`ClinicalChangeLog`)
+
+Selected write operations may insert rows into the **`ClinicalChangeLog`** table (bootstrap in `ward-backend/db.js`). Today this includes **patient profile updates** via `PUT /api/patients/:id`: the log records **which fields were touched (names only)**, not request body values. Admins can list rows for **their tenant** via `GET /api/admin/clinical-changes` (see `ward-backend/routes/adminAudit.js`).
+
+This is **not** a full EMR audit trail for every entity; expand deliberately and update this section when new writers are added.
+
 ### What is not logged
 
 - **Unauthenticated** requests do not produce audit rows (the middleware skips when `req.user` is missing).

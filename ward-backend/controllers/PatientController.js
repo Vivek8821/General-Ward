@@ -3,6 +3,7 @@ const router = express.Router({ mergeParams: true });
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { requireTenantPatient } = require('../middleware/tenant');
 const patientService = require('../services/PatientService');
+const clinicalAuditService = require('../services/ClinicalAuditService');
 const medicationRoutes = require('../routes/medications');
 const historyRoutes = require('../routes/history');
 const statRoutes = require('../routes/stats');
@@ -84,6 +85,16 @@ router.put('/:id', authenticateToken, requireRole(['doctor', 'nurse']), requireT
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await patientService.updatePatient(req.params.id, req.body, tenantId);
+        try {
+            await clinicalAuditService.recordPatientUpdate({
+                tenantId,
+                user: req.user,
+                patientId: req.params.id,
+                body: req.body,
+            });
+        } catch (auditErr) {
+            console.error('[ClinicalChangeLog] patient update', auditErr.message);
+        }
         res.json(result);
     } catch (error) {
         if (error.message === 'Patient not found') {

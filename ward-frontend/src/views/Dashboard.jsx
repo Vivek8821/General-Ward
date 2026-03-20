@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { Users, Bed, Activity, AlertTriangle, Plus, Search, Archive } from 'lucide-react';
@@ -6,9 +7,7 @@ import toast from 'react-hot-toast';
 
 export default function Dashboard() {
   const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
-  const [patients, setPatients] = useState([]);
   const [escalated, setEscalated] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isReviewingCases, setIsReviewingCases] = useState(false);
   const [isAddingPatient, setIsAddingPatient] = useState(false);
@@ -24,65 +23,70 @@ export default function Dashboard() {
   });
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchData();
+  const endpoint = viewMode === 'active' ? '/patients' : '/patients/archives';
 
-    // Polling setup for Doctors to receive real-time-like notifications
+  const {
+    data: patients = [],
+    isLoading: isPatientsLoading,
+    isError: isPatientsError,
+    refetch: refetchPatients,
+  } = useQuery({
+    queryKey: ['patients', viewMode],
+    queryFn: async () => api.get(endpoint),
+    enabled: !!user,
+    staleTime: 30 * 1000,
+    // Prevent navigation-driven remounts from triggering duplicate fetches.
+    refetchOnMount: false,
+  });
+
+  // Polling setup for Doctors to receive real-time-like notifications.
+  useEffect(() => {
     let intervalId;
-    if (user.role === 'doctor' && viewMode === 'active') {
+    if (user?.role === 'doctor' && viewMode === 'active') {
       intervalId = setInterval(async () => {
         try {
           const eData = await api.get('/escalations/all');
           setEscalated(prev => {
-            // Check if there are new escalations not in our current state
             if (eData.length > prev.length) {
               const newEscalations = eData.filter(e => !prev.some(p => p.id === e.id));
               newEscalations.forEach(e => {
-                 toast.error(`Case Escalate: ${e.reason}`, {
-                    icon: '🚨',
-                    duration: 6000,
-                 });
+                toast.error(`Case Escalate: ${e.reason}`, {
+                  icon: '🚨',
+                  duration: 6000,
+                });
               });
             }
             return eData;
           });
-          
-          // Refresh patient list to get any new 'escalated' status changes
-          const pData = await api.get('/patients');
-          setPatients(pData);
+
+          // Refresh patient list so escalated status changes reflect in the roster.
+          await refetchPatients();
         } catch (err) {
-          console.error("Polling error", err);
+          console.error('Polling error', err);
         }
       }, 15000); // 15 seconds
     }
 
     return () => {
-       if (intervalId) clearInterval(intervalId);
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [user.role, viewMode]);
+  }, [user?.role, viewMode, refetchPatients]);
 
   useEffect(() => {
     // Escalation review is only meaningful in the active roster.
     if (viewMode === 'archived') setIsReviewingCases(false);
   }, [viewMode]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const endpoint = viewMode === 'active' ? '/patients' : '/patients/archives';
-      const pData = await api.get(endpoint);
-      setPatients(pData);
-      
-      if (user.role === 'doctor' && viewMode === 'active') {
-        const eData = await api.get('/escalations/all');
-        setEscalated(eData);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    // Initial escalations load (kept out of the patient query pilot).
+    if (user?.role === 'doctor' && viewMode === 'active') {
+      api.get('/escalations/all')
+        .then((eData) => setEscalated(eData))
+        .catch((err) => console.error(err));
+    } else {
+      setEscalated([]);
     }
-  };
+  }, [user?.role, viewMode]);
 
   const handleSavePatient = async (e) => {
     e.preventDefault();
@@ -100,7 +104,7 @@ export default function Dashboard() {
         allergies: '',
         careIntensity: 1
       });
-      fetchData(); // Refresh list
+      await refetchPatients();
     } catch (err) {
       toast.error(err.message || 'Failed to add patient');
     } finally {
@@ -211,8 +215,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {loading ? (
+        {isPatientsLoading ? (
           <div className="p-10 text-center text-text-muted">Loading patients...</div>
+        ) : isPatientsError ? (
+          <div className="p-10 text-center text-danger font-semibold">
+            Failed to load patients.
+          </div>
         ) : filteredPatients.length === 0 ? (
           <div className="p-10 text-center text-text-muted flex flex-col items-center justify-center gap-3">
             <Users size={48} className="opacity-20" />

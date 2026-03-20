@@ -6,6 +6,18 @@ const authLockoutRepository = require('../repositories/AuthLockoutRepository');
 
 const LOGIN_LOCKOUT_MESSAGE = 'Too many login attempts from this IP, please try again after 15 minutes';
 
+function getCookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    path: '/',
+    // AuthService uses `expiresIn: '8h'`, align cookie lifetime to reduce surprise.
+    maxAge: 8 * 60 * 60 * 1000,
+  };
+}
+
 function getClientIp(req) {
   return req.ip || req.connection?.remoteAddress || 'unknown';
 }
@@ -27,6 +39,8 @@ router.post('/login', async (req, res) => {
 
         const result = await authService.authenticateUser(username, password);
         await authLockoutRepository.reset(username, ipAddress);
+        // Phase C.1: set an HttpOnly cookie so we can migrate away from localStorage JWT.
+        res.cookie('ward_token', result.token, getCookieOptions());
         res.json(result);
     } catch (error) {
         const { username } = req.body || {};
@@ -42,6 +56,18 @@ router.post('/login', async (req, res) => {
 
         res.status(401).json({ error: 'Invalid credentials' });
     }
+});
+
+// POST /api/auth/logout
+// Clears the auth cookie used in Phase C.1–C.2 migration.
+router.post('/logout', async (req, res) => {
+  try {
+    res.clearCookie('ward_token', getCookieOptions());
+    res.json({ message: 'Logged out' });
+  } catch (err) {
+    // Cookie clearing should be best-effort; never fail logout.
+    res.json({ message: 'Logged out' });
+  }
 });
 
 // GET /api/auth/me

@@ -156,15 +156,50 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ## First-party file inventory
 
-**90** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**114** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+
+<a id="fp-github-workflows-postgres-ci-yml"></a>
+### `.github/workflows/postgres-ci.yml`
+
+First-party file (open to inspect exact behavior).
 
 <a id="fp-cursorrules-md"></a>
 ### `cursorrules.md`
 
 Documentation file that explains how to work with this repo/subsystem.
 
+<a id="fp-docker-compose-postgres-yml"></a>
+### `docker-compose.postgres.yml`
+
+First-party file (open to inspect exact behavior).
+
 <a id="fp-docs-compliance-md"></a>
 ### `docs/COMPLIANCE.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-docs-plans-enterprise-hardening-detailed-md"></a>
+### `docs/plans/enterprise-hardening-detailed.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-docs-plans-enterprise-hardening-progress-md"></a>
+### `docs/plans/enterprise-hardening-PROGRESS.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-docs-plans-patient-detail-ui-refresh-detailed-md"></a>
+### `docs/plans/patient-detail-ui-refresh-detailed.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-docs-plans-patient-detail-ui-refresh-progress-md"></a>
+### `docs/plans/patient-detail-ui-refresh-PROGRESS.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-docs-runbooks-postgres-cutover-md"></a>
+### `docs/runbooks/postgres-cutover.md`
 
 Documentation file that explains how to work with this repo/subsystem.
 
@@ -213,6 +248,21 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-dbadapter-index-js"></a>
+### `ward-backend/dbAdapter/index.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-dbadapter-postgresadapter-js"></a>
+### `ward-backend/dbAdapter/postgresAdapter.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-dbadapter-sqliteadapter-js"></a>
+### `ward-backend/dbAdapter/sqliteAdapter.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-implementation-state-json"></a>
 ### `ward-backend/IMPLEMENTATION_STATE.json`
 
@@ -238,6 +288,11 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-migratepostgres-js"></a>
+### `ward-backend/migratePostgres.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-package-lock-json"></a>
 ### `ward-backend/package-lock.json`
 
@@ -248,6 +303,21 @@ JSON configuration/state file used by the app or tooling.
 
 JSON configuration/state file used by the app or tooling.
 
+<a id="fp-ward-backend-postgres-migrations-migrations-001-create-schema-migrations-sql"></a>
+### `ward-backend/postgres-migrations/migrations/001_create_schema_migrations.sql`
+
+First-party file (open to inspect exact behavior).
+
+<a id="fp-ward-backend-postgres-migrations-planmigrations-js"></a>
+### `ward-backend/postgres-migrations/planMigrations.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-postgres-js"></a>
+### `ward-backend/postgres.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-repositories-authlockoutrepository-js"></a>
 ### `ward-backend/repositories/AuthLockoutRepository.js`
 
@@ -255,6 +325,11 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-repositories-authrepository-js"></a>
 ### `ward-backend/repositories/AuthRepository.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-repositories-clinicalchangelogrepository-js"></a>
+### `ward-backend/repositories/ClinicalChangeLogRepository.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -348,6 +423,11 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-services-clinicalauditservice-js"></a>
+### `ward-backend/services/ClinicalAuditService.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-services-escalationservice-js"></a>
 ### `ward-backend/services/EscalationService.js`
 
@@ -390,6 +470,11 @@ Integration test validating service/routes behavior (run via `npm test` in `ward
 
 <a id="fp-ward-backend-tests-integration-auth-test-js"></a>
 ### `ward-backend/tests/integration/auth.test.js`
+
+Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
+<a id="fp-ward-backend-tests-integration-authcookie-test-js"></a>
+### `ward-backend/tests/integration/authCookie.test.js`
 
 Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
 
@@ -438,8 +523,18 @@ Integration test validating service/routes behavior (run via `npm test` in `ward
 
 Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
 
+<a id="fp-ward-backend-tests-services-migratepostgres-test-js"></a>
+### `ward-backend/tests/services/migratePostgres.test.js`
+
+Unit test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
 <a id="fp-ward-backend-tests-services-patientservice-test-js"></a>
 ### `ward-backend/tests/services/PatientService.test.js`
+
+Unit test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
+<a id="fp-ward-backend-tests-services-postgressmoke-test-js"></a>
+### `ward-backend/tests/services/postgresSmoke.test.js`
 
 Unit test validating service/routes behavior (run via `npm test` in `ward-backend`).
 
@@ -457,6 +552,11 @@ SQLite database artifact (runtime/generated data).
 ### `ward-backend/ward.db-wal`
 
 SQLite database artifact (runtime/generated data).
+
+<a id="fp-ward-frontend-env-example"></a>
+### `ward-frontend/.env.example`
+
+First-party file (open to inspect exact behavior).
 
 <a id="fp-ward-frontend-gitignore"></a>
 ### `ward-frontend/.gitignore`
@@ -553,6 +653,11 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-frontend-src-components-ui-tabs-jsx"></a>
+### `ward-frontend/src/components/ui/tabs.jsx`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-frontend-src-context-authcontext-jsx"></a>
 ### `ward-frontend/src/context/AuthContext.jsx`
 
@@ -568,10 +673,15 @@ Frontend styling (global/app styles).
 
 First-party source code in the backend/frontend layer.
 
-<a id="fp-ward-frontend-src-utils-api-js"></a>
-### `ward-frontend/src/utils/api.js`
+<a id="fp-ward-frontend-src-utils-api-ts"></a>
+### `ward-frontend/src/utils/api.ts`
 
-First-party source code in the backend/frontend layer.
+First-party file (open to inspect exact behavior).
+
+<a id="fp-ward-frontend-src-utils-patientdisplay-ts"></a>
+### `ward-frontend/src/utils/patientDisplay.ts`
+
+First-party file (open to inspect exact behavior).
 
 <a id="fp-ward-frontend-src-views-adminaudit-jsx"></a>
 ### `ward-frontend/src/views/AdminAudit.jsx`
@@ -598,6 +708,16 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-frontend-src-vite-env-d-ts"></a>
+### `ward-frontend/src/vite-env.d.ts`
+
+First-party file (open to inspect exact behavior).
+
+<a id="fp-ward-frontend-tsconfig-json"></a>
+### `ward-frontend/tsconfig.json`
+
+JSON configuration/state file used by the app or tooling.
+
 <a id="fp-ward-frontend-vite-config-js"></a>
 ### `ward-frontend/vite.config.js`
 
@@ -610,6 +730,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 90**, **thirdParty 30997**, **data 1**, total 31088.
+- Inventory counts: **firstParty 114**, **thirdParty 32056**, **data 1**, total 32171.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.

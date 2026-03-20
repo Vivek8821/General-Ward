@@ -257,6 +257,21 @@ const initDb = () => {
           )
         `);
 
+        // Domain-level change log (entity updates beyond HTTP access audit).
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ClinicalChangeLog (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            userId TEXT NOT NULL,
+            userRole TEXT NOT NULL,
+            entityType TEXT NOT NULL,
+            entityId TEXT NOT NULL,
+            action TEXT NOT NULL,
+            summary TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+
         // Idempotency keys for write endpoints (e.g., observations ingest).
         // This prevents duplicate rows when clients retry safely.
         db.run(`
@@ -306,6 +321,7 @@ const initDb = () => {
         db.run(`UPDATE Tasks SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
         db.run(`UPDATE HandoverNotes SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
         db.run(`UPDATE AuditLogs SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE ClinicalChangeLog SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID], () => {});
 
         // Enforce a safe default tenant for any legacy/explicit inserts that omit tenantId.
         // This prevents tenant-scoped reads from "losing" rows seeded by tests or older code.
@@ -334,7 +350,8 @@ const initDb = () => {
           'DischargeSummaries',
           'Tasks',
           'HandoverNotes',
-          'AuditLogs'
+          'AuditLogs',
+          'ClinicalChangeLog'
         ].forEach(createDefaultTenantTrigger);
 
         // Extend AuditLogs with additional attributes for stronger traceability.
@@ -349,6 +366,8 @@ const initDb = () => {
         db.run(`CREATE INDEX IF NOT EXISTS idx_discharges_patient ON DischargeSummaries(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_auditlogs_timestamp ON AuditLogs(timestamp);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_auditlogs_tenant_timestamp ON AuditLogs(tenantId, timestamp DESC);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_clinicalchangelog_tenant_time ON ClinicalChangeLog(tenantId, timestamp DESC);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_clinicalchangelog_entity ON ClinicalChangeLog(entityType, entityId);`);
 
         db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_patient ON Tasks(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON Tasks(assignee);`);

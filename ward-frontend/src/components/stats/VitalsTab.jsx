@@ -44,8 +44,8 @@ export default function VitalsTab({ patientId, readOnly }) {
     try {
       // Basic validation
       if (!formData.bpSystolic || !formData.temp || !formData.pulse) {
-         alert("Please fill out at least BP, Temp, and Pulse.");
-         return;
+        toast.error('Please fill out at least BP, Temp, and Pulse.');
+        return;
       }
 
       await api.post(`/patients/${patientId}/stats`, {

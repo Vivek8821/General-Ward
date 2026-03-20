@@ -42,11 +42,10 @@ export default function AdminAudit() {
 
   const downloadCsv = async () => {
     try {
-      const token = localStorage.getItem('ward_token');
       const params = new URLSearchParams({ limit: '100' });
       if (successFilter === '0' || successFilter === '1') params.set('success', successFilter);
       const res = await fetch(`${API_BASE}/admin/audit-logs/export.csv?${params}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
       });
       if (res.status === 401 || res.status === 403) {
         toast.error('Not authorized');
@@ -84,12 +83,11 @@ export default function AdminAudit() {
     }
     try {
       setPurgeBusy(true);
-      const token = localStorage.getItem('ward_token');
       const res = await fetch(`${API_BASE}/admin/audit/purge`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ dryRun, olderThanDays: days }),
       });

@@ -1,9 +1,9 @@
-const { db, withTransaction } = require('../db');
+const dbAdapter = require('../dbAdapter');
 
 class EscalationRepository {
-    createEscalationWithStatusUpdate(escalationData) {
+    async createEscalationWithStatusUpdate(escalationData) {
         const tenantId = escalationData.tenantId || 'tenant-default';
-        return withTransaction(async ({ runAsync }) => {
+        return dbAdapter.withTransaction(async ({ runAsync }) => {
             await runAsync(
                 `INSERT INTO Escalations (id, tenantId, patientId, reason, escalatedBy) VALUES (?, ?, ?, ?, ?)`,
                 [escalationData.id, tenantId, escalationData.patientId, escalationData.reason, escalationData.escalatedBy]
@@ -22,23 +22,17 @@ class EscalationRepository {
         });
     }
 
-    findAllPending(tenantId) {
+    async findAllPending(tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return new Promise((resolve, reject) => {
-            db.all(
-                `SELECT * FROM Escalations WHERE tenantId = ? AND status = 'pending' ORDER BY timestamp DESC`,
-                [tenant],
-                (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-                }
-            );
-        });
+        return dbAdapter.all(
+            `SELECT * FROM Escalations WHERE tenantId = ? AND status = 'pending' ORDER BY timestamp DESC`,
+            [tenant]
+        );
     }
 
-    reviewEscalationWithStatusUpdate(escalationId, tenantId) {
+    async reviewEscalationWithStatusUpdate(escalationId, tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return withTransaction(async ({ runAsync, getAsync }) => {
+        return dbAdapter.withTransaction(async ({ runAsync, getAsync }) => {
             const updEsc = await runAsync(
                 `UPDATE Escalations SET status = 'reviewed' WHERE id = ? AND tenantId = ?`,
                 [escalationId, tenant]

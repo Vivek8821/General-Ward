@@ -5,6 +5,7 @@
 
 - `GET /health`
 - `GET /api/version`
+- `/api/admin/*` → `ward-backend/routes/adminAudit.js` (admin role): audit log CSV/export/purge, **`GET /api/admin/clinical-changes`** (domain change log)
 - `POST /api/auth/login`, `GET /api/auth/me`
   - Route file: `ward-backend/routes/auth.js`
 - `/api/patients/*`

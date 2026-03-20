@@ -11,7 +11,7 @@
 ## API helper + auth token
 `ward-frontend/src/utils/api.js`
 
-- Base URL: `http://localhost:3001/api`
+- Base URL: from `VITE_API_BASE` (see `ward-frontend/.env.example`); default `http://localhost:3001` + `/api` suffix unless the env value already ends with `/api`.
 - Reads JWT from `localStorage` key `ward_token`
 - On `401/403` redirects back to `/login` (and clears local storage)
 

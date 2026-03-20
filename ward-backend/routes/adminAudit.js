@@ -173,6 +173,64 @@ router.get('/audit-logs/export.csv', authenticateToken, requireRole(['admin']), 
  * POST /api/admin/audit/purge
  * Body: { dryRun: boolean, olderThanDays?: number }
  */
+/**
+ * GET /api/admin/clinical-changes
+ * Domain-level entity changes (tenant-scoped). Query: limit, cursor (timestamp|id), entityType, from, to
+ */
+router.get('/clinical-changes', authenticateToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const tenantId = tenantIdForUser(req.user);
+    const parsedLimit = parseLimit(req.query.limit);
+    if (parsedLimit === null) {
+      return res.status(400).json({ error: 'Invalid limit' });
+    }
+
+    let query = `
+      SELECT id, tenantId, userId, userRole, entityType, entityId, action, summary, timestamp
+      FROM ClinicalChangeLog
+      WHERE tenantId = ?
+    `;
+    const params = [tenantId];
+
+    const { entityType, from, to, cursor } = req.query;
+    if (entityType && typeof entityType === 'string') {
+      query += ' AND entityType = ?';
+      params.push(entityType);
+    }
+    if (from && typeof from === 'string') {
+      query += ' AND datetime(timestamp) >= datetime(?)';
+      params.push(from);
+    }
+    if (to && typeof to === 'string') {
+      query += ' AND datetime(timestamp) <= datetime(?)';
+      params.push(to);
+    }
+
+    if (cursor && typeof cursor === 'string') {
+      const parts = cursor.split('|');
+      if (parts.length === 2 && parts[0] && parts[1]) {
+        const [cursorTs, cursorId] = parts;
+        query += ` AND (timestamp < ? OR (timestamp = ? AND id < ?))`;
+        params.push(cursorTs, cursorTs, cursorId);
+      }
+    }
+
+    query += ' ORDER BY timestamp DESC, id DESC LIMIT ?';
+    params.push(parsedLimit);
+
+    const rows = await allAsync(query, params);
+    const nextCursor =
+      rows.length === parsedLimit
+        ? `${rows[rows.length - 1].timestamp}|${rows[rows.length - 1].id}`
+        : null;
+
+    res.json({ items: rows, nextCursor });
+  } catch (err) {
+    console.error('[adminAudit] clinical-changes', err);
+    res.status(500).json({ error: err.message || 'Failed to list clinical changes' });
+  }
+});
+
 router.post('/audit/purge', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
     const tenantId = tenantIdForUser(req.user);

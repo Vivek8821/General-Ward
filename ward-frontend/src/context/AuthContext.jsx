@@ -26,9 +26,17 @@ export const AuthProvider = ({ children }) => {
     const saved = localStorage.getItem('ward_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem('ward_token')));
+  const [loading, setLoading] = useState(true);
 
   const logout = () => {
+    // Phase C.1 migration: best-effort backend cookie logout.
+    // Cookie clearing is handled server-side; even if it fails, we still clear local state.
+    try {
+      api.post('/auth/logout', {}).catch(() => {});
+    } catch {
+      // ignore
+    }
+
     localStorage.removeItem('ward_token');
     localStorage.removeItem('ward_user');
     setUser(null);
@@ -44,28 +52,38 @@ export const AuthProvider = ({ children }) => {
     }
   }, [theme]);
 
-  useEffect(() => {
-    const token = localStorage.getItem('ward_token');
-    if (token) {
-      api.get('/auth/me')
-        .then(data => {
-          setUser(data.user);
-          localStorage.setItem('ward_user', JSON.stringify(data.user));
-        })
-        .catch(() => {
-          logout();
-        })
-        .finally(() => setLoading(false));
-    }
-  }, []);
-
   const login = async (username, password) => {
     const data = await api.post('/auth/login', { username, password });
-    localStorage.setItem('ward_token', data.token);
     localStorage.setItem('ward_user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
   };
+
+  // Bootstrap user from cookie-auth on initial load.
+  useEffect(() => {
+    // Avoid noisy auth failures / redirects on the login page.
+    if (window.location.pathname === '/login') {
+      setLoading(false);
+      return;
+    }
+
+    api
+      .get('/auth/me')
+      .then((data) => {
+        if (data?.user) {
+          setUser(data.user);
+          localStorage.setItem('ward_user', JSON.stringify(data.user));
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem('ward_user');
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading, theme, setTheme }}>

@@ -1,3 +1,17 @@
+# General Ward — frontend
+
+Vite + React SPA for ward operations. See root [README.md](../README.md) for how to run with the API.
+
+## API URL
+
+The API base is resolved in `src/utils/api.js`:
+
+- Set **`VITE_API_BASE`** in `.env` or `.env.local` in this folder (see [`.env.example`](./.env.example)).
+- If unset, requests go to `http://localhost:3001/api`.
+- Trailing slashes are stripped; unless the value already ends with `/api`, `/api` is appended once.
+
+---
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

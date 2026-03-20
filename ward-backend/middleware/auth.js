@@ -14,8 +14,27 @@ if (JWT_SECRET_ENV) {
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
+    const tokenFromHeader = authHeader && authHeader.split(' ')[1];
+
+    // Phase C.2 migration: accept token from the HttpOnly cookie set at login.
+    // We parse `req.headers.cookie` manually to avoid adding a cookie dependency.
+    const cookieHeader = req.headers.cookie || '';
+    let tokenFromCookie = null;
+    if (cookieHeader) {
+        const parts = cookieHeader.split(';');
+        for (const part of parts) {
+            const trimmed = part.trim();
+            if (!trimmed) continue;
+            const [name, ...rest] = trimmed.split('=');
+            if (name === 'ward_token') {
+                tokenFromCookie = rest.join('=').trim();
+                break;
+            }
+        }
+    }
+
+    const token = tokenFromHeader || tokenFromCookie;
+
     if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
     
     jwt.verify(token, JWT_SECRET, (err, user) => {

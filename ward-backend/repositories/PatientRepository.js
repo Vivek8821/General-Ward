@@ -1,135 +1,105 @@
-const { db, withTransaction } = require('../db');
+const crypto = require('crypto');
+const dbAdapter = require('../dbAdapter');
 
 class PatientRepository {
-    create(patientData) {
-        return new Promise((resolve, reject) => {
-            const tenantId = patientData.tenantId || 'tenant-default';
-            db.run(
-                `INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
-                [patientData.id, tenantId, patientData.name, patientData.mrn, patientData.bedNumber, patientData.dob, patientData.diagnosis, patientData.allergies, patientData.careIntensity || 1],
-                function(err) {
-                    if (err) return reject(err);
-                    resolve({ ...patientData, status: 'active' });
-                }
-            );
-        });
+    async create(patientData) {
+        const tenantId = patientData.tenantId || 'tenant-default';
+        await dbAdapter.run(
+            `INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+            [patientData.id, tenantId, patientData.name, patientData.mrn, patientData.bedNumber, patientData.dob, patientData.diagnosis, patientData.allergies, patientData.careIntensity || 1]
+        );
+        return { ...patientData, status: 'active' };
     }
 
-    findAll(tenantId) {
+    async findAll(tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return new Promise((resolve, reject) => {
-            db.all(
-              `SELECT * FROM Patients WHERE tenantId = ? AND status IN ('active', 'escalated')`,
-              [tenant],
-              (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-              }
-            );
-        });
+        return dbAdapter.all(
+          `SELECT * FROM Patients WHERE tenantId = ? AND status IN ('active', 'escalated')`,
+          [tenant]
+        );
     }
 
-    findArchived(tenantId) {
+    async findArchived(tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return new Promise((resolve, reject) => {
-            db.all(
-              `SELECT * FROM Patients WHERE tenantId = ? AND status = 'discharged'`,
-              [tenant],
-              (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-              }
-            );
-        });
+        return dbAdapter.all(
+          `SELECT * FROM Patients WHERE tenantId = ? AND status = 'discharged'`,
+          [tenant]
+        );
     }
 
-    findById(id, tenantId) {
+    async findById(id, tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM Patients WHERE id = ? AND tenantId = ?`, [id, tenant], (err, row) => {
-                if (err) return reject(err);
-                resolve(row);
-            });
-        });
+        return dbAdapter.get(`SELECT * FROM Patients WHERE id = ? AND tenantId = ?`, [id, tenant]);
     }
 
-    findDischargeSummary(patientId, tenantId) {
+    async findDischargeSummary(patientId, tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return new Promise((resolve, reject) => {
-            db.get(
-              `SELECT * FROM DischargeSummaries WHERE patientId = ? AND tenantId = ? ORDER BY timestamp DESC LIMIT 1`,
-              [patientId, tenant],
-              (err, row) => {
-                if (err) return reject(err);
-                resolve(row);
-              }
-            );
-        });
+        return dbAdapter.get(
+          `SELECT * FROM DischargeSummaries WHERE patientId = ? AND tenantId = ? ORDER BY timestamp DESC LIMIT 1`,
+          [patientId, tenant]
+        );
     }
 
-    update(id, patientData, tenantId) {
+    async update(id, patientData, tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return new Promise((resolve, reject) => {
-            db.run(
-                `UPDATE Patients
-                 SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ?
-                 WHERE id = ? AND tenantId = ?`,
-                [patientData.name, patientData.bedNumber, patientData.dob, patientData.diagnosis, patientData.allergies, patientData.careIntensity, id, tenant],
-                function(err) {
-                    if (err) return reject(err);
-                    resolve(this.changes);
-                }
-            );
-        });
+        const result = await dbAdapter.run(
+          `UPDATE Patients
+           SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ?
+           WHERE id = ? AND tenantId = ?`,
+          [patientData.name, patientData.bedNumber, patientData.dob, patientData.diagnosis, patientData.allergies, patientData.careIntensity, id, tenant]
+        );
+        return result.changes;
     }
 
-    updateStatus(id, newStatus) {
-        return new Promise((resolve, reject) => {
-            db.run(`UPDATE Patients SET status = ? WHERE id = ?`, [newStatus, id], function(err) {
-                if (err) return reject(err);
-                resolve(this.changes);
-            });
-        });
+    async updateStatus(id, newStatus, tenantId) {
+        // tenantId optional because existing code didn't provide it; keep backward compatible signature.
+        // If tenantId is provided later, we can tighten the WHERE clause.
+        const query = tenantId
+          ? `UPDATE Patients SET status = ? WHERE id = ? AND tenantId = ?`
+          : `UPDATE Patients SET status = ? WHERE id = ?`;
+        const params = tenantId ? [newStatus, id, tenantId] : [newStatus, id];
+        const result = await dbAdapter.run(query, params);
+        return result.changes;
     }
 
-    discharge(patientId, data, dischargedBy, tenantId) {
+    async discharge(patientId, data, dischargedBy, tenantId) {
         const tenant = tenantId || 'tenant-default';
-        return withTransaction(async ({ runAsync }) => {
-            const upd = await runAsync(
-                `UPDATE Patients SET status = 'discharged' WHERE id = ? AND tenantId = ?`,
-                [patientId, tenant]
-            );
+        return dbAdapter.withTransaction(async ({ run }) => {
+          const upd = await run(
+            `UPDATE Patients SET status = 'discharged' WHERE id = ? AND tenantId = ?`,
+            [patientId, tenant]
+          );
 
-            if (!upd || upd.changes === 0) {
-                throw new Error('Patient not found');
-            }
+          if (!upd || upd.changes === 0) {
+            throw new Error('Patient not found');
+          }
 
-            const summaryId = require('crypto').randomUUID();
-            const vitals = data.dischargeVitals ? JSON.stringify(data.dischargeVitals) : '{}';
+          const summaryId = crypto.randomUUID();
+          const vitals = data.dischargeVitals ? JSON.stringify(data.dischargeVitals) : '{}';
 
-            await runAsync(
-                `
-                    INSERT INTO DischargeSummaries (
-                        id, tenantId, patientId, reasonForAdmission, duration,
-                        medicationsDuringAdmission, dischargeVitals,
-                        dischargeRecommendations, dischargedBy
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `,
-                [
-                    summaryId,
-                    tenant,
-                    patientId,
-                    data.reasonForAdmission,
-                    data.duration,
-                    data.medicationsDuringAdmission,
-                    vitals,
-                    data.dischargeRecommendations,
-                    dischargedBy
-                ]
-            );
+          await run(
+            `
+                INSERT INTO DischargeSummaries (
+                    id, tenantId, patientId, reasonForAdmission, duration,
+                    medicationsDuringAdmission, dischargeVitals,
+                    dischargeRecommendations, dischargedBy
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [
+              summaryId,
+              tenant,
+              patientId,
+              data.reasonForAdmission,
+              data.duration,
+              data.medicationsDuringAdmission,
+              vitals,
+              data.dischargeRecommendations,
+              dischargedBy
+            ]
+          );
 
-            return { message: 'Patient discharged successfully', summaryId };
+          return { message: 'Patient discharged successfully', summaryId };
         });
     }
 }

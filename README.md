@@ -14,9 +14,33 @@ npm start
 
 ## Configuration
 
-See [`ward-backend/.env.example`](ward-backend/.env.example). In **production**, `JWT_SECRET` must be set (`ward-backend/middleware/auth.js`).
+See [`ward-backend/.env.example`](ward-backend/.env.example). In **production**, `JWT_SECRET` must be set (`ward-backend/middleware/auth.js`), and **`CORS_ORIGIN`** must list the SPA origin(s) (comma-separated) or the API will refuse to start.
+
+For the React app, optional [`ward-frontend/.env.example`](ward-frontend/.env.example): set **`VITE_API_BASE`** to the API host (default: `http://localhost:3001`). The client appends `/api` unless the value already ends with `/api`.
 
 Optional: `AUDIT_RETENTION_DAYS` — used as default when calling `POST /api/admin/audit/purge` without `olderThanDays` (see [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md)).
+
+## Postgres (Phase D.5)
+The backend can run against PostgreSQL when `ward-backend/.env` sets `DATABASE_URL`.
+
+### Local Postgres via Docker Compose
+1. Start Postgres:
+   ```bash
+   docker compose -f docker-compose.postgres.yml up -d
+   ```
+2. Set `DATABASE_URL` in `ward-backend/.env` (or create it from `.env.example`):
+   ```bash
+   DATABASE_URL=postgres://ward:ward@localhost:5432/ward
+   ```
+3. Apply migrations:
+   ```bash
+   node ward-backend/migratePostgres.js
+   ```
+4. Verify in CI-equivalent mode (smoke test; runs only when `DATABASE_URL` is set):
+   ```bash
+   DATABASE_URL=postgres://ward:ward@localhost:5432/ward \
+     npx jest ward-backend/tests/services/postgresSmoke.test.js --runInBand --forceExit
+   ```
 
 ## Seeded users (development)
 
