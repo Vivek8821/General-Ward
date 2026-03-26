@@ -21,5 +21,29 @@ const hasDatabaseUrl = !!process.env.DATABASE_URL && String(process.env.DATABASE
     const reg = await dbAdapter.get("SELECT to_regclass('SchemaMigrations') AS reg", []);
     expect(reg?.reg).toBe('SchemaMigrations');
   });
+
+  it('verifies core application tables exist after migrations', async () => {
+    const requiredTables = [
+      'users',
+      'tenants',
+      'patients',
+      'dailystats',
+      'medications',
+      'medicationadministrations',
+      'escalations',
+      'dischargesummaries',
+      'tasks',
+      'handovernotes',
+      'auditlogs',
+      'clinicalchangelog',
+      'idempotencykeys',
+      'authloginattempts',
+    ];
+
+    for (const table of requiredTables) {
+      const row = await dbAdapter.get('SELECT to_regclass($1) AS reg', [table]);
+      expect(row?.reg).toBe(table);
+    }
+  });
 });
 

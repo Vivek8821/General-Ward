@@ -6,13 +6,31 @@
 
 | Field | Value |
 |--------|--------|
-| Last completed step | **E.2.3** (TanStack Query pilot) |
+| Last completed step | **SYNC.4.0** (Two-device validation runbook prepared) |
 | Interrupted at | *(none)* |
 | Branch / commit | *(local)* |
 
 ## Blockers
 
-*(none)*
+- **SYNC.4.1 live execution pending:** final two-device acceptance requires deployed shared Postgres environment and two active client sessions.
+
+## Follow-ups (optional / not blocking)
+
+- **CSRF (C.0):** Design choice was Cookie + double-submit CSRF. HttpOnly session cookie and credentialed CORS are implemented (C.1–C.4); **CSRF tokens for state-changing requests are not implemented** in this codebase yet — add when threat model requires it.
+
+## Session checkpoint template (crash recovery)
+
+Use this block before and after every numbered sync step:
+
+- `Step ID`:
+- `Intent`:
+- `Files to touch`:
+- `Commands to run`:
+- `Verifier expected`:
+- `Stress check`:
+- `Rollback pointer`:
+- `Interrupted at` (if any):
+- `Next action`:
 
 ## Log
 
@@ -42,6 +60,16 @@
 | 2026-03-20 | E.2.1 | Done | tsc+build | Added `ward-frontend/tsconfig.json`, `src/vite-env.d.ts`, installed `typescript`, and converted `src/utils/patientDisplay.js` → `patientDisplay.ts`. |
 | 2026-03-20 | E.2.2 | Done | tsc+build | Migrated `ward-frontend/src/utils/api.js` → `api.ts` with typed env support; frontend build passed. |
 | 2026-03-20 | E.2.3 | Done | useQuery pilot + build | Installed `@tanstack/react-query`, wrapped app with `QueryClientProvider`, and converted `Dashboard.jsx` patient roster fetch to `useQuery` (doctor polling now calls `refetchPatients`). |
+| 2026-03-26 | E.2.3.1 | Done | lint+build | `Tasks.jsx`: `useQuery` for `GET /tasks/my?limit=50` (`queryKey` includes role); `completeTask`/`refetchTasks` after successful complete; removed redundant `useEffect` fetch. |
+| 2026-03-26 | SYNC.0.1 | Done | codepath audit | Verified shared-sync prerequisites in codebase: credentialed CORS in `ward-backend/server.js`; cookie token fallback in `ward-backend/middleware/auth.js`; Postgres migration/adapter path in backend + README; TanStack Query active in `Dashboard.jsx` and `Tasks.jsx`. |
+| 2026-03-26 | SYNC.1.1 | Done | frontend lint+build; backend npm test | Verified deployment/env contract is present in code and docs: `CORS_ORIGIN` enforced in prod, `DATABASE_URL` Postgres path, `VITE_API_BASE` in frontend env example. Stress gate passed (frontend build, backend tests). |
+| 2026-03-26 | SYNC.1.2 | Done | migrate dry-run + backend npm test | Added `002_create_application_schema.sql` with full app tables/indexes/default-tenant triggers + backfills; updated `tests/services/postgresSmoke.test.js` to assert required table presence (when `DATABASE_URL` is set). Dry-run lists both migrations; backend tests pass. |
+| 2026-03-26 | SYNC.1.3 | Done | backend npm test + runbook update | Added `ward-backend/scripts/compareSqlitePostgresCounts.js` and `npm run verify:migration-counts` for deterministic SQLite->Postgres row-count validation across core tables; updated `docs/runbooks/postgres-cutover.md` with post-import verification procedure. |
+| 2026-03-26 | SYNC.2.1 | Done | frontend lint+build | Added shared query keys in `ward-frontend/src/utils/queryKeys.ts`; `Dashboard.jsx` now uses `queryKeys.patients(viewMode)` and invalidates via `queryClient.invalidateQueries`; `Tasks.jsx` now uses role+limit query key and invalidates that key after complete. |
+| 2026-03-26 | SYNC.2.2 | Done | frontend lint+build | Added polling intervals for cross-device freshness: `Tasks.jsx` now polls every 15s; `Dashboard.jsx` patient query now polls every 15s in active view; removed duplicate patient refetch from escalation toast polling loop. |
+| 2026-03-26 | SYNC.3.1 | Done | docs update | Added structured crash-recovery checkpoint template in PROGRESS (`Step ID`, intent, files, commands, verifier, stress, rollback, interrupted-at, next action) to make mid-step recovery deterministic. |
+| 2026-03-26 | SYNC.3.2 | Done | runbook update | Added `Common failure modes and mitigations` section in `docs/runbooks/postgres-cutover.md` for CORS/cookie failures, partial migrations, data mismatches, tenant default regressions, and stale cross-device polling. |
+| 2026-03-26 | SYNC.4.0 | Done | runbook added | Added `docs/runbooks/multi-device-sync-validation.md` with two-device matrix, stress loop, pass criteria, and failure logging template for repeatable acceptance execution. |
 
 ## Rollback / snapshots
 

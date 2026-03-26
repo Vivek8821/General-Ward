@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { queryKeys } from '../utils/queryKeys';
 import { Users, Bed, Activity, AlertTriangle, Plus, Search, Archive } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,6 +23,7 @@ export default function Dashboard() {
     careIntensity: 1
   });
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const endpoint = viewMode === 'active' ? '/patients' : '/patients/archives';
 
@@ -29,12 +31,12 @@ export default function Dashboard() {
     data: patients = [],
     isLoading: isPatientsLoading,
     isError: isPatientsError,
-    refetch: refetchPatients,
   } = useQuery({
-    queryKey: ['patients', viewMode],
+    queryKey: queryKeys.patients(viewMode),
     queryFn: async () => api.get(endpoint),
     enabled: !!user,
     staleTime: 30 * 1000,
+    refetchInterval: viewMode === 'active' ? 15 * 1000 : false,
     // Prevent navigation-driven remounts from triggering duplicate fetches.
     refetchOnMount: false,
   });
@@ -59,8 +61,6 @@ export default function Dashboard() {
             return eData;
           });
 
-          // Refresh patient list so escalated status changes reflect in the roster.
-          await refetchPatients();
         } catch (err) {
           console.error('Polling error', err);
         }
@@ -70,7 +70,7 @@ export default function Dashboard() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [user?.role, viewMode, refetchPatients]);
+  }, [user?.role, viewMode]);
 
   useEffect(() => {
     // Escalation review is only meaningful in the active roster.
@@ -104,7 +104,7 @@ export default function Dashboard() {
         allergies: '',
         careIntensity: 1
       });
-      await refetchPatients();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.patients(viewMode) });
     } catch (err) {
       toast.error(err.message || 'Failed to add patient');
     } finally {

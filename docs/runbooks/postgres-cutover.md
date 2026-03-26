@@ -12,11 +12,9 @@ Replace the current SQLite-backed runtime with PostgreSQL using the existing DB 
 2. Postgres migration runner is implemented.
    - `node ward-backend/migratePostgres.js` reads `*.sql` files from `ward-backend/postgres-migrations/migrations/`.
    - It also creates a `SchemaMigrations` tracking table in Postgres.
-3. Migration coverage caveat (important).
-   - The current migrations folder includes only the `SchemaMigrations` tracking table creation migration (`001_create_schema_migrations.sql`).
-   - The *full* application schema (all tables, tenant defaulting triggers, and indexes) is defined for SQLite in `ward-backend/db.js`, but it is not yet represented as Postgres migration files.
-
-This runbook therefore includes a required step: create the real schema migrations for Postgres based on the SQLite schema.
+3. Migration coverage status.
+   - `001_create_schema_migrations.sql` creates migration tracking metadata.
+   - `002_create_application_schema.sql` creates the full application schema (tables, indexes, tenant-default triggers, and tenant backfills) based on `ward-backend/db.js`.
 
 ## Prerequisites
 1. PostgreSQL access (or a running Postgres instance).
@@ -94,6 +92,13 @@ Acceptance criteria:
 - For every core table, row counts match (or differ only for acceptable deltas).
 - Foreign key references reconcile (no orphaned rows beyond what the schema allows).
 
+Post-import verification helper:
+1. Set `DATABASE_URL` to Postgres.
+2. Optionally set `SQLITE_DB_PATH` if source DB is not `ward-backend/ward.db`.
+3. Run:
+   - `cd ward-backend && npm run verify:migration-counts`
+4. Treat any `DIFF` line as a failed cutover validation until explained and approved.
+
 ### 8. Switch runtime to PostgreSQL
 1. Deploy backend with `DATABASE_URL` set.
 2. Ensure frontend calls still use cookie auth:
@@ -137,6 +142,57 @@ Rollback means: stop using Postgres and restore SQLite state.
 
 Operational note:
 - Because this cutover is schema + data migration, a “partial” rollback (migrating only some steps) is not safe. Either complete the schema migrations + import, or do full restore + restart.
+
+## Common failure modes and mitigations
+
+1. CORS + cookie auth breakage (`Failed to fetch` in browser)
+   - Signal:
+     - Browser console/network shows CORS rejection.
+     - API works in curl but not in browser.
+   - Checks:
+     - `CORS_ORIGIN` exactly matches frontend origin.
+     - Backend CORS uses `credentials: true`.
+     - Frontend requests include `credentials: 'include'`.
+   - Mitigation:
+     - Correct origin allowlist and redeploy backend.
+     - Re-test login and `/auth/me` flow from browser.
+
+2. Migration partially applied / startup schema errors
+   - Signal:
+     - API returns 500 with missing relation/column errors.
+   - Checks:
+     - `SchemaMigrations` has expected rows.
+     - `node ward-backend/migratePostgres.js --dry-run` output matches expected migration set.
+   - Mitigation:
+     - Re-run migrations in a controlled window.
+     - If inconsistent, restore from backup and re-run clean cutover.
+
+3. Data mismatch after import
+   - Signal:
+     - Missing records in Postgres workflows compared to SQLite baseline.
+   - Checks:
+     - Run `cd ward-backend && npm run verify:migration-counts`.
+   - Mitigation:
+     - Investigate and re-import only failed tables if safe.
+     - If not safe, rollback and repeat complete import window.
+
+4. Tenant defaulting regressions
+   - Signal:
+     - Tenant-scoped queries unexpectedly return empty results for legacy entities.
+   - Checks:
+     - Validate `tenantId` backfill and trigger behavior on inserts/updates with NULL tenant.
+   - Mitigation:
+     - Apply backfill updates and verify default-tenant triggers exist/are active.
+
+5. Polling sync appears stale across devices
+   - Signal:
+     - Device B does not reflect Device A changes within expected interval.
+   - Checks:
+     - Query key/invalidation alignment in frontend.
+     - Polling interval enabled for the affected view.
+   - Mitigation:
+     - Fix query key mismatch.
+     - Add or tune `refetchInterval` and mutation invalidation.
 
 ## Reference: why these steps match the code
 - Adapter selection:

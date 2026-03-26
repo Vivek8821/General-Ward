@@ -1,37 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { queryKeys } from '../utils/queryKeys';
 import toast from 'react-hot-toast';
 import { Clock, CheckCircle, ListTodo } from 'lucide-react';
 
 export default function Tasks() {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchMyTasks = async () => {
-    try {
-      setLoading(true);
+  const {
+    data: tasks = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: queryKeys.tasksMy(user?.role, 50),
+    queryFn: async () => {
       const data = await api.get('/tasks/my?limit=50');
-      setTasks(data || []);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to load tasks: ' + (err.message || 'unknown error'));
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data || [];
+    },
+    enabled: !!user?.id,
+    staleTime: 30 * 1000,
+    refetchInterval: 15 * 1000,
+    // Keep list stable across navigation; use explicit refetch after writes.
+    refetchOnMount: false,
+  });
 
+  // Keep the previous UX of surfacing fetch failures via toast, but render
+  // an inline fallback as well.
   useEffect(() => {
-    fetchMyTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+    if (isError && error?.message) {
+      toast.error('Failed to load tasks: ' + error.message);
+    }
+  }, [isError, error]);
 
   const handleComplete = async (taskId) => {
     try {
       await api.put(`/tasks/${taskId}/complete`, {});
       toast.success('Task marked completed.');
-      await fetchMyTasks();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.tasksMy(user?.role, 50) });
     } catch (err) {
       console.error(err);
       toast.error('Failed to complete task: ' + (err.message || 'unknown error'));
@@ -53,8 +62,12 @@ export default function Tasks() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="p-10 text-center text-text-muted">Loading tasks...</div>
+      ) : isError ? (
+        <div className="p-10 text-center text-danger font-semibold">
+          Failed to load tasks.
+        </div>
       ) : tasks.length === 0 ? (
         <div className="p-10 text-center text-text-muted flex flex-col items-center justify-center gap-3">
           <Clock className="w-10 h-10 opacity-20" />

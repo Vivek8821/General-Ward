@@ -156,7 +156,7 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ## First-party file inventory
 
-**114** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**118** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
 
 <a id="fp-github-workflows-postgres-ci-yml"></a>
 ### `.github/workflows/postgres-ci.yml`
@@ -195,6 +195,11 @@ Documentation file that explains how to work with this repo/subsystem.
 
 <a id="fp-docs-plans-patient-detail-ui-refresh-progress-md"></a>
 ### `docs/plans/patient-detail-ui-refresh-PROGRESS.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-docs-runbooks-multi-device-sync-validation-md"></a>
+### `docs/runbooks/multi-device-sync-validation.md`
 
 Documentation file that explains how to work with this repo/subsystem.
 
@@ -308,6 +313,11 @@ JSON configuration/state file used by the app or tooling.
 
 First-party file (open to inspect exact behavior).
 
+<a id="fp-ward-backend-postgres-migrations-migrations-002-create-application-schema-sql"></a>
+### `ward-backend/postgres-migrations/migrations/002_create_application_schema.sql`
+
+First-party file (open to inspect exact behavior).
+
 <a id="fp-ward-backend-postgres-migrations-planmigrations-js"></a>
 ### `ward-backend/postgres-migrations/planMigrations.js`
 
@@ -405,6 +415,11 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-routes-tasks-js"></a>
 ### `ward-backend/routes/tasks.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-comparesqlitepostgrescounts-js"></a>
+### `ward-backend/scripts/compareSqlitePostgresCounts.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -683,6 +698,11 @@ First-party file (open to inspect exact behavior).
 
 First-party file (open to inspect exact behavior).
 
+<a id="fp-ward-frontend-src-utils-querykeys-ts"></a>
+### `ward-frontend/src/utils/queryKeys.ts`
+
+First-party file (open to inspect exact behavior).
+
 <a id="fp-ward-frontend-src-views-adminaudit-jsx"></a>
 ### `ward-frontend/src/views/AdminAudit.jsx`
 
@@ -730,6 +750,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 114**, **thirdParty 32056**, **data 1**, total 32171.
+- Inventory counts: **firstParty 118**, **thirdParty 32056**, **data 1**, total 32175.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.
