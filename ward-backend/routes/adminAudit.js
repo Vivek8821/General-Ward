@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateToken, requireRole } = require('../middleware/auth');
-const { allAsync, getAsync, runAsync } = require('../db');
+const dbAdapter = require('../dbAdapter');
 
 const router = express.Router();
 const MAX_LIMIT = 100;
@@ -62,11 +62,11 @@ router.get('/audit-logs', authenticateToken, requireRole(['admin']), async (req,
       params.push(Number(success));
     }
     if (from && typeof from === 'string') {
-      query += ' AND datetime(timestamp) >= datetime(?)';
+      query += ' AND timestamp >= ?';
       params.push(from);
     }
     if (to && typeof to === 'string') {
-      query += ' AND datetime(timestamp) <= datetime(?)';
+      query += ' AND timestamp <= ?';
       params.push(to);
     }
 
@@ -82,7 +82,7 @@ router.get('/audit-logs', authenticateToken, requireRole(['admin']), async (req,
     query += ' ORDER BY timestamp DESC, id DESC LIMIT ?';
     params.push(parsedLimit);
 
-    const rows = await allAsync(query, params);
+    const rows = await dbAdapter.all(query, params);
     const nextCursor =
       rows.length === parsedLimit
         ? `${rows[rows.length - 1].timestamp}|${rows[rows.length - 1].id}`
@@ -117,18 +117,18 @@ router.get('/audit-logs/export.csv', authenticateToken, requireRole(['admin']), 
       params.push(Number(success));
     }
     if (from && typeof from === 'string') {
-      query += ' AND datetime(timestamp) >= datetime(?)';
+      query += ' AND timestamp >= ?';
       params.push(from);
     }
     if (to && typeof to === 'string') {
-      query += ' AND datetime(timestamp) <= datetime(?)';
+      query += ' AND timestamp <= ?';
       params.push(to);
     }
 
     query += ' ORDER BY timestamp DESC, id DESC LIMIT ?';
     params.push(exportMax);
 
-    const rows = await allAsync(query, params);
+    const rows = await dbAdapter.all(query, params);
 
     const header = [
       'id',
@@ -198,11 +198,11 @@ router.get('/clinical-changes', authenticateToken, requireRole(['admin']), async
       params.push(entityType);
     }
     if (from && typeof from === 'string') {
-      query += ' AND datetime(timestamp) >= datetime(?)';
+      query += ' AND timestamp >= ?';
       params.push(from);
     }
     if (to && typeof to === 'string') {
-      query += ' AND datetime(timestamp) <= datetime(?)';
+      query += ' AND timestamp <= ?';
       params.push(to);
     }
 
@@ -218,7 +218,7 @@ router.get('/clinical-changes', authenticateToken, requireRole(['admin']), async
     query += ' ORDER BY timestamp DESC, id DESC LIMIT ?';
     params.push(parsedLimit);
 
-    const rows = await allAsync(query, params);
+    const rows = await dbAdapter.all(query, params);
     const nextCursor =
       rows.length === parsedLimit
         ? `${rows[rows.length - 1].timestamp}|${rows[rows.length - 1].id}`
@@ -244,14 +244,14 @@ router.post('/audit/purge', authenticateToken, requireRole(['admin']), async (re
       return res.status(400).json({ error: resolved.error });
     }
     const { days } = resolved;
-    const modifier = `-${days} days`;
+    const cutoffIso = new Date(Date.now() - days * 86400000).toISOString();
 
     const countSql = `
       SELECT COUNT(*) AS c FROM AuditLogs
-      WHERE tenantId = ? AND datetime(timestamp) < datetime('now', ?)
+      WHERE tenantId = ? AND timestamp < ?
     `;
-    const row = await getAsync(countSql, [tenantId, modifier]);
-    const count = row ? row.c : 0;
+    const row = await dbAdapter.get(countSql, [tenantId, cutoffIso]);
+    const count = row ? Number(row.c) : 0;
 
     if (dryRun) {
       return res.json({ dryRun: true, wouldDelete: count, olderThanDays: days, tenantId });
@@ -259,9 +259,9 @@ router.post('/audit/purge', authenticateToken, requireRole(['admin']), async (re
 
     const delSql = `
       DELETE FROM AuditLogs
-      WHERE tenantId = ? AND datetime(timestamp) < datetime('now', ?)
+      WHERE tenantId = ? AND timestamp < ?
     `;
-    const result = await runAsync(delSql, [tenantId, modifier]);
+    const result = await dbAdapter.run(delSql, [tenantId, cutoffIso]);
     return res.json({ dryRun: false, deleted: result.changes, olderThanDays: days, tenantId });
   } catch (err) {
     console.error('[adminAudit] purge', err);

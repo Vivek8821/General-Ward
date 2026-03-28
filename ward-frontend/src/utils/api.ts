@@ -1,5 +1,7 @@
 import toast from 'react-hot-toast';
 
+const CSRF_STORAGE_KEY = 'ward_csrf_token';
+
 const DEFAULT_ORIGIN = 'http://localhost:3001';
 
 function normalizeApiBase(raw: string | undefined): string {
@@ -18,9 +20,19 @@ function normalizeApiBase(raw: string | undefined): string {
   return `${base}/api`;
 }
 
-const API_BASE = normalizeApiBase(import.meta.env.VITE_API_BASE);
+export const API_BASE = normalizeApiBase(import.meta.env.VITE_API_BASE);
 
 type JsonHeaders = Record<string, string>;
+
+export function getCsrfHeaders(): JsonHeaders {
+  try {
+    const csrf = sessionStorage.getItem(CSRF_STORAGE_KEY);
+    if (csrf) return { 'X-CSRF-Token': csrf };
+  } catch {
+    // ignore
+  }
+  return {};
+}
 
 type ApiErrorResponse = {
   error?: string;
@@ -33,6 +45,15 @@ type ApiRequestOptions = Omit<RequestInit, 'headers' | 'body' | 'method'> & {
   body?: string;
 };
 
+export function setCsrfToken(token: string | null) {
+  try {
+    if (token) sessionStorage.setItem(CSRF_STORAGE_KEY, token);
+    else sessionStorage.removeItem(CSRF_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 export const api = {
   getHeaders(): JsonHeaders {
     return {
@@ -41,11 +62,23 @@ export const api = {
   },
 
   async request(endpoint: string, options: ApiRequestOptions = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    const csrfHeaders: JsonHeaders = {};
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+      try {
+        const csrf = sessionStorage.getItem(CSRF_STORAGE_KEY);
+        if (csrf) csrfHeaders['X-CSRF-Token'] = csrf;
+      } catch {
+        // ignore
+      }
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       credentials: 'include',
       headers: {
         ...this.getHeaders(),
+        ...csrfHeaders,
         ...(options.headers || {}),
       },
     });
@@ -57,6 +90,7 @@ export const api = {
         toast.error(msg);
         localStorage.removeItem('ward_token');
         localStorage.removeItem('ward_user');
+        setCsrfToken(null);
         window.location.href = '/login';
       } else {
         toast.error(msg);

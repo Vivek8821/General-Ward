@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { runAsync } = require('../db');
+const dbAdapter = require('../dbAdapter');
 
 /**
  * @param {object} row
@@ -14,7 +14,7 @@ const { runAsync } = require('../db');
 async function insert(row) {
   const id = crypto.randomUUID();
   const tenantId = row.tenantId || 'tenant-default';
-  await runAsync(
+  await dbAdapter.run(
     `INSERT INTO ClinicalChangeLog (id, tenantId, userId, userRole, entityType, entityId, action, summary)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [

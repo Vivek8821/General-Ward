@@ -1,6 +1,6 @@
 /* eslint react-refresh/only-export-components: 0 */
 import { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '../utils/api';
+import { api, setCsrfToken } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }) => {
 
     localStorage.removeItem('ward_token');
     localStorage.removeItem('ward_user');
+    setCsrfToken(null);
     setUser(null);
   };
 
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     const data = await api.post('/auth/login', { username, password });
+    if (data?.csrfToken) setCsrfToken(data.csrfToken);
     localStorage.setItem('ward_user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
@@ -73,6 +75,7 @@ export const AuthProvider = ({ children }) => {
         if (data?.user) {
           setUser(data.user);
           localStorage.setItem('ward_user', JSON.stringify(data.user));
+          if (data?.csrfToken) setCsrfToken(data.csrfToken);
         } else {
           setUser(null);
         }

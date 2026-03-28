@@ -1,10 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const db = require('./db');
 const { auditLog } = require('./middleware/audit');
 const { requestLogger } = require('./middleware/requestLogger');
 const { checkPostgresConnectivity } = require('./postgres');
+const { attachUserIfPresent, authenticateToken } = require('./middleware/auth');
+const { verifyCsrfForMutations } = require('./middleware/csrf');
 
 // Import routes
 // Import routes
@@ -38,7 +39,11 @@ function getCorsMiddleware() {
         if (origin.length === 0) {
             throw new Error('[cors] CORS_ORIGIN must list at least one origin in production');
         }
-        return cors({ origin, credentials: true });
+        return cors({
+            origin,
+            credentials: true,
+            allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'Idempotency-Key'],
+        });
     }
 
     if (raw && String(raw).trim() !== '') {
@@ -46,7 +51,11 @@ function getCorsMiddleware() {
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
-        return cors({ origin, credentials: true });
+        return cors({
+            origin,
+            credentials: true,
+            allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'Idempotency-Key'],
+        });
     }
 
     // Frontend uses `credentials: 'include'` for cookie-based auth.
@@ -62,6 +71,7 @@ function getCorsMiddleware() {
             return cb(null, origin);
         },
         credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'Idempotency-Key'],
     });
 }
 
@@ -70,7 +80,9 @@ function getCorsMiddleware() {
 app.set('trust proxy', 1);
 app.use(getCorsMiddleware());
 app.use(helmet());
-app.use(express.json());
+app.use(express.json({ limit: '512kb' }));
+app.use('/api', attachUserIfPresent);
+app.use('/api', verifyCsrfForMutations);
 app.use(auditLog); // Attach audit logging globally
 app.use(requestLogger); // Structured request logging
 
@@ -84,27 +96,29 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/observations', observationsRoutes);
 app.use('/api/admin', adminAuditRoutes);
 
-// Health check endpoint
-app.get('/health', async (req, res) => {
-    try {
-        const postgres = await checkPostgresConnectivity();
-        res.json({
-            status: 'ok',
-            message: 'General Ward API is running',
-            postgres,
-        });
-    } catch (err) {
-        // Health checks should never fail the whole endpoint.
-        res.json({
-            status: 'ok',
-            message: 'General Ward API is running',
-            postgres: { enabled: false, ok: false },
-        });
-    }
+// Health check — minimal public surface (no DB topology in body).
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
 });
 
 app.get('/api/version', (req, res) => {
     res.json({ backendVersion });
+});
+
+// Authenticated ops may check DB readiness (avoids exposing infra in public /health).
+app.get('/api/health/detail', authenticateToken, async (req, res) => {
+    try {
+        const postgres = await checkPostgresConnectivity();
+        res.json({
+            status: 'ok',
+            postgres,
+        });
+    } catch (err) {
+        res.json({
+            status: 'ok',
+            postgres: { enabled: false, ok: false },
+        });
+    }
 });
 
 app.listen(PORT, () => {

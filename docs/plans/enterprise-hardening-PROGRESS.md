@@ -6,7 +6,7 @@
 
 | Field | Value |
 |--------|--------|
-| Last completed step | **SYNC.4.0** (Two-device validation runbook prepared) |
+| Last completed step | **SEC.1** (Security hardening: dbAdapter + CSRF + health) |
 | Interrupted at | *(none)* |
 | Branch / commit | *(local)* |
 
@@ -16,7 +16,8 @@
 
 ## Follow-ups (optional / not blocking)
 
-- **CSRF (C.0):** Design choice was Cookie + double-submit CSRF. HttpOnly session cookie and credentialed CORS are implemented (C.1–C.4); **CSRF tokens for state-changing requests are not implemented** in this codebase yet — add when threat model requires it.
+- **Dependency advisories:** `npm audit` may still report `sqlite3` / `tar` (transitive) until `sqlite3@6` or alternate driver; track upgrades separately.
+- **CSRF (C.0):** Implemented as JWT `csrf` claim + `X-CSRF-Token` header for mutating `/api/*` routes (skipped when JWT has no `csrf`, e.g. legacy tests). Login returns `{ user, csrfToken }` only (no JWT in JSON body).
 
 ## Session checkpoint template (crash recovery)
 
@@ -70,6 +71,7 @@ Use this block before and after every numbered sync step:
 | 2026-03-26 | SYNC.3.1 | Done | docs update | Added structured crash-recovery checkpoint template in PROGRESS (`Step ID`, intent, files, commands, verifier, stress, rollback, interrupted-at, next action) to make mid-step recovery deterministic. |
 | 2026-03-26 | SYNC.3.2 | Done | runbook update | Added `Common failure modes and mitigations` section in `docs/runbooks/postgres-cutover.md` for CORS/cookie failures, partial migrations, data mismatches, tenant default regressions, and stale cross-device polling. |
 | 2026-03-26 | SYNC.4.0 | Done | runbook added | Added `docs/runbooks/multi-device-sync-validation.md` with two-device matrix, stress loop, pass criteria, and failure logging template for repeatable acceptance execution. |
+| 2026-03-28 | SEC.1 | Done | backend npm test + frontend lint/build | Unified auth, lockout, HTTP audit, tenant middleware, admin audit routes, observations, stats, medications, history, clinical changelog on `dbAdapter` (Postgres/SQLite). Postgres `withTransaction` inner queries use `?`→`$n`. Portable audit date filters + purge cutoff. CSRF: `attachUserIfPresent` + `verifyCsrfForMutations`, JWT `csrf` + `X-CSRF-Token`, login omits token from JSON. Minimal public `/health`; `/api/health/detail` for authed DB status. `express.json` limit 512kb. CORS allows CSRF header. Frontend sessionStorage CSRF + Admin purge fetch. |
 
 ## Rollback / snapshots
 

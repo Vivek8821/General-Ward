@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true }); 
-const { db } = require('../db');
+const dbAdapter = require('../dbAdapter');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { requireTenantPatient } = require('../middleware/tenant');
 const crypto = require('crypto');
@@ -121,61 +121,59 @@ const computeStaleness = (row) => {
 };
 
 // POST /api/patients/:patientId/stats
-router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), requireTenantPatient('patientId'), (req, res) => {
+router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), requireTenantPatient('patientId'), async (req, res) => {
     const { patientId } = req.params;
     const { type, data } = req.body;
     const id = crypto.randomUUID();
     const tenantId = req.user.tenantId || 'tenant-default';
-    
+
     if (!type) {
         return res.status(400).json({
             error: 'Stat type is required',
-            code: 'VALIDATION_ERROR'
+            code: 'VALIDATION_ERROR',
         });
     }
 
-    // validate type and content
     if (!['vital', 'symptom', 'diet', 'sleep'].includes(type) || !validateStats(type, data)) {
         return res.status(400).json({
             error: 'Invalid stat type or malformed/physiologically invalid data',
-            code: 'VALIDATION_ERROR'
+            code: 'VALIDATION_ERROR',
         });
     }
 
     const dataString = typeof data === 'object' ? JSON.stringify(data) : data;
 
-    db.run(
-        `INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy) VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, tenantId, patientId, type, dataString, req.user.name],
-        function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.status(201).json({
-                id,
-                patientId,
-                type,
-                data,
-                recordedBy: req.user.name
-            });
-        }
-    );
+    try {
+        await dbAdapter.run(
+            `INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy) VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, tenantId, patientId, type, dataString, req.user.name]
+        );
+        res.status(201).json({
+            id,
+            patientId,
+            type,
+            data,
+            recordedBy: req.user.name,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // GET /api/patients/:patientId/stats
-router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
+router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), async (req, res) => {
     const { patientId } = req.params;
-    const { type, limit, cursor } = req.query; // optional filter by type + cursor pagination
+    const { type, limit, cursor } = req.query;
     const tenantId = req.user.tenantId || 'tenant-default';
-    
+
     let query = `SELECT * FROM DailyStats WHERE patientId = ? AND tenantId = ?`;
     const params = [patientId, tenantId];
-    
+
     if (type) {
         query += ` AND type = ?`;
         params.push(type);
     }
 
-    // Cursor pagination (descending timestamp):
-    // cursor format: "<timestampISO>|<id>"
     if (cursor && typeof cursor === 'string') {
         const parts = cursor.split('|');
         if (parts.length === 2) {
@@ -195,10 +193,10 @@ router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), re
         query += ` LIMIT ?`;
         params.push(parsedLimit);
     }
-    
-    db.all(query, params, (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        const enriched = rows.map(row => {
+
+    try {
+        const rows = await dbAdapter.all(query, params);
+        const enriched = rows.map((row) => {
             let parsedData = row.data;
             try {
                 parsedData = JSON.parse(row.data);
@@ -217,119 +215,123 @@ router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), re
                 data: parsedData,
                 isStale,
                 ageMinutes,
-                earlyWarningScore: ews
+                earlyWarningScore: ews,
             };
         });
 
         res.json(enriched);
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // GET /api/patients/:patientId/stats/ews/latest
 // Returns the most recent vital entry with its computed early warning score.
-router.get('/ews/latest', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
+router.get('/ews/latest', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), async (req, res) => {
     const { patientId } = req.params;
     const tenantId = req.user.tenantId || 'tenant-default';
 
-    db.get(
-        `SELECT * FROM DailyStats WHERE patientId = ? AND tenantId = ? AND type = 'vital' ORDER BY timestamp DESC LIMIT 1`,
-        [patientId, tenantId],
-        (err, row) => {
-            if (err) return res.status(500).json({ error: err.message });
-            if (!row) {
-                return res.status(404).json({ error: 'No vitals found for patient' });
-            }
+    try {
+        const row = await dbAdapter.get(
+            `SELECT * FROM DailyStats WHERE patientId = ? AND tenantId = ? AND type = 'vital' ORDER BY timestamp DESC LIMIT 1`,
+            [patientId, tenantId]
+        );
+        if (!row) {
+            return res.status(404).json({ error: 'No vitals found for patient' });
+        }
 
-            let parsedData = row.data;
-            try {
-                parsedData = JSON.parse(row.data);
-            } catch (e) {
-                // leave as-is
-            }
+        let parsedData = row.data;
+        try {
+            parsedData = JSON.parse(row.data);
+        } catch (e) {
+            // leave as-is
+        }
 
-            const { isStale, ageMinutes } = computeStaleness(row);
-            const ews = scoringService.calculateFromVital(parsedData, row.timestamp);
+        const { isStale, ageMinutes } = computeStaleness(row);
+        const ews = scoringService.calculateFromVital(parsedData, row.timestamp);
 
-            if (!ews) {
-                return res.status(400).json({
-                    error: 'Unable to compute early warning score from stored vitals',
-                    code: 'SCORING_ERROR'
-                });
-            }
-
-            res.json({
-                patientId,
-                vital: {
-                    ...row,
-                    data: parsedData,
-                    isStale,
-                    ageMinutes
-                },
-                score: ews
+        if (!ews) {
+            return res.status(400).json({
+                error: 'Unable to compute early warning score from stored vitals',
+                code: 'SCORING_ERROR',
             });
         }
-    );
+
+        res.json({
+            patientId,
+            vital: {
+                ...row,
+                data: parsedData,
+                isStale,
+                ageMinutes,
+            },
+            score: ews,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // GET /api/patients/:patientId/stats/trends
 // Computes simple trend directions from the latest two vital sign entries.
-router.get('/trends', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), (req, res) => {
+router.get('/trends', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('patientId'), async (req, res) => {
     const { patientId } = req.params;
     const tenantId = req.user.tenantId || 'tenant-default';
 
-    db.all(
-        `SELECT * FROM DailyStats
+    try {
+        const rows = await dbAdapter.all(
+            `SELECT * FROM DailyStats
          WHERE patientId = ? AND tenantId = ? AND type = 'vital'
          ORDER BY timestamp DESC
          LIMIT 2`,
-        [patientId, tenantId],
-        (err, rows) => {
-            if (err) return res.status(500).json({ error: err.message });
-            if (!rows || rows.length < 2) {
-                return res.status(200).json({
-                    patientId,
-                    trends: {}
-                });
-            }
-
-            const [latestRow, previousRow] = rows;
-            let latestData = latestRow.data;
-            let previousData = previousRow.data;
-
-            try {
-                latestData = JSON.parse(latestRow.data);
-            } catch (e) {}
-            try {
-                previousData = JSON.parse(previousRow.data);
-            } catch (e) {}
-
-            const mkTrend = (prevVal, latestVal) => {
-                if (prevVal === undefined || latestVal === undefined) return null;
-                const p = Number(prevVal);
-                const l = Number(latestVal);
-                if (!Number.isFinite(p) || !Number.isFinite(l)) return null;
-                const delta = l - p;
-                const direction = Math.abs(delta) < 1e-6 ? 'stable' : delta > 0 ? 'up' : 'down';
-                return { previous: p, latest: l, delta, direction };
-            };
-
-            const trends = {
-                pulse: mkTrend(previousData.pulse, latestData.pulse),
-                temp: mkTrend(previousData.temp, latestData.temp),
-                systolic: mkTrend(previousData.bpSystolic, latestData.bpSystolic),
-                diastolic: mkTrend(previousData.bpDiastolic, latestData.bpDiastolic),
-                spo2: mkTrend(previousData.spo2, latestData.spo2),
-                respRate: mkTrend(previousData.respRate, latestData.respRate)
-            };
-
-            return res.json({
+            [patientId, tenantId]
+        );
+        if (!rows || rows.length < 2) {
+            return res.status(200).json({
                 patientId,
-                fromTimestamp: previousRow.timestamp,
-                toTimestamp: latestRow.timestamp,
-                trends
+                trends: {},
             });
         }
-    );
+
+        const [latestRow, previousRow] = rows;
+        let latestData = latestRow.data;
+        let previousData = previousRow.data;
+
+        try {
+            latestData = JSON.parse(latestRow.data);
+        } catch (e) {}
+        try {
+            previousData = JSON.parse(previousRow.data);
+        } catch (e) {}
+
+        const mkTrend = (prevVal, latestVal) => {
+            if (prevVal === undefined || latestVal === undefined) return null;
+            const p = Number(prevVal);
+            const l = Number(latestVal);
+            if (!Number.isFinite(p) || !Number.isFinite(l)) return null;
+            const delta = l - p;
+            const direction = Math.abs(delta) < 1e-6 ? 'stable' : delta > 0 ? 'up' : 'down';
+            return { previous: p, latest: l, delta, direction };
+        };
+
+        const trends = {
+            pulse: mkTrend(previousData.pulse, latestData.pulse),
+            temp: mkTrend(previousData.temp, latestData.temp),
+            systolic: mkTrend(previousData.bpSystolic, latestData.bpSystolic),
+            diastolic: mkTrend(previousData.bpDiastolic, latestData.bpDiastolic),
+            spo2: mkTrend(previousData.spo2, latestData.spo2),
+            respRate: mkTrend(previousData.respRate, latestData.respRate),
+        };
+
+        return res.json({
+            patientId,
+            fromTimestamp: previousRow.timestamp,
+            toTimestamp: latestRow.timestamp,
+            trends,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../utils/api';
+import { api, API_BASE, getCsrfHeaders } from '../utils/api';
 import toast from 'react-hot-toast';
 import { Download, Trash2, Search, ClipboardList } from 'lucide-react';
-
-const API_BASE = 'http://localhost:3001/api';
 
 export default function AdminAudit() {
   const { user } = useAuth();
@@ -88,6 +86,7 @@ export default function AdminAudit() {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...getCsrfHeaders(),
         },
         body: JSON.stringify({ dryRun, olderThanDays: days }),
       });

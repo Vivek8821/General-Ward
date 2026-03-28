@@ -12,12 +12,10 @@ if (JWT_SECRET_ENV) {
   console.warn('[auth] JWT_SECRET not set; using insecure fallback (non-production only).');
 }
 
-function authenticateToken(req, res, next) {
+function extractToken(req) {
     const authHeader = req.headers['authorization'];
     const tokenFromHeader = authHeader && authHeader.split(' ')[1];
 
-    // Phase C.2 migration: accept token from the HttpOnly cookie set at login.
-    // We parse `req.headers.cookie` manually to avoid adding a cookie dependency.
     const cookieHeader = req.headers.cookie || '';
     let tokenFromCookie = null;
     if (cookieHeader) {
@@ -33,10 +31,24 @@ function authenticateToken(req, res, next) {
         }
     }
 
-    const token = tokenFromHeader || tokenFromCookie;
+    return tokenFromHeader || tokenFromCookie || null;
+}
+
+/** Parse JWT early so CSRF and audit can run after global auth hint (same claims as authenticateToken). */
+function attachUserIfPresent(req, res, next) {
+    const token = extractToken(req);
+    if (!token) return next();
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (!err) req.user = user;
+        next();
+    });
+}
+
+function authenticateToken(req, res, next) {
+    const token = extractToken(req);
 
     if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
-    
+
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) return res.status(403).json({ error: 'Invalid or expired token.' });
         req.user = user;
@@ -53,4 +65,4 @@ function requireRole(roles) {
     };
 }
 
-module.exports = { authenticateToken, requireRole, JWT_SECRET };
+module.exports = { authenticateToken, attachUserIfPresent, extractToken, requireRole, JWT_SECRET };

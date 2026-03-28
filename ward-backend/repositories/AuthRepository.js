@@ -1,14 +1,9 @@
-const { db } = require('../db');
+const dbAdapter = require('../dbAdapter');
 
 class AuthRepository {
-    findUserByName(username) {
-        return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM Users WHERE name = ?`, [username], (err, user) => {
-                if (err) return reject(err);
-                resolve(user);
-            });
-        });
-    }
+  async findUserByName(username) {
+    return dbAdapter.get(`SELECT * FROM Users WHERE name = ?`, [username]);
+  }
 }
 
 module.exports = new AuthRepository();
