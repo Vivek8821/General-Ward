@@ -1,63 +1,22 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Hospital } from 'lucide-react';
 
-const DEMO_USER_KEY = 'ward_login_demo_username';
-const DEMO_PASS_KEY = 'ward_login_demo_password';
-
-function readStoredDemo() {
-  try {
-    const u = sessionStorage.getItem(DEMO_USER_KEY);
-    const p = sessionStorage.getItem(DEMO_PASS_KEY);
-    if (u != null && p != null) return { username: u, password: p };
-  } catch {
-    // ignore
-  }
-  return null;
-}
-
-function writeStoredDemo(username, password) {
-  try {
-    sessionStorage.setItem(DEMO_USER_KEY, username);
-    sessionStorage.setItem(DEMO_PASS_KEY, password);
-  } catch {
-    // ignore
-  }
-}
-
-function clearStoredDemo() {
-  try {
-    sessionStorage.removeItem(DEMO_USER_KEY);
-    sessionStorage.removeItem(DEMO_PASS_KEY);
-  } catch {
-    // ignore
-  }
-}
-
-/** Matches ward-backend/seed.js Users.name values */
-const DEMO = {
-  doctor: { username: 'Dr. Smith', password: '1234' },
-  nurse: { username: 'Nurse Johnson', password: '5678' },
-  admin: { username: 'Ward Admin', password: '9999' },
+/** Default sign-in for dev — matches ward-backend/seed.js (Dr. Smith / 1234). */
+const DEFAULT_LOGIN = {
+  username: 'Dr. Smith',
+  password: '1234',
 };
 
 export default function Login() {
-  const stored = readStoredDemo();
-  const [username, setUsername] = useState(() => stored?.username ?? '');
-  const [password, setPassword] = useState(() => stored?.password ?? '');
+  const [username, setUsername] = useState(DEFAULT_LOGIN.username);
+  const [password, setPassword] = useState(DEFAULT_LOGIN.password);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  const applyDemo = (u, p) => {
-    writeStoredDemo(u, p);
-    setUsername(u);
-    setPassword(p);
-    setError('');
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,7 +25,6 @@ export default function Login() {
 
     try {
       await login(username, password);
-      clearStoredDemo();
       navigate('/');
     } catch (err) {
       setError(err.message || 'Invalid credentials');
@@ -135,30 +93,6 @@ export default function Login() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-            <button
-              type="button"
-              onClick={() => applyDemo(DEMO.doctor.username, DEMO.doctor.password)}
-              className="btn bg-warning/20 text-warning hover:bg-warning/30 !py-2 !px-4 text-xs font-bold border border-warning/30"
-            >
-              Autofill Doctor
-            </button>
-            <button
-              type="button"
-              onClick={() => applyDemo(DEMO.nurse.username, DEMO.nurse.password)}
-              className="btn bg-info/20 text-info hover:bg-info/30 !py-2 !px-4 text-xs font-bold border border-info/30"
-            >
-              Autofill Nurse
-            </button>
-            <button
-              type="button"
-              onClick={() => applyDemo(DEMO.admin.username, DEMO.admin.password)}
-              className="btn bg-bg-tertiary text-text-secondary hover:bg-hover !py-2 !px-4 text-xs font-bold border border-border"
-            >
-              Autofill Admin
-            </button>
-          </div>
-
           <button
             type="submit"
             disabled={loading}
@@ -167,6 +101,13 @@ export default function Login() {
             {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
+
+        <p className="text-text-secondary text-sm mt-6">
+          New hospital?{' '}
+          <Link to="/signup" className="font-semibold text-primary hover:underline">
+            Sign up
+          </Link>
+        </p>
       </div>
     </main>
   );

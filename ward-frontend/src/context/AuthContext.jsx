@@ -64,10 +64,24 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const signup = async (payload) => {
+    const data = await api.post('/auth/signup', {
+      ...payload,
+      orgName: payload.hospitalName,
+    });
+    if (!data?.user) {
+      throw new Error('Signup failed');
+    }
+    if (data.csrfToken) setCsrfToken(data.csrfToken);
+    localStorage.setItem('ward_user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data;
+  };
+
   // Bootstrap user from cookie-auth on initial load.
   useEffect(() => {
-    // Avoid noisy auth failures / redirects on the login page.
-    if (window.location.pathname === '/login') {
+    // Avoid noisy auth failures / redirects on public pages.
+    if (window.location.pathname === '/login' || window.location.pathname === '/signup') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
@@ -92,7 +106,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, theme, setTheme }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, loading, theme, setTheme }}>
       {!loading && children}
     </AuthContext.Provider>
   );

@@ -63,18 +63,23 @@ describe('PatientService', () => {
         });
 
         it('should throw an error if patient is not found in database', async () => {
-            patientRepository.discharge.mockResolvedValue({ updated: 0, message: 'Patient not found' });
+            patientRepository.discharge.mockRejectedValue(new Error('Patient not found'));
 
             await expect(
-                patientService.dischargePatient('invalid-id', validDischargePayload, 'Dr. Test')
+                patientService.dischargePatient('invalid-id', validDischargePayload, 'Dr. Test', 'tenant-default')
             ).rejects.toThrow('Patient not found');
         });
 
         it('should update the patient status to discharged', async () => {
-            patientRepository.discharge.mockResolvedValue({ updated: 1, message: 'Patient discharged successfully' });
+            patientRepository.discharge.mockResolvedValue({
+                message: 'Patient discharged successfully',
+                summaryId: 'sum-1',
+                archiveId: 'arc-1',
+            });
 
-            const result = await patientService.dischargePatient('valid-id', validDischargePayload, 'Dr. Test');
+            const result = await patientService.dischargePatient('valid-id', validDischargePayload, 'Dr. Test', 'tenant-default');
             expect(result.message).toBe('Patient discharged successfully');
+            expect(result.archiveId).toBe('arc-1');
         });
     });
 });

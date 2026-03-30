@@ -209,6 +209,23 @@ const initDb = () => {
           )
         `);
 
+        // Immutable full-record snapshot at discharge (hospital archive).
+        db.run(`
+          CREATE TABLE IF NOT EXISTS HospitalArchives (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT,
+            patientId TEXT NOT NULL,
+            dischargeSummaryId TEXT NOT NULL,
+            archivedAt TEXT NOT NULL,
+            dischargedBy TEXT NOT NULL,
+            patientName TEXT NOT NULL,
+            mrn TEXT NOT NULL,
+            bedNumber TEXT NOT NULL,
+            snapshotJson TEXT NOT NULL,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+
         // Tasks Table (shift/workflow tasks for clinicians)
         db.run(`
           CREATE TABLE IF NOT EXISTS Tasks (
@@ -318,6 +335,7 @@ const initDb = () => {
         db.run(`UPDATE MedicationAdministrations SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
         db.run(`UPDATE Escalations SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
         db.run(`UPDATE DischargeSummaries SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
+        db.run(`UPDATE HospitalArchives SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
         db.run(`UPDATE Tasks SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
         db.run(`UPDATE HandoverNotes SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
         db.run(`UPDATE AuditLogs SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
@@ -348,6 +366,7 @@ const initDb = () => {
           'MedicationAdministrations',
           'Escalations',
           'DischargeSummaries',
+          'HospitalArchives',
           'Tasks',
           'HandoverNotes',
           'AuditLogs',
@@ -364,6 +383,7 @@ const initDb = () => {
         db.run(`CREATE INDEX IF NOT EXISTS idx_medications_patient ON Medications(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_escalations_patient ON Escalations(patientId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_discharges_patient ON DischargeSummaries(patientId);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_hospital_archives_tenant_time ON HospitalArchives(tenantId, archivedAt DESC);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_auditlogs_timestamp ON AuditLogs(timestamp);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_auditlogs_tenant_timestamp ON AuditLogs(tenantId, timestamp DESC);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_clinicalchangelog_tenant_time ON ClinicalChangeLog(tenantId, timestamp DESC);`);

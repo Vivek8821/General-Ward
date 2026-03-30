@@ -272,8 +272,12 @@ export default function Dashboard() {
           <div className="p-6 bg-bg-primary grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-slide-up">
             {filteredPatients.map(patient => (
               <a
-                key={patient.id} 
-                href={`/patient/${patient.id}`}
+                key={patient.archiveId || patient.patientId || patient.id}
+                href={
+                  viewMode === 'archived' && patient.archiveId
+                    ? `/archive/${patient.archiveId}`
+                    : `/patient/${patient.patientId || patient.id}`
+                }
                 className="card p-6 cursor-pointer hover:-translate-y-0.5 flex flex-col justify-between h-full group transition-all duration-300 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl"
               >
                 <div>
@@ -283,7 +287,11 @@ export default function Dashboard() {
                       <span className="font-semibold text-text-secondary whitespace-nowrap"> · Bed {patient.bedNumber}</span>
                     </h3>
                     <span className="text-xs text-slate-500 dark:text-slate-500 font-medium shrink-0">
-                      {viewMode === 'active' ? `L${patient.careIntensity}` : 'Out'}
+                      {viewMode === 'active'
+                        ? `L${patient.careIntensity}`
+                        : patient.archiveId
+                          ? 'Archived'
+                          : 'Legacy'}
                     </span>
                   </div>
                   <div className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider font-mono mb-4">
@@ -298,7 +306,9 @@ export default function Dashboard() {
                 
                 <div className="mt-6 pt-4 border-t border-border/60 flex justify-between items-center">
                   <span className={`text-xs font-semibold uppercase tracking-wide ${patient.status === 'escalated' ? 'text-red-600 dark:text-red-400' : 'text-text-muted'}`}>
-                    {patient.status}
+                    {viewMode === 'archived' && patient.archivedAt
+                      ? new Date(patient.archivedAt).toLocaleDateString()
+                      : patient.status}
                   </span>
                   <span className="text-xs font-semibold text-text-secondary group-hover:text-primary group-hover:underline flex items-center gap-1">
                     View Profile &rarr;

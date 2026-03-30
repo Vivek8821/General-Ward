@@ -52,6 +52,20 @@ router.get('/archives', authenticateToken, requireRole(['doctor', 'nurse', 'admi
     }
 });
 
+// Full immutable file for one archived admission (snapshot at discharge)
+router.get('/archives/:archiveId', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
+    try {
+        const tenantId = req.user.tenantId || 'tenant-default';
+        const record = await patientService.getHospitalArchive(req.params.archiveId, tenantId);
+        res.json(record);
+    } catch (error) {
+        if (error.message === 'Archive not found') {
+            return res.status(404).json({ error: error.message });
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get patient by ID
 router.get('/:id', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('id'), async (req, res) => {
     try {

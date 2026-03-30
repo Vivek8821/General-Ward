@@ -42,10 +42,10 @@ The original launch checklist targets a SaaS product with payments and user sign
 
 | Original checklist item | Adaptation for General Ward |
 |-------------------------|----------------------------|
-| Authentication/signup success rates | **Login success/failure rates** (no signup exists) |
+| Authentication/signup success rates | **Login + signup success/failure rates** — signup and staff registration added via [signup-payment plan](./signup-payment-detailed.md) |
 | Server health (uptime, latency, error rate) | Direct match — build on existing `/health` and `requestLogger.js` |
-| Payment processing success/failure | **Deferred** — no payment system exists; create the monitoring *hook pattern* so it activates when payments are added |
-| Conversion across onboarding milestones | **Clinical workflow completion rates** — patient admission → vitals → medication → discharge |
+| Payment processing success/failure | **Razorpay subscription events** — integrated via [signup-payment plan](./signup-payment-detailed.md); monitoring activates when webhook events flow through `SubscriptionEvents` table |
+| Conversion across onboarding milestones | **Clinical workflow completion rates** — patient admission → vitals → medication → discharge; **plus signup funnel** — org signup → payment → staff invite → staff register |
 | Alerts for critical failures | Direct match — build alerting on the metrics collected above |
 | Kill switches | Direct match — build feature flag middleware from scratch |
 | Rollback plan | Direct match — document and test rollback procedures |
@@ -420,39 +420,51 @@ Document in PROGRESS:
 
 ---
 
-## Phase M4 — Payment monitoring hook (deferred activation)
+## Phase M4 — Payment & signup monitoring
 
-**Goal:** Create the monitoring pattern so that when payment processing is added in the future, monitoring activates automatically. **No payment routes exist today — this phase creates scaffolding only.**
+**Goal:** Monitor Razorpay subscription events and signup funnel. Depends on [signup-payment plan](./signup-payment-detailed.md) being executed first (Phases S1–P1 minimum). If signup/payment phases are not yet complete, this phase creates the scaffolding that activates automatically once they are.
 
-### M4.1 Payment event schema in metrics collector
+### M4.1 Payment and signup event tracking in metrics collector
 
 **Files:** [ward-backend/middleware/metricsCollector.js](../../ward-backend/middleware/metricsCollector.js)
 
 **Implementation:**
 
-1. Add payment-specific counter structure (all initialized to 0, never incremented until payment routes exist):
-   - `paymentAttempts`, `paymentSuccess`, `paymentFailure`, `paymentRefund`
+1. Add payment-specific counter structure:
+   - `paymentAttempts`, `paymentSuccess`, `paymentFailure`, `paymentHalted`
    - `paymentRolling` — per-minute window (same pattern as auth and workflow)
-2. These counters will remain at 0 until a future phase adds `recordCustomEvent('payment.success', ...)` calls in payment route handlers.
-3. In `GET /api/monitoring/metrics`, include:
+   - `enabled` flag: `true` when `RAZORPAY_KEY_ID` env var is set (from `isPaymentEnabled()` in [razorpay.js](../../ward-backend/services/razorpay.js))
+2. Add signup-specific counters:
+   - `signupOrgAttempts`, `signupOrgSuccess`, `signupOrgFailure`
+   - `signupStaffAttempts`, `signupStaffSuccess`, `signupStaffFailure`
+   - `signupRolling` — per-minute window for org and staff signups
+3. Wire into:
+   - Webhook handler ([webhooks.js](../../ward-backend/routes/webhooks.js)): `recordCustomEvent('payment.charged')` on `subscription.charged`, `recordCustomEvent('payment.failed')` on `payment.failed`, etc.
+   - Signup controller ([SignupController.js](../../ward-backend/controllers/SignupController.js)): `recordCustomEvent('signup.org.success')` / `recordCustomEvent('signup.org.failure')` after org signup; same for staff registration.
+4. In `GET /api/monitoring/metrics`, include:
    ```json
    {
      "payment": {
-       "enabled": false,
-       "attempts": 0, "success": 0, "failure": 0, "refund": 0,
-       "successRate": null
+       "enabled": true,
+       "attempts": N, "success": N, "failure": N, "halted": N,
+       "successRate": N.N
+     },
+     "signup": {
+       "org": { "attempts": N, "success": N, "failure": N },
+       "staff": { "attempts": N, "success": N, "failure": N },
+       "rolling": [...]
      }
    }
    ```
-   `enabled` is `false` until a payment module sets it to `true` (or until env var `PAYMENT_ENABLED=true`).
 
 **Edge cases:**
-- Frontend should show "Payment monitoring not active" when `payment.enabled === false`.
+- Payment features not configured: `payment.enabled = false`, all counters stay at 0.
+- Signup features not yet built: signup counters stay at 0 (no signup routes to fire events).
 
 **Acceptance:**
 - `npm test` passes.
-- Metrics endpoint returns `payment.enabled: false`.
-- No real payment code exists — this is purely scaffolding.
+- If signup/payment routes exist: events tracked correctly after signup and webhook.
+- If not yet built: metrics endpoint returns zero counters gracefully.
 
 ---
 

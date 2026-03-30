@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
+import { queryKeys } from '../utils/queryKeys';
 import { useAuth } from '../context/AuthContext';
 import { Activity, Apple, Moon, ClipboardList, AlertTriangle, FileText, Clock, CheckCircle } from 'lucide-react';
 import HistoryTab from '../components/stats/HistoryTab';
@@ -22,6 +24,7 @@ function errMsg(err) {
 export default function PatientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [patient, setPatient] = useState(null);
   const [patientError, setPatientError] = useState(null);
@@ -203,11 +206,16 @@ export default function PatientDetail() {
   const handleDischargeCase = async (e) => {
       e.preventDefault();
       try {
-          await api.post(`/patients/${id}/discharge`, dischargeForm);
+          const res = await api.post(`/patients/${id}/discharge`, dischargeForm);
           setIsDischarging(false);
-          fetchPatient();
-          toast.success('Patient successfully discharged.');
-          navigate('/');
+          await queryClient.invalidateQueries({ queryKey: queryKeys.patients('archived') });
+          await queryClient.invalidateQueries({ queryKey: queryKeys.patients('active') });
+          toast.success('Patient discharged; full record archived.');
+          if (res?.archiveId) {
+              navigate(`/archive/${res.archiveId}`);
+          } else {
+              navigate('/');
+          }
       } catch (err) {
           toast.error('Failed to discharge patient: ' + errMsg(err));
       }

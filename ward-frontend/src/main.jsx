@@ -5,8 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedLayout } from './components/Layout';
 import Login from './views/Login';
+import Signup from './views/Signup';
 import Dashboard from './views/Dashboard';
 import PatientDetail from './views/PatientDetail';
+import HospitalArchiveDetail from './views/HospitalArchiveDetail';
 import Tasks from './views/Tasks';
 import AdminAudit from './views/AdminAudit';
 import NotFound from './views/NotFound';
@@ -29,10 +31,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
             
             <Route element={<ProtectedLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/patient/:id" element={<PatientDetail />} />
+              <Route path="/archive/:archiveId" element={<HospitalArchiveDetail />} />
               <Route path="/tasks" element={<Tasks />} />
             </Route>
 

@@ -68,13 +68,15 @@ class PatientService {
         }
 
         const tenant = tenantId || 'tenant-default';
-        const result = await patientRepository.discharge(id, data, dischargedBy, tenant);
+        return patientRepository.discharge(id, data, dischargedBy, tenant);
+    }
 
-        if (!result || result.updated === 0 || result.message === 'Patient not found') {
-            throw new Error('Patient not found');
+    async getHospitalArchive(archiveId, tenantId) {
+        const row = await patientRepository.findArchiveById(archiveId, tenantId);
+        if (!row) {
+            throw new Error('Archive not found');
         }
-
-        return result;
+        return row;
     }
 }
 
