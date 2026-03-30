@@ -124,7 +124,7 @@ export default function AdminAudit() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <ClipboardList className="w-7 h-7 text-slate-500" />
+            <ClipboardList className="w-7 h-7 text-slate-600 dark:text-slate-500" />
             Audit log
           </h1>
           <p className="text-sm text-text-muted mt-1">
@@ -142,7 +142,7 @@ export default function AdminAudit() {
         <h2 className="text-lg font-semibold">Filters</h2>
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Success</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">Success</label>
             <select
               className="input-field !py-2"
               value={successFilter}
@@ -159,8 +159,8 @@ export default function AdminAudit() {
         </div>
       </div>
 
-      <div className="card p-6 space-y-4 border border-red-500/20">
-        <h2 className="text-lg font-semibold text-red-400">Retention</h2>
+      <div className="card p-6 space-y-4 border border-red-200 dark:border-red-500/20">
+        <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Retention</h2>
         <p className="text-sm text-text-muted">
           Delete audit rows older than the given number of days for <strong>this tenant only</strong>. Use dry run
           first. You can also set <code className="text-xs bg-bg-tertiary px-1 rounded">AUDIT_RETENTION_DAYS</code> on
@@ -168,7 +168,7 @@ export default function AdminAudit() {
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
               Older than (days)
             </label>
             <input
@@ -191,7 +191,7 @@ export default function AdminAudit() {
             type="button"
             disabled={purgeBusy}
             onClick={() => runPurge(false)}
-            className="btn bg-red-800 text-white hover:bg-red-900 border border-red-900 text-sm"
+            className="btn bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-900 border border-red-800 dark:border-red-900 text-sm"
           >
             <Trash2 className="w-4 h-4" /> Purge
           </button>
@@ -221,7 +221,7 @@ export default function AdminAudit() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
                   <th className="p-3 font-medium">Time</th>
                   <th className="p-3 font-medium">User</th>
                   <th className="p-3 font-medium">Role</th>

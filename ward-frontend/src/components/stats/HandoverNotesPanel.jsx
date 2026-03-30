@@ -90,8 +90,8 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
     <div className="animate-in fade-in pt-4 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-50">
-            <Clock className="text-slate-500 dark:text-slate-400 shrink-0" size={18} aria-hidden /> Handover Notes
+          <h3 className="text-xl font-bold flex items-center gap-2 text-slate-800 dark:text-slate-50">
+            <Clock className="text-slate-600 dark:text-slate-400 shrink-0" size={18} aria-hidden /> Handover Notes
           </h3>
           <p className="text-sm text-text-muted mt-1">
             Shift-based notes to support clinical handover and accountability.

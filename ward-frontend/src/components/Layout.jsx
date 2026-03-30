@@ -32,7 +32,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
         <header className="nav-ribbon p-5 px-8 flex justify-between items-center mb-8">
           <div className="flex items-center gap-3 min-w-0">
             <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-bg-tertiary text-slate-600 dark:text-slate-400"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-bg-tertiary text-slate-700 dark:text-slate-400"
               aria-hidden
             >
               <Hospital className="h-5 w-5" strokeWidth={1.75} />
@@ -41,7 +41,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
               <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
                 General Ward
               </h1>
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-500">
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                 Clinical operations
               </p>
             </div>
@@ -51,7 +51,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-lg border border-border bg-bg-tertiary text-slate-600 hover:bg-bg-primary hover:border-slate-400/40 dark:text-slate-400 dark:hover:border-slate-500 transition-colors"
+              className="p-2 rounded-lg border border-border bg-bg-tertiary text-slate-700 hover:bg-bg-primary hover:border-slate-400/40 dark:text-slate-400 dark:hover:border-slate-500 transition-colors"
               aria-label="Toggle color theme"
             >
               <Sun className="w-5 h-5 hidden dark:block" />
@@ -62,7 +62,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
               <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 max-w-[120px] sm:max-w-[200px] truncate">
                 {user.name}
               </span>
-              <span className="rounded-md border border-border bg-bg-tertiary px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              <span className="rounded-md border border-border bg-bg-tertiary px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">
                 {user.role}
               </span>
             </div>
@@ -70,7 +70,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
             {user.role === 'admin' && (
               <Link
                 to="/admin/audit"
-                className="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 whitespace-nowrap"
+                className="text-sm font-medium text-slate-700 hover:text-primary dark:text-slate-400 whitespace-nowrap"
               >
                 Audit log
               </Link>

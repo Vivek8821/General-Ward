@@ -176,14 +176,14 @@ export default function Dashboard() {
 
       {/* Escalation Alert Bar (Doctor Only) */}
       {viewMode === 'active' && user.role === 'doctor' && escalated.length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/20 border-l-4 border-l-red-500 p-5 rounded-r-xl flex justify-between items-center gap-4">
-          <div className="flex items-center gap-3 text-red-400 font-semibold text-lg">
+        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 border-l-4 border-l-red-500 p-5 rounded-r-xl flex justify-between items-center gap-4">
+          <div className="flex items-center gap-3 text-red-700 dark:text-red-400 font-semibold text-lg">
             <AlertTriangle className="w-6 h-6 shrink-0" aria-hidden />
             {escalated.length} Patient{escalated.length > 1 ? 's' : ''} Require Immediate Attention
           </div>
           <button 
             onClick={() => setIsReviewingCases(!isReviewingCases)}
-            className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors ${isReviewingCases ? 'btn bg-bg-tertiary text-red-400 border border-red-500/40' : 'bg-red-800 text-white hover:bg-red-900 border border-red-900'}`}
+            className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors ${isReviewingCases ? 'btn bg-bg-tertiary text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/40' : 'bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-900 border border-red-800 dark:border-red-900'}`}
           >
             {isReviewingCases ? 'View All Patients' : 'Review Cases'}
           </button>
@@ -196,7 +196,7 @@ export default function Dashboard() {
           <StatCard title="Total Patients" value={patients.length} icon={<Users size={24} />} />
           <StatCard title="Active Beds" value={activePatients.length} icon={<Bed size={24} />} />
           <StatCard title="Critical Care (Level 4)" value={activePatients.filter(p => p.careIntensity === 4).length} icon={<Activity size={24} />} color="text-danger" />
-          <StatCard title="Escalations" value={escalatedPatients.length} icon={<AlertTriangle size={22} strokeWidth={2} />} color="text-red-400" />
+          <StatCard title="Escalations" value={escalatedPatients.length} icon={<AlertTriangle size={22} strokeWidth={2} />} color="text-red-600 dark:text-red-400" />
         </div>
       )}
 
@@ -238,7 +238,7 @@ export default function Dashboard() {
             {viewMode === 'active' && user.role === 'nurse' && escalatedPatients.length > 0 && (
               <button
                 onClick={() => setIsReviewingCases(!isReviewingCases)}
-                className={`text-sm px-4 py-2.5 rounded-xl font-semibold transition-colors whitespace-nowrap ${isReviewingCases ? 'btn bg-bg-tertiary text-red-400 border border-red-500/40' : 'bg-red-800 text-white hover:bg-red-900 border border-red-900'}`}
+                className={`text-sm px-4 py-2.5 rounded-xl font-semibold transition-colors whitespace-nowrap ${isReviewingCases ? 'btn bg-bg-tertiary text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/40' : 'bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-900 border border-red-800 dark:border-red-900'}`}
               >
                 {isReviewingCases ? 'View All Patients' : 'Review Escalated Patients'}
               </button>
@@ -282,22 +282,22 @@ export default function Dashboard() {
                       {patient.name}
                       <span className="font-semibold text-text-secondary whitespace-nowrap"> · Bed {patient.bedNumber}</span>
                     </h3>
-                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium shrink-0">
+                    <span className="text-xs text-slate-500 dark:text-slate-500 font-medium shrink-0">
                       {viewMode === 'active' ? `L${patient.careIntensity}` : 'Out'}
                     </span>
                   </div>
-                  <div className="text-slate-400 text-xs font-medium uppercase tracking-wider font-mono mb-4">
+                  <div className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider font-mono mb-4">
                     MRN {patient.mrn}
                   </div>
                   
-                  <div className="bg-zinc-900 rounded-xl p-4 min-h-[80px] border border-zinc-700/80">
-                     <span className="text-slate-400 text-xs font-medium uppercase tracking-wider block mb-1.5">Primary Diagnosis</span>
-                     <span className="text-sm font-medium text-white line-clamp-2">{patient.diagnosis}</span>
+                  <div className="bg-slate-100 dark:bg-zinc-900 rounded-xl p-4 min-h-[80px] border border-slate-200 dark:border-zinc-700/80">
+                     <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider block mb-1.5">Primary Diagnosis</span>
+                     <span className="text-sm font-medium text-slate-800 dark:text-white line-clamp-2">{patient.diagnosis}</span>
                   </div>
                 </div>
                 
                 <div className="mt-6 pt-4 border-t border-border/60 flex justify-between items-center">
-                  <span className={`text-xs font-semibold uppercase tracking-wide ${patient.status === 'escalated' ? 'text-red-400' : 'text-text-muted'}`}>
+                  <span className={`text-xs font-semibold uppercase tracking-wide ${patient.status === 'escalated' ? 'text-red-600 dark:text-red-400' : 'text-text-muted'}`}>
                     {patient.status}
                   </span>
                   <span className="text-xs font-semibold text-text-secondary group-hover:text-primary group-hover:underline flex items-center gap-1">
@@ -429,7 +429,7 @@ function StatCard({ title, value, icon, color = 'text-primary' }) {
   return (
     <div className="card p-6 pb-4 border-t-4 border-t-primary relative flex flex-col justify-between min-h-[132px] transition-transform hover:-translate-y-0.5">
       <div className="flex justify-between items-start gap-3">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</h3>
+        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{title}</h3>
         <span className={`shrink-0 opacity-70 ${color}`} aria-hidden>
           {icon}
         </span>

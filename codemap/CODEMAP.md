@@ -156,7 +156,12 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ## First-party file inventory
 
-**118** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**125** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+
+<a id="fp-github-workflows-ci-yml"></a>
+### `.github/workflows/ci.yml`
+
+First-party file (open to inspect exact behavior).
 
 <a id="fp-github-workflows-postgres-ci-yml"></a>
 ### `.github/workflows/postgres-ci.yml`
@@ -188,6 +193,11 @@ Documentation file that explains how to work with this repo/subsystem.
 
 Documentation file that explains how to work with this repo/subsystem.
 
+<a id="fp-docs-plans-legal-gdpr-mapping-md"></a>
+### `docs/plans/legal-gdpr-mapping.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
 <a id="fp-docs-plans-patient-detail-ui-refresh-detailed-md"></a>
 ### `docs/plans/patient-detail-ui-refresh-detailed.md`
 
@@ -198,6 +208,11 @@ Documentation file that explains how to work with this repo/subsystem.
 
 Documentation file that explains how to work with this repo/subsystem.
 
+<a id="fp-docs-runbooks-core-workflow-manual-test-md"></a>
+### `docs/runbooks/core-workflow-manual-test.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
 <a id="fp-docs-runbooks-multi-device-sync-validation-md"></a>
 ### `docs/runbooks/multi-device-sync-validation.md`
 
@@ -205,6 +220,11 @@ Documentation file that explains how to work with this repo/subsystem.
 
 <a id="fp-docs-runbooks-postgres-cutover-md"></a>
 ### `docs/runbooks/postgres-cutover.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-docs-runbooks-stress-test-gate-md"></a>
+### `docs/runbooks/stress-test-gate.md`
 
 Documentation file that explains how to work with this repo/subsystem.
 
@@ -268,6 +288,11 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-dbadapter-sqlplaceholders-js"></a>
+### `ward-backend/dbAdapter/sqlPlaceholders.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-implementation-state-json"></a>
 ### `ward-backend/IMPLEMENTATION_STATE.json`
 
@@ -280,6 +305,11 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-middleware-auth-js"></a>
 ### `ward-backend/middleware/auth.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-middleware-csrf-js"></a>
+### `ward-backend/middleware/csrf.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -718,6 +748,11 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-frontend-src-views-notfound-jsx"></a>
+### `ward-frontend/src/views/NotFound.jsx`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-frontend-src-views-patientdetail-jsx"></a>
 ### `ward-frontend/src/views/PatientDetail.jsx`
 
@@ -750,6 +785,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 118**, **thirdParty 32056**, **data 1**, total 32175.
+- Inventory counts: **firstParty 125**, **thirdParty 32056**, **data 1**, total 32182.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.

@@ -60,7 +60,7 @@ export default function HistoryTab({ patientId, readOnly }) {
   return (
     <div className="animate-in fade-in pt-4">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-50"><FileText className="text-slate-500 dark:text-slate-400 shrink-0" aria-hidden /> Extensive Medical History</h3>
+        <h3 className="text-xl font-bold flex items-center gap-2 text-slate-800 dark:text-slate-50"><FileText className="text-slate-600 dark:text-slate-400 shrink-0" aria-hidden /> Extensive Medical History</h3>
         
         {isDoctor && !isEditing && !readOnly && (
           <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 !px-4 text-sm">
@@ -109,8 +109,8 @@ export default function HistoryTab({ patientId, readOnly }) {
           </div>
         </form>
       ) : !history ? (
-        <div className="text-center p-10 mt-4 flex flex-col items-center justify-center gap-4 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900/50 text-text-muted">
-          <FileText size={48} className="opacity-25 text-slate-400 dark:text-slate-600 shrink-0" aria-hidden />
+        <div className="text-center p-10 mt-4 flex flex-col items-center justify-center gap-4 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-text-muted">
+          <FileText size={48} className="opacity-25 text-slate-500 dark:text-slate-600 shrink-0" aria-hidden />
           <p className="font-semibold text-text-secondary max-w-md">No extensive medical history profile has been established yet.</p>
           {isDoctor && !readOnly && (
             <>

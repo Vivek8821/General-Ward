@@ -80,7 +80,7 @@ export default function Login() {
       <div className="card p-12 text-center max-w-[420px] w-full animate-in fade-in slide-in-from-bottom-5 duration-500">
         <div className="flex flex-col items-center gap-3 mb-8">
           <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-bg-tertiary text-slate-600 dark:text-slate-400"
+            className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-bg-tertiary text-slate-700 dark:text-slate-400"
             aria-hidden
           >
             <Hospital className="h-6 w-6" strokeWidth={1.75} />
@@ -89,7 +89,7 @@ export default function Login() {
             <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
               General Ward
             </h1>
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 mt-1">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 mt-1">
               Clinical operations
             </p>
           </div>

@@ -221,15 +221,15 @@ export default function PatientDetail() {
 
       {/* Escalation Banner for Doctors */}
       {user.role === 'doctor' && patient.status === 'escalated' && escalations.length > 0 && (
-          <div className="bg-red-500/10 border border-red-500/20 border-l-4 border-l-red-500 p-5 rounded-r-xl mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 border-l-4 border-l-red-500 p-5 rounded-r-xl mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                  <h3 className="text-red-400 font-semibold text-lg flex items-center gap-2">
+                  <h3 className="text-red-700 dark:text-red-400 font-semibold text-lg flex items-center gap-2">
                       <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden /> Action Required: Case Escalated
                   </h3>
                   <p className="text-text-primary mt-1 font-semibold">Reason: {escalations[0].reason}</p>
                   <p className="text-xs text-text-muted mt-1">Escalated by: {escalations[0].escalatedBy}</p>
               </div>
-              <button onClick={() => handleReviewCase(escalations[0].id)} className="bg-red-800 text-white hover:bg-red-900 border border-red-900 px-5 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors">
+              <button onClick={() => handleReviewCase(escalations[0].id)} className="bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-900 border border-red-800 dark:border-red-900 px-5 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors">
                   Mark as Reviewed
               </button>
           </div>
@@ -240,7 +240,7 @@ export default function PatientDetail() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-border stagger-slide-up">
           <div className="min-w-0">
             <div className="flex flex-wrap items-baseline gap-2 gap-y-1">
-              <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              <h1 className="text-2xl md:text-3xl font-semibold text-black dark:text-white">
                 {patient.name}
               </h1>
               {patient.status === 'discharged' && (
@@ -252,8 +252,8 @@ export default function PatientDetail() {
                 <span
                   className={`text-xs font-semibold uppercase tracking-wide rounded-md px-2 py-0.5 border ${
                     patient.careIntensity === 4
-                      ? 'bg-red-950/50 text-red-200 border-red-800'
-                      : 'bg-amber-950/40 text-amber-200 border-amber-700/50'
+                      ? 'bg-red-100 text-red-800 border-red-300 dark:bg-red-950/50 dark:text-red-200 dark:border-red-800'
+                      : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-700/50'
                   }`}
                 >
                   Level {patient.careIntensity}
@@ -261,16 +261,16 @@ export default function PatientDetail() {
               )}
             </div>
             <div
-              className="mt-3 text-sm text-slate-600 dark:text-slate-400 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-900/50 px-3 py-2 font-medium"
+              className="mt-3 text-sm text-slate-700 dark:text-slate-400 rounded-md border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 px-3 py-2 font-medium"
               aria-label="Patient identifiers"
             >
               <span className="whitespace-normal break-words">
                 <span className="text-slate-500 dark:text-slate-500">MRN:</span> {patient.mrn}
-                <span className="mx-2 text-slate-400 dark:text-slate-600" aria-hidden>
+                <span className="mx-2 text-slate-300 dark:text-slate-600" aria-hidden>
                   |
                 </span>
                 <span className="text-slate-500 dark:text-slate-500">Bed</span> {patient.bedNumber}
-                <span className="mx-2 text-slate-400 dark:text-slate-600" aria-hidden>
+                <span className="mx-2 text-slate-300 dark:text-slate-600" aria-hidden>
                   |
                 </span>
                 <span className="text-slate-500 dark:text-slate-500">Level</span> {patient.careIntensity}
@@ -278,12 +278,12 @@ export default function PatientDetail() {
             </div>
             <div className="mt-2 text-sm">
               {allergiesHasRisk(patient.allergies) ? (
-                <span className="inline-flex items-center rounded-md border border-red-800 bg-red-950/45 px-2.5 py-1 font-semibold text-red-200">
+                <span className="inline-flex items-center rounded-md border border-red-300 dark:border-red-800 bg-red-100 dark:bg-red-950/45 px-2.5 py-1 font-semibold text-red-800 dark:text-red-200">
                   Allergies: {String(patient.allergies).trim()}
                 </span>
               ) : (
-                <p className="text-slate-500 dark:text-slate-400">
-                  <span className="font-medium text-slate-600 dark:text-slate-500">Allergies:</span>{' '}
+                <p className="text-slate-600 dark:text-slate-400">
+                  <span className="font-medium text-slate-700 dark:text-slate-500">Allergies:</span>{' '}
                   {formatAllergiesMutedLabel(patient.allergies)}
                 </p>
               )}
@@ -320,7 +320,7 @@ export default function PatientDetail() {
           <div className="mt-6 bg-bg-tertiary border border-border rounded-xl p-4">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-500 dark:text-slate-400" /> Tasks Due
+                <Clock className="w-4 h-4 text-slate-600 dark:text-slate-400" /> Tasks Due
               </h3>
               <div className="text-xs uppercase tracking-widest font-bold text-text-muted">
                 Open: {patientTasks.length}
@@ -478,7 +478,7 @@ export default function PatientDetail() {
                <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-2xl border border-border my-8">
                   <div className="p-6 border-b border-border bg-bg-tertiary rounded-t-2xl">
                      <h2 id="discharge-dialog-title" className="text-2xl font-bold text-text-primary flex items-center gap-3">
-                         <FileText className="w-6 h-6 text-slate-500 dark:text-slate-400" aria-hidden /> Official Patient Discharge
+                         <FileText className="w-6 h-6 text-slate-600 dark:text-slate-400" aria-hidden /> Official Patient Discharge
                      </h2>
                      <p className="text-text-muted text-sm mt-1">Please completely fill out the clinical discharge summary for {patient.name}.</p>
                   </div>

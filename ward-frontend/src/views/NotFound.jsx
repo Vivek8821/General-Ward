@@ -14,7 +14,7 @@ export default function NotFound() {
       >
         <div className="flex flex-col items-center gap-3 mb-6">
           <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-bg-tertiary text-slate-600 dark:text-slate-400"
+            className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-bg-tertiary text-slate-700 dark:text-slate-400"
             aria-hidden
           >
             <Hospital className="h-6 w-6" strokeWidth={1.75} />

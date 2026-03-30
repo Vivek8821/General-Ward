@@ -1,28 +1,29 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 :root {
   --color-primary: #4f46e5;
   --color-primary-dark: #4338ca;
   --color-secondary: #a385e0;
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
-  --color-danger: #fb7185;
-  --color-info: #60a5fa;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #e11d48;
+  --color-info: #2563eb;
 
-  --color-bg-primary: #fafafa;
-  --color-bg-secondary: #f4f4f5;
-  --color-bg-tertiary: #e4e4e7;
-  --color-text-primary: #3f3f46;
-  --color-text-secondary: #52525b;
-  --color-text-muted: #71717a;
-  --color-border: rgba(82, 82, 91, 0.2);
-  --color-hover: #e4e4e7;
+  --color-bg-primary: #f7f8fa;
+  --color-bg-secondary: #eef0f4;
+  --color-bg-tertiary: #e1e4ea;
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-border: rgba(55, 65, 81, 0.18);
+  --color-hover: #dfe2e8;
   --color-input: #ffffff;
 }
 
 /* Dark mode configuration (OLED Optimized but softened) */
 .dark {
-  --color-primary: #4f46e5;
+  --color-primary: #6366f1;
   --color-primary-dark: #4338ca;
   --color-secondary: #a385e0;
   --color-success: #4ade80;
@@ -41,7 +42,7 @@
   --color-input: #18181b;
 }
 
-@theme {
+@theme inline {
   --color-primary: var(--color-primary);
   --color-primary-dark: var(--color-primary-dark);
   --color-secondary: var(--color-secondary);
@@ -139,11 +140,11 @@ body {
   }
   
   .btn-success {
-    @apply bg-success text-white border-success/30;
+    @apply bg-success text-white border-success/30 shadow-sm;
   }
   
   .btn-warning {
-    @apply bg-warning text-white border-warning/30;
+    @apply bg-warning text-white border-warning/30 shadow-sm;
   }
   
   .btn-info {
@@ -183,7 +184,7 @@ body {
   /* Cards */
   .card {
     @apply bg-bg-secondary rounded-xl border border-border transition-all duration-300;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   }
   
   /* Dark cards: depth from border, not hover bloom */
