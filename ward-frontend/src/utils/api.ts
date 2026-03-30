@@ -86,16 +86,21 @@ export const api = {
     if (response.status === 401 || response.status === 403) {
       const errBody = (await response.json().catch(() => ({}))) as ApiErrorResponse;
       const msg = errBody?.error || errBody?.message || 'Access denied';
+
       if (window.location.pathname !== '/login') {
         toast.error(msg);
         localStorage.removeItem('ward_token');
         localStorage.removeItem('ward_user');
         setCsrfToken(null);
         window.location.href = '/login';
-      } else {
-        toast.error(msg);
+        return;
       }
-      return;
+
+      // On /login, failed POST /auth/login returns 401 — must throw so callers get an Error, not `undefined`.
+      // (We do not toast here; Login.jsx shows the message from the caught error.)
+      const err = new Error(msg) as Error & { status?: number };
+      err.status = response.status;
+      throw err;
     }
 
     if (!response.ok) {

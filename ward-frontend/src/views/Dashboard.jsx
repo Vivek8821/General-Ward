@@ -3,10 +3,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { queryKeys } from '../utils/queryKeys';
-import { Users, Bed, Activity, AlertTriangle, Plus, Search, Archive } from 'lucide-react';
+import { Users, Bed, Activity, AlertTriangle, Plus, Search, Archive, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const WELCOME_DISMISSED_KEY = 'ward_welcome_dismissed';
+
 export default function Dashboard() {
+  const [showWelcome, setShowWelcome] = useState(() => {
+    try { return !localStorage.getItem(WELCOME_DISMISSED_KEY); } catch { return true; }
+  });
   const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
   const [escalated, setEscalated] = useState([]);
   const [search, setSearch] = useState('');
@@ -31,6 +36,7 @@ export default function Dashboard() {
     data: patients = [],
     isLoading: isPatientsLoading,
     isError: isPatientsError,
+    refetch: refetchPatients,
   } = useQuery({
     queryKey: queryKeys.patients(viewMode),
     queryFn: async () => api.get(endpoint),
@@ -125,9 +131,33 @@ export default function Dashboard() {
       filteredPatients = filteredPatients.filter(p => p.status === 'escalated');
   }
 
+  const dismissWelcome = () => {
+    setShowWelcome(false);
+    try { localStorage.setItem(WELCOME_DISMISSED_KEY, '1'); } catch { /* ignore */ }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      
+
+      {showWelcome && (
+        <div className="relative bg-primary/10 border border-primary/20 rounded-xl p-5 pr-12">
+          <button
+            type="button"
+            onClick={dismissWelcome}
+            className="absolute top-3 right-3 p-1 rounded-md hover:bg-primary/20 text-primary transition-colors"
+            aria-label="Dismiss welcome message"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <h2 className="text-lg font-semibold text-primary">Welcome to General Ward</h2>
+          <p className="text-sm text-text-secondary mt-1 max-w-2xl">
+            This is your clinical operations dashboard. Use the <strong>Active Ward</strong> view to manage current patients,
+            or switch to <strong>Hospital Archives</strong> for discharged records.
+            Open any patient card for vitals, medications, notes, and more.
+          </p>
+        </div>
+      )}
+
       {/* View Toggle */}
       <div className="flex gap-4 border-b border-border pb-4 w-fit">
         <button 
@@ -177,10 +207,11 @@ export default function Dashboard() {
           
           <div className="flex items-center gap-4 flex-wrap w-full md:w-auto">
             <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-5 h-5" aria-hidden />
               <input 
                 type="text" 
                 placeholder="Search MRN, Name, Bed..." 
+                aria-label="Search patients by MRN, name, or bed number"
                 className="input-field !pl-10"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
@@ -218,8 +249,15 @@ export default function Dashboard() {
         {isPatientsLoading ? (
           <div className="p-10 text-center text-text-muted">Loading patients...</div>
         ) : isPatientsError ? (
-          <div className="p-10 text-center text-danger font-semibold">
-            Failed to load patients.
+          <div className="p-10 text-center space-y-3">
+            <p className="text-danger font-semibold">Failed to load patients.</p>
+            <button
+              type="button"
+              onClick={() => refetchPatients()}
+              className="btn btn-secondary text-sm"
+            >
+              Retry
+            </button>
           </div>
         ) : filteredPatients.length === 0 ? (
           <div className="p-10 text-center text-text-muted flex flex-col items-center justify-center gap-3">
@@ -233,10 +271,10 @@ export default function Dashboard() {
         ) : (
           <div className="p-6 bg-bg-primary grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-slide-up">
             {filteredPatients.map(patient => (
-              <div 
+              <a
                 key={patient.id} 
-                onClick={() => window.location.href = `/patient/${patient.id}`}
-                className="card p-6 cursor-pointer hover:-translate-y-0.5 flex flex-col justify-between h-full group transition-all duration-300"
+                href={`/patient/${patient.id}`}
+                className="card p-6 cursor-pointer hover:-translate-y-0.5 flex flex-col justify-between h-full group transition-all duration-300 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl"
               >
                 <div>
                   <div className="flex items-baseline justify-between gap-2 mb-3">
@@ -266,7 +304,7 @@ export default function Dashboard() {
                     View Profile &rarr;
                   </span>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         )}
@@ -274,11 +312,11 @@ export default function Dashboard() {
 
       {/* Add Patient Modal */}
       {isAddingPatient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-labelledby="add-patient-title">
           <div className="bg-bg-primary w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-border">
             <div className="p-6 border-b border-border bg-bg-tertiary">
-              <h2 className="text-2xl font-bold flex items-center gap-2 text-primary">
-                <Plus className="w-6 h-6" /> Add New Patient
+              <h2 id="add-patient-title" className="text-2xl font-bold flex items-center gap-2 text-primary">
+                <Plus className="w-6 h-6" aria-hidden /> Add New Patient
               </h2>
               <p className="text-text-muted text-sm mt-1">Register a new patient to the active ward roster.</p>
             </div>

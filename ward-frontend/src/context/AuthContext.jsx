@@ -55,7 +55,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     const data = await api.post('/auth/login', { username, password });
-    if (data?.csrfToken) setCsrfToken(data.csrfToken);
+    if (!data?.user) {
+      throw new Error('Login failed');
+    }
+    if (data.csrfToken) setCsrfToken(data.csrfToken);
     localStorage.setItem('ward_user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
@@ -65,6 +68,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Avoid noisy auth failures / redirects on the login page.
     if (window.location.pathname === '/login') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
@@ -85,7 +89,6 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
       })
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

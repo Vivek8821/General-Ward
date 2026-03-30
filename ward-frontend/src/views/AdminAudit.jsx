@@ -9,6 +9,7 @@ export default function AdminAudit() {
   const [items, setItems] = useState([]);
   const [nextCursor, setNextCursor] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [successFilter, setSuccessFilter] = useState('');
   const [olderThanDays, setOlderThanDays] = useState('365');
   const [purgeBusy, setPurgeBusy] = useState(false);
@@ -17,6 +18,7 @@ export default function AdminAudit() {
     async (cursor = null, append = false) => {
       try {
         setLoading(true);
+        setLoadError(false);
         const params = new URLSearchParams({ limit: '50' });
         if (successFilter === '0' || successFilter === '1') params.set('success', successFilter);
         if (cursor) params.set('cursor', cursor);
@@ -26,6 +28,7 @@ export default function AdminAudit() {
         setItems((prev) => (append ? [...prev, ...(data.items || [])] : data.items || []));
         setNextCursor(data.nextCursor || null);
       } catch (e) {
+        setLoadError(true);
         toast.error(e.message || 'Failed to load audit logs');
       } finally {
         setLoading(false);
@@ -201,6 +204,17 @@ export default function AdminAudit() {
         </div>
         {loading && items.length === 0 ? (
           <div className="p-10 text-center text-text-muted">Loading…</div>
+        ) : loadError && items.length === 0 ? (
+          <div className="p-10 text-center space-y-3">
+            <p className="text-danger font-semibold">Failed to load audit logs.</p>
+            <button
+              type="button"
+              onClick={() => loadPage(null, false)}
+              className="btn btn-secondary text-sm"
+            >
+              Retry
+            </button>
+          </div>
         ) : items.length === 0 ? (
           <div className="p-10 text-center text-text-muted">No audit rows for this tenant.</div>
         ) : (

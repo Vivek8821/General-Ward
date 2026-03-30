@@ -3,14 +3,61 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Hospital } from 'lucide-react';
 
+const DEMO_USER_KEY = 'ward_login_demo_username';
+const DEMO_PASS_KEY = 'ward_login_demo_password';
+
+function readStoredDemo() {
+  try {
+    const u = sessionStorage.getItem(DEMO_USER_KEY);
+    const p = sessionStorage.getItem(DEMO_PASS_KEY);
+    if (u != null && p != null) return { username: u, password: p };
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function writeStoredDemo(username, password) {
+  try {
+    sessionStorage.setItem(DEMO_USER_KEY, username);
+    sessionStorage.setItem(DEMO_PASS_KEY, password);
+  } catch {
+    // ignore
+  }
+}
+
+function clearStoredDemo() {
+  try {
+    sessionStorage.removeItem(DEMO_USER_KEY);
+    sessionStorage.removeItem(DEMO_PASS_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** Matches ward-backend/seed.js Users.name values */
+const DEMO = {
+  doctor: { username: 'Dr. Smith', password: '1234' },
+  nurse: { username: 'Nurse Johnson', password: '5678' },
+  admin: { username: 'Ward Admin', password: '9999' },
+};
+
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const stored = readStoredDemo();
+  const [username, setUsername] = useState(() => stored?.username ?? '');
+  const [password, setPassword] = useState(() => stored?.password ?? '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const applyDemo = (u, p) => {
+    writeStoredDemo(u, p);
+    setUsername(u);
+    setPassword(p);
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,6 +66,7 @@ export default function Login() {
 
     try {
       await login(username, password);
+      clearStoredDemo();
       navigate('/');
     } catch (err) {
       setError(err.message || 'Invalid credentials');
@@ -28,7 +76,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-bg-primary to-bg-tertiary p-4">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-bg-primary to-bg-tertiary p-4" aria-label="Sign in">
       <div className="card p-12 text-center max-w-[420px] w-full animate-in fade-in slide-in-from-bottom-5 duration-500">
         <div className="flex flex-col items-center gap-3 mb-8">
           <div
@@ -48,47 +96,71 @@ export default function Login() {
           <p className="text-text-secondary text-base pt-1">Sign in to your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 text-left">
-          {error && <div className="text-danger bg-danger/10 p-3 rounded-lg text-sm font-semibold text-center">{error}</div>}
-          
+        <form onSubmit={handleSubmit} className="space-y-5 text-left" autoComplete="on">
+          {error && (
+            <div role="alert" className="text-danger bg-danger/10 p-3 rounded-lg text-sm font-semibold text-center">{error}</div>
+          )}
+
           <div>
-            <label className="block text-sm font-semibold mb-2 text-text-primary">Username</label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-semibold mb-2 text-text-primary" htmlFor="login-username">
+              Username
+            </label>
+            <input
+              id="login-username"
+              name="username"
+              type="text"
               required
+              autoComplete="username"
               className="input-field"
               value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="e.g. nurse_jane"
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g. Dr. Smith"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-semibold mb-2 text-text-primary">Password / PIN</label>
-            <input 
-              type="password" 
+            <label className="block text-sm font-semibold mb-2 text-text-primary" htmlFor="login-password">
+              Password / PIN
+            </label>
+            <input
+              id="login-password"
+              name="password"
+              type="password"
               required
+              autoComplete="current-password"
               className="input-field"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-             <button type="button" onClick={() => { setUsername('Dr. Smith'); setPassword('1234'); }} className="btn bg-warning/20 text-warning hover:bg-warning/30 !py-2 !px-4 text-xs font-bold border border-warning/30">
-               Autofill Doctor
-             </button>
-             <button type="button" onClick={() => { setUsername('Nurse Johnson'); setPassword('5678'); }} className="btn bg-info/20 text-info hover:bg-info/30 !py-2 !px-4 text-xs font-bold border border-info/30">
-               Autofill Nurse
-             </button>
-             <button type="button" onClick={() => { setUsername('Ward Admin'); setPassword('9999'); }} className="btn bg-bg-tertiary text-text-secondary hover:bg-hover !py-2 !px-4 text-xs font-bold border border-border">
-               Autofill Admin
-             </button>
+            <button
+              type="button"
+              onClick={() => applyDemo(DEMO.doctor.username, DEMO.doctor.password)}
+              className="btn bg-warning/20 text-warning hover:bg-warning/30 !py-2 !px-4 text-xs font-bold border border-warning/30"
+            >
+              Autofill Doctor
+            </button>
+            <button
+              type="button"
+              onClick={() => applyDemo(DEMO.nurse.username, DEMO.nurse.password)}
+              className="btn bg-info/20 text-info hover:bg-info/30 !py-2 !px-4 text-xs font-bold border border-info/30"
+            >
+              Autofill Nurse
+            </button>
+            <button
+              type="button"
+              onClick={() => applyDemo(DEMO.admin.username, DEMO.admin.password)}
+              className="btn bg-bg-tertiary text-text-secondary hover:bg-hover !py-2 !px-4 text-xs font-bold border border-border"
+            >
+              Autofill Admin
+            </button>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="btn btn-primary w-full justify-center !py-4 text-lg mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
           >
@@ -96,6 +168,6 @@ export default function Login() {
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

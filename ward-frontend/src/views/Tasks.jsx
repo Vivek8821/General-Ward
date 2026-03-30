@@ -15,6 +15,7 @@ export default function Tasks() {
     isLoading,
     isError,
     error,
+    refetch: refetchTasks,
   } = useQuery({
     queryKey: queryKeys.tasksMy(user?.role, 50),
     queryFn: async () => {
@@ -65,8 +66,15 @@ export default function Tasks() {
       {isLoading ? (
         <div className="p-10 text-center text-text-muted">Loading tasks...</div>
       ) : isError ? (
-        <div className="p-10 text-center text-danger font-semibold">
-          Failed to load tasks.
+        <div className="p-10 text-center space-y-3">
+          <p className="text-danger font-semibold">Failed to load tasks.</p>
+          <button
+            type="button"
+            onClick={() => refetchTasks()}
+            className="btn btn-secondary text-sm"
+          >
+            Retry
+          </button>
         </div>
       ) : tasks.length === 0 ? (
         <div className="p-10 text-center text-text-muted flex flex-col items-center justify-center gap-3">

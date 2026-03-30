@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend tests (SQLite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend dependencies
+        working-directory: ward-backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: ward-backend
+        run: npm test
+
+  frontend-build:
+    name: Frontend build and lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install frontend dependencies
+        working-directory: ward-frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: ward-frontend
+        run: npm run lint
+
+      - name: Build
+        working-directory: ward-frontend
+        run: npm run build

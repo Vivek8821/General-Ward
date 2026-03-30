@@ -77,7 +77,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
             )}
 
             <button onClick={handleLogout} className="btn btn-secondary !py-2 !px-4 text-sm">
-              <LogOut className="w-4 h-4" /> Logout
+              <LogOut className="w-4 h-4" aria-hidden /> Logout
             </button>
           </div>
         </header>

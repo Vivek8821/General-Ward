@@ -24,6 +24,7 @@ export default function PatientDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [patient, setPatient] = useState(null);
+  const [patientError, setPatientError] = useState(null);
   const [activeTab, setActiveTab] = useState('history');
   const [isEditing, setIsEditing] = useState(false);
   const [isDischarging, setIsDischarging] = useState(false);
@@ -55,6 +56,7 @@ export default function PatientDetail() {
 
   async function fetchPatient() {
     try {
+      setPatientError(null);
       const data = await api.get(`/patients/${id}`);
       setPatient(data);
       setEditForm(data);
@@ -68,7 +70,11 @@ export default function PatientDetail() {
       }
     } catch (err) {
       console.error(err);
-      navigate('/');
+      if (err?.status === 404) {
+        setPatientError('Patient not found.');
+      } else {
+        setPatientError('Unable to load patient data. The server may be unreachable.');
+      }
     }
   }
 
@@ -83,10 +89,8 @@ export default function PatientDetail() {
   }
 
   useEffect(() => {
-    // This effect triggers an async fetch that updates component state; the rule
-    // flags it despite the pattern being appropriate here.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPatient();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -109,6 +113,27 @@ export default function PatientDetail() {
       toast.error('Failed to complete task: ' + errMsg(err));
     }
   };
+
+  if (patientError) {
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <button onClick={() => navigate('/')} className="btn bg-bg-tertiary border-border border-2 hover:border-primary !py-2">
+          &larr; Back to Dashboard
+        </button>
+        <div className="card p-10 text-center space-y-4">
+          <p className="text-danger font-semibold text-lg">{patientError}</p>
+          <div className="flex gap-3 justify-center">
+            <button type="button" onClick={() => fetchPatient()} className="btn btn-primary text-sm">
+              Retry
+            </button>
+            <button type="button" onClick={() => navigate('/')} className="btn btn-secondary text-sm">
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!patient) return <div className="p-10 text-center">Loading patient data...</div>;
 
@@ -341,10 +366,10 @@ export default function PatientDetail() {
 
         {/* Edit Modal / Form Overlay */}
         {isEditing && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-labelledby="edit-patient-title">
                <div className="bg-bg-primary w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-border">
                   <div className="p-6 border-b border-border bg-bg-tertiary">
-                     <h2 className="text-2xl font-bold">Edit Patient Info</h2>
+                     <h2 id="edit-patient-title" className="text-2xl font-bold">Edit Patient Info</h2>
                   </div>
                   <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
                      <div className="grid grid-cols-2 gap-4">
@@ -449,10 +474,10 @@ export default function PatientDetail() {
 
         {/* Discharge Modal / Form Overlay */}
         {isDischarging && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 overflow-y-auto">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="discharge-dialog-title">
                <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-2xl border border-border my-8">
                   <div className="p-6 border-b border-border bg-bg-tertiary rounded-t-2xl">
-                     <h2 className="text-2xl font-bold text-text-primary flex items-center gap-3">
+                     <h2 id="discharge-dialog-title" className="text-2xl font-bold text-text-primary flex items-center gap-3">
                          <FileText className="w-6 h-6 text-slate-500 dark:text-slate-400" aria-hidden /> Official Patient Discharge
                      </h2>
                      <p className="text-text-muted text-sm mt-1">Please completely fill out the clinical discharge summary for {patient.name}.</p>
