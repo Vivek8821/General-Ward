@@ -1,6 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
+const config = require('../config');
 const { authenticateToken } = require('../middleware/auth');
 const authService = require('../services/AuthService');
 const authLockoutRepository = require('../repositories/AuthLockoutRepository');
@@ -16,11 +17,10 @@ const loginLimiter = rateLimit({
 });
 
 function getCookieOptions() {
-  const isProd = process.env.NODE_ENV === 'production';
   return {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
+    secure: config.isProdLike,
+    sameSite: config.isProdLike ? 'none' : 'lax',
     path: '/',
     maxAge: 8 * 60 * 60 * 1000,
   };

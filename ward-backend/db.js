@@ -71,6 +71,14 @@ const initDb = () => {
   return new Promise((resolve, reject) => {
     db.serialize(() => {
       try {
+        const runIgnoreDuplicateColumn = (sql) => {
+          db.run(sql, (err) => {
+            if (!err) return;
+            if (/duplicate column name/i.test(String(err.message || ''))) return;
+            console.error('[db] migration failed:', err.message);
+          });
+        };
+
         // Users Table
         db.run(`
           CREATE TABLE IF NOT EXISTS Users (
@@ -161,22 +169,19 @@ const initDb = () => {
         `);
 
         // Dynamically patch existing DB for MAR and timestamp
-        db.run(`ALTER TABLE Medications ADD COLUMN timestamp DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {});
-        db.run(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`, (err) => {});
+        runIgnoreDuplicateColumn(`ALTER TABLE Medications ADD COLUMN timestamp DATETIME DEFAULT CURRENT_TIMESTAMP`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`);
 
         // Medication administration extensions (reason + dose capture).
-        db.run(`ALTER TABLE MedicationAdministrations ADD COLUMN doseActuallyGiven TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE MedicationAdministrations ADD COLUMN reasonCode TEXT`, (err) => { /* Ignore duplicate column error */ });
-
-        // Dynamically patch existing DB for MedsTab fix
-        db.run(`ALTER TABLE Medications ADD COLUMN status TEXT DEFAULT 'active'`, (err) => { /* Ignore duplicate column error */ });
+        runIgnoreDuplicateColumn(`ALTER TABLE MedicationAdministrations ADD COLUMN doseActuallyGiven TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE MedicationAdministrations ADD COLUMN reasonCode TEXT`);
 
         // Tenant-aware schema: add tenantId columns idempotently for legacy databases.
-        db.run(`ALTER TABLE Users ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE Patients ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE DailyStats ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE Medications ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE MedicationAdministrations ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DailyStats ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Medications ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE MedicationAdministrations ADD COLUMN tenantId TEXT`);
 
         // Escalations Table
         db.run(`
@@ -321,11 +326,11 @@ const initDb = () => {
         `);
 
         // Additional tenant column backfills for legacy DBs.
-        db.run(`ALTER TABLE Escalations ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE DischargeSummaries ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE Tasks ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE HandoverNotes ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE AuditLogs ADD COLUMN tenantId TEXT`, (err) => { /* Ignore duplicate column error */ });
+        runIgnoreDuplicateColumn(`ALTER TABLE Escalations ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Tasks ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE HandoverNotes ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE AuditLogs ADD COLUMN tenantId TEXT`);
 
         // Backfill any existing rows that predate tenant support.
         db.run(`UPDATE Users SET tenantId = ? WHERE tenantId IS NULL`, [DEFAULT_TENANT_ID]);
@@ -375,8 +380,8 @@ const initDb = () => {
 
         // Extend AuditLogs with additional attributes for stronger traceability.
         // Safe to run multiple times (errors ignored if columns already exist).
-        db.run(`ALTER TABLE AuditLogs ADD COLUMN statusCode INTEGER`, (err) => { /* Ignore duplicate column error */ });
-        db.run(`ALTER TABLE AuditLogs ADD COLUMN success INTEGER`, (err) => { /* Ignore duplicate column error */ });
+        runIgnoreDuplicateColumn(`ALTER TABLE AuditLogs ADD COLUMN statusCode INTEGER`);
+        runIgnoreDuplicateColumn(`ALTER TABLE AuditLogs ADD COLUMN success INTEGER`);
 
         // Production Indexes for query performance and cascading speed
         db.run(`CREATE INDEX IF NOT EXISTS idx_dailystats_patient ON DailyStats(patientId);`);

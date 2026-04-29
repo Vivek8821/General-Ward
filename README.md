@@ -44,7 +44,9 @@ The backend can run against PostgreSQL when `ward-backend/.env` sets `DATABASE_U
 
 ## Seeded users (development)
 
-After `node ward-backend/seed.js` (stop the API first if it locks `ward.db`):
+After `node ward-backend/seed.js` (stop the API first if it locks `ward.db`).
+
+**Important**: `seed.js` is **development/demo only**. It creates weak, known PINs and should **never** be used for a production database. For any real deployment, create users via the app and enforce strong credentials.
 
 | Name           | Role   | PIN/password (demo) |
 |----------------|--------|---------------------|

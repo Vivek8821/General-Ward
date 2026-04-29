@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const config = require('./config');
 const { auditLog } = require('./middleware/audit');
 const { requestLogger } = require('./middleware/requestLogger');
 const { checkPostgresConnectivity } = require('./postgres');
@@ -23,22 +24,15 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 function getCorsMiddleware() {
-    const isProd = process.env.NODE_ENV === 'production';
-    const raw = process.env.CORS_ORIGIN;
+    const isProdLike = config.isProdLike;
 
-    if (isProd) {
-        if (!raw || String(raw).trim() === '') {
+    if (isProdLike) {
+        if (config.cors.mode !== 'explicit') {
             throw new Error(
-                '[cors] CORS_ORIGIN must be set in production (comma-separated origins, e.g. https://app.example.com)'
+                '[cors] CORS_ORIGIN must be set in production/staging (comma-separated origins, e.g. https://app.example.com)'
             );
         }
-        const origin = String(raw)
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
-        if (origin.length === 0) {
-            throw new Error('[cors] CORS_ORIGIN must list at least one origin in production');
-        }
+        const origin = config.cors.origins;
         return cors({
             origin,
             credentials: true,
@@ -46,11 +40,8 @@ function getCorsMiddleware() {
         });
     }
 
-    if (raw && String(raw).trim() !== '') {
-        const origin = String(raw)
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
+    if (config.cors.mode === 'explicit') {
+        const origin = config.cors.origins;
         return cors({
             origin,
             credentials: true,
@@ -79,7 +70,30 @@ function getCorsMiddleware() {
 // Needed so `req.ip` and related rate-limiting/lockout logic work correctly behind proxies.
 app.set('trust proxy', 1);
 app.use(getCorsMiddleware());
-app.use(helmet());
+app.use(
+    helmet({
+        // This API serves JSON; use a strict CSP in production/staging to reduce
+        // risk if any HTML endpoints are ever added.
+        contentSecurityPolicy: config.isProdLike
+            ? {
+                  directives: {
+                      defaultSrc: ["'none'"],
+                      baseUri: ["'none'"],
+                      formAction: ["'none'"],
+                      frameAncestors: ["'none'"],
+                      // Allow same-origin connections (API clients); expand only if needed.
+                      connectSrc: ["'self'"],
+                      imgSrc: ["'self'", 'data:'],
+                      scriptSrc: ["'self'"],
+                      styleSrc: ["'self'"],
+                      fontSrc: ["'self'"],
+                      objectSrc: ["'none'"],
+                      upgradeInsecureRequests: [],
+                  },
+              }
+            : false,
+    })
+);
 app.use(express.json({ limit: '512kb' }));
 app.use('/api', attachUserIfPresent);
 app.use('/api', verifyCsrfForMutations);

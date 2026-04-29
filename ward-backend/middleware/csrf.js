@@ -17,8 +17,14 @@ function verifyCsrfForMutations(req, res, next) {
     return next();
   }
 
-  if (!req.user.csrf) {
+  // Enforce CSRF for browser cookie-authenticated requests only.
+  // Header-based clients (e.g. stress harness) do not use CSRF by design.
+  if (req.authSource !== 'cookie') {
     return next();
+  }
+
+  if (!req.user.csrf) {
+    return res.status(403).json({ error: 'Missing CSRF token' });
   }
 
   const header = req.headers['x-csrf-token'];

@@ -4,10 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { Hospital } from 'lucide-react';
 
 /** Default sign-in for dev — matches ward-backend/seed.js (Dr. Smith / 1234). */
-const DEFAULT_LOGIN = {
-  username: 'Dr. Smith',
-  password: '1234',
-};
+const DEFAULT_LOGIN = import.meta.env.DEV
+  ? { username: 'Dr. Smith', password: '1234' }
+  : { username: '', password: '' };
 
 export default function Login() {
   const [username, setUsername] = useState(DEFAULT_LOGIN.username);

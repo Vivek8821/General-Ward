@@ -5,7 +5,7 @@ function auditLog(req, res, next) {
   res.on('finish', () => {
     if (!req.user) return;
 
-    const path = req.originalUrl;
+    const path = (req.originalUrl || '').split('?')[0];
 
     if (path === '/health') return;
 

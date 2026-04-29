@@ -5,7 +5,7 @@ const crypto = require('crypto');
 async function seed() {
     console.log('Seeding database...');
     
-    // Hash passwords (dev/demo only)
+    // Dev/demo only: this seed creates weak, known PINs. Never use on a production database.
     const drHash = await bcrypt.hash('1234', 10);
     const nurseHash = await bcrypt.hash('5678', 10);
     const adminHash = await bcrypt.hash('9999', 10);
