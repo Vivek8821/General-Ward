@@ -12,9 +12,13 @@ import DietTab from '../components/stats/DietTab';
 import SleepTab from '../components/stats/SleepTab';
 import MedsTab from '../components/stats/MedsTab';
 import DischargeSummaryTab from '../components/stats/DischargeSummaryTab';
+import EscalateModal from '../components/modals/EscalateModal';
+import DischargeModal from '../components/modals/DischargeModal';
+import EditPatientModal from '../components/modals/EditPatientModal';
 import { Archive } from 'lucide-react';
 import { allergiesHasRisk, formatAllergiesMutedLabel } from '../utils/patientDisplay';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 function errMsg(err) {
@@ -26,8 +30,7 @@ export default function PatientDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [patient, setPatient] = useState(null);
-  const [patientError, setPatientError] = useState(null);
+  
   const [activeTab, setActiveTab] = useState('history');
   const [isEditing, setIsEditing] = useState(false);
   const [isDischarging, setIsDischarging] = useState(false);
@@ -39,85 +42,105 @@ export default function PatientDetail() {
       dischargeVitals: { hr: '', bp: '', o2: '', temp: '', lipids: '' },
       dischargeRecommendations: ''
   });
-  const [escalations, setEscalations] = useState([]);
-  const [patientTasks, setPatientTasks] = useState([]);
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
   const [escalateReason, setEscalateReason] = useState('');
 
+  // 1. Data Fetching via React Query
+  const { data: patient, isLoading: patientLoading, error: patientErr } = useQuery({
+    queryKey: queryKeys.patientDetail(id),
+    queryFn: () => api.get(`/patients/${id}`),
+    enabled: !!id,
+  });
+
+  const { data: patientTasks = [], refetch: refetchTasks } = useQuery({
+    queryKey: queryKeys.patientTasks(id),
+    queryFn: () => api.get(`/patients/${id}/tasks?status=open&limit=50`),
+    enabled: !!id,
+  });
+
+  const { data: allEscalations = [] } = useQuery({
+    queryKey: queryKeys.escalations(),
+    queryFn: () => api.get('/escalations/all'),
+    enabled: !!id && patient?.status === 'escalated' && user?.role === 'doctor',
+  });
+
+  const escalations = allEscalations.filter(e => e.patientId === id);
   const canManageTasks = ['doctor', 'nurse', 'admin'].includes(user?.role);
 
-  async function fetchPatientTasks() {
-    try {
-      const tasks = await api.get(`/patients/${id}/tasks?status=open&limit=50`);
-      setPatientTasks(Array.isArray(tasks) ? tasks : []);
-    } catch (err) {
-      console.error(err);
-      // Keep tasks panel resilient; patient detail can render even if tasks fail.
-      setPatientTasks([]);
-    }
-  }
-
-  async function fetchPatient() {
-    try {
-      setPatientError(null);
-      const data = await api.get(`/patients/${id}`);
-      setPatient(data);
-      setEditForm(data);
-      
-      if (data.status === 'discharged') {
-          setActiveTab('discharge');
-      }
-      
-      if (data.status === 'escalated' && user.role === 'doctor') {
-         fetchEscalations();
-      }
-    } catch (err) {
-      console.error(err);
-      if (err?.status === 404) {
-        setPatientError('Patient not found.');
-      } else {
-        setPatientError('Unable to load patient data. The server may be unreachable.');
-      }
-    }
-  }
-
-  async function fetchEscalations() {
-    try {
-      const eData = await api.get('/escalations/all');
-      // Filter escalations for this specific patient
-      setEscalations(eData.filter(e => e.patientId === id));
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
+  // 2. State Syncing
   useEffect(() => {
-    fetchPatient();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
-
-  useEffect(() => {
-    fetchPatientTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, user?.role]);
+    if (patient) {
+      setEditForm(patient);
+      if (patient.status === 'discharged') {
+        setActiveTab('discharge');
+      }
+    }
+  }, [patient]);
 
   useEffect(() => {
     if (!patient) return;
     if (patient.status !== 'discharged' && activeTab === 'discharge') {
       setActiveTab('history');
     }
-  }, [patient, patient?.status, patient?.id, activeTab]);
+  }, [patient?.status, activeTab]);
 
-  const handleCompleteTask = async (taskId) => {
-    try {
-      await api.put(`/tasks/${taskId}/complete`, {});
-      await fetchPatientTasks();
-    } catch (err) {
-      toast.error('Failed to complete task: ' + errMsg(err));
-    }
-  };
+  // 3. Mutations
+  const completeTaskMutation = useMutation({
+    mutationFn: (taskId) => api.put(`/tasks/${taskId}/complete`, {}),
+    onSuccess: () => {
+      refetchTasks();
+      toast.success('Task completed.');
+    },
+    onError: (err) => toast.error('Failed to complete task: ' + errMsg(err)),
+  });
 
-  if (patientError) {
+  const updatePatientMutation = useMutation({
+    mutationFn: (data) => api.put(`/patients/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.patientDetail(id) });
+      setIsEditing(false);
+      toast.success('Patient updated.');
+    },
+    onError: (err) => toast.error('Failed to update patient: ' + errMsg(err)),
+  });
+
+  const escalateMutation = useMutation({
+    mutationFn: (reason) => api.post(`/patients/${id}/escalations`, { reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.patientDetail(id) });
+      setEscalateModalOpen(false);
+      setEscalateReason('');
+      toast.success('Case escalated.');
+    },
+    onError: (err) => toast.error('Failed to escalate: ' + errMsg(err)),
+  });
+
+  const reviewEscalationMutation = useMutation({
+    mutationFn: (escalationId) => api.post(`/escalations/${escalationId}/review`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.patientDetail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.escalations() });
+      toast.success('Case marked as reviewed.');
+    },
+    onError: (err) => toast.error('Failed to review case: ' + errMsg(err)),
+  });
+
+  const dischargeMutation = useMutation({
+    mutationFn: (data) => api.post(`/patients/${id}/discharge`, data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.patients('archived') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.patients('active') });
+      toast.success('Patient discharged.');
+      if (res?.archiveId) navigate(`/archive/${res.archiveId}`);
+      else navigate('/');
+    },
+    onError: (err) => toast.error('Failed to discharge patient: ' + errMsg(err)),
+  });
+
+  const handleCompleteTask = (taskId) => completeTaskMutation.mutate(taskId);
+
+  if (patientErr) {
+    const patientError = patientErr.status === 404 ? 'Patient not found.' : 'Unable to load patient data.';
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
         <button onClick={() => navigate('/')} className="btn bg-bg-tertiary border-border border-2 hover:border-primary !py-2">
@@ -126,7 +149,7 @@ export default function PatientDetail() {
         <div className="card p-10 text-center space-y-4">
           <p className="text-danger font-semibold text-lg">{patientError}</p>
           <div className="flex gap-3 justify-center">
-            <button type="button" onClick={() => fetchPatient()} className="btn btn-primary text-sm">
+            <button type="button" onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.patientDetail(id) })} className="btn btn-primary text-sm">
               Retry
             </button>
             <button type="button" onClick={() => navigate('/')} className="btn btn-secondary text-sm">
@@ -138,87 +161,38 @@ export default function PatientDetail() {
     );
   }
 
-  if (!patient) return <div className="p-10 text-center">Loading patient data...</div>;
+  if (patientLoading) return <div className="p-10 text-center">Loading patient data...</div>;
 
-  const openEscalateModal = () => {
-    setEscalateReason('');
-    setEscalateModalOpen(true);
-  };
-
-  const submitEscalation = async (e) => {
+  const submitEscalation = (e) => {
     e.preventDefault();
     const reason = escalateReason.trim();
-    if (!reason) {
-      toast.error('Please enter a reason for escalation.');
-      return;
-    }
-    try {
-      await api.post(`/patients/${id}/escalations`, { reason });
-      toast.success('Case escalated. Doctors have been notified.');
-      setEscalateModalOpen(false);
-      setEscalateReason('');
-      fetchPatient();
-    } catch (err) {
-      toast.error('Failed to escalate: ' + errMsg(err));
-    }
+    if (!reason) return toast.error('Please enter a reason.');
+    escalateMutation.mutate(reason);
   };
 
-  const handleReviewCase = async (escalationId) => {
-      try {
-          await api.post(`/escalations/${escalationId}/review`);
-          toast.success('Case marked as reviewed.');
-          fetchPatient(); // Refresh status
-      } catch (err) {
-          toast.error('Failed to review case: ' + errMsg(err));
-      }
-  };
-
-  const handleSaveEdit = async (e) => {
-      e.preventDefault();
-      try {
-          await api.put(`/patients/${id}`, editForm);
-          setIsEditing(false);
-          fetchPatient();
-          toast.success('Patient updated.');
-      } catch (err) {
-          toast.error('Failed to update patient: ' + errMsg(err));
-      }
+  const handleReviewCase = (escalationId) => reviewEscalationMutation.mutate(escalationId);
+  const handleSaveEdit = (e) => {
+    e.preventDefault();
+    updatePatientMutation.mutate(editForm);
   };
 
   const prepareDischarge = async () => {
       try {
-          // Auto-fetch medication history for the discharge summary
           const meds = await api.get(`/patients/${id}/medications`);
           const formattedMeds = meds.length > 0 
               ? meds.map(m => `• ${m.name} — ${m.dosage} (${m.frequency}) [${m.status.toUpperCase()}]`).join('\n')
               : 'No medications administered during this admission.';
               
-          setDischargeForm(prev => ({
-              ...prev,
-              medicationsDuringAdmission: formattedMeds
-          }));
+          setDischargeForm(prev => ({ ...prev, medicationsDuringAdmission: formattedMeds }));
       } catch (err) {
-          console.error("Failed to auto-fetch medications for discharge context", err);
+          console.error("Failed to auto-fetch medications", err);
       }
       setIsDischarging(true);
   };
 
-  const handleDischargeCase = async (e) => {
-      e.preventDefault();
-      try {
-          const res = await api.post(`/patients/${id}/discharge`, dischargeForm);
-          setIsDischarging(false);
-          await queryClient.invalidateQueries({ queryKey: queryKeys.patients('archived') });
-          await queryClient.invalidateQueries({ queryKey: queryKeys.patients('active') });
-          toast.success('Patient discharged; full record archived.');
-          if (res?.archiveId) {
-              navigate(`/archive/${res.archiveId}`);
-          } else {
-              navigate('/');
-          }
-      } catch (err) {
-          toast.error('Failed to discharge patient: ' + errMsg(err));
-      }
+  const handleDischargeCase = (e) => {
+    e.preventDefault();
+    dischargeMutation.mutate(dischargeForm);
   };
 
   return (
@@ -372,180 +346,31 @@ export default function PatientDetail() {
           </div>
         )}
 
-        {/* Edit Modal / Form Overlay */}
-        {isEditing && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-labelledby="edit-patient-title">
-               <div className="bg-bg-primary w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-border">
-                  <div className="p-6 border-b border-border bg-bg-tertiary">
-                     <h2 id="edit-patient-title" className="text-2xl font-bold">Edit Patient Info</h2>
-                  </div>
-                  <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
-                     <div className="grid grid-cols-2 gap-4">
-                         <div>
-                             <label className="block text-sm font-bold mb-1 text-text-secondary">Name</label>
-                             <input type="text" className="input-field" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} required />
-                         </div>
-                         <div>
-                             <label className="block text-sm font-bold mb-1 text-text-secondary">Bed Number</label>
-                             <input type="text" className="input-field" value={editForm.bedNumber} onChange={e => setEditForm({...editForm, bedNumber: e.target.value})} required />
-                         </div>
-                         <div>
-                             <label className="block text-sm font-bold mb-1 text-text-secondary">Date of Birth</label>
-                             <input type="date" className="input-field" value={editForm.dob} onChange={e => setEditForm({...editForm, dob: e.target.value})} required />
-                         </div>
-                         <div>
-                             <label className="block text-sm font-bold mb-1 text-text-secondary">Care Intensity (1-4)</label>
-                             <select className="input-field" value={editForm.careIntensity} onChange={e => setEditForm({...editForm, careIntensity: parseInt(e.target.value)})}>
-                                 <option value={1}>Level 1 (Basic)</option>
-                                 <option value={2}>Level 2 (Moderate)</option>
-                                 <option value={3}>Level 3 (High)</option>
-                                 <option value={4}>Level 4 (Critical)</option>
-                             </select>
-                         </div>
-                         <div className="col-span-2">
-                             <label className="block text-sm font-bold mb-1 text-text-secondary">Allergies</label>
-                             <input type="text" className="input-field" value={editForm.allergies || ''} onChange={e => setEditForm({...editForm, allergies: e.target.value})} />
-                         </div>
-                         <div className="col-span-2">
-                             <label className="block text-sm font-bold mb-1 flex items-center justify-between">
-                                 <span className="text-text-secondary">Diagnosis</span>
-                                 {user.role === 'nurse' && <span className="text-xs text-warning border border-warning/50 px-2 py-0.5 rounded-md">Doctors Only</span>}
-                             </label>
-                             <textarea 
-                                className={`input-field min-h-[80px] ${user.role === 'nurse' ? 'bg-bg-tertiary opacity-70 cursor-not-allowed' : ''}`} 
-                                value={editForm.diagnosis} 
-                                onChange={e => setEditForm({...editForm, diagnosis: e.target.value})} 
-                                disabled={user.role === 'nurse'}
-                                required 
-                             />
-                         </div>
-                     </div>
-                     <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-border">
-                         <button type="button" onClick={() => setIsEditing(false)} className="btn btn-secondary !py-2">Cancel</button>
-                         <button type="submit" className="btn btn-primary !py-2">Save Changes</button>
-                     </div>
-                  </form>
-               </div>
-            </div>
-        )}
+        <EditPatientModal 
+          isOpen={isEditing} 
+          onClose={() => setIsEditing(false)} 
+          onSubmit={handleSaveEdit} 
+          form={editForm} 
+          setForm={setEditForm} 
+          userRole={user.role} 
+        />
 
-        {/* Escalate case — nurse */}
-        {escalateModalOpen && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="escalate-dialog-title"
-            >
-              <div className="bg-bg-primary w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-border">
-                <div className="p-6 border-b border-border bg-bg-tertiary">
-                  <h2 id="escalate-dialog-title" className="text-xl font-bold flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" aria-hidden />
-                    Escalate to doctor
-                  </h2>
-                  <p className="text-sm text-text-muted mt-1">Provide a clear reason for escalation. This will be visible to the care team.</p>
-                </div>
-                <form onSubmit={submitEscalation} className="p-6 space-y-4">
-                  <div>
-                    <label htmlFor="escalate-reason" className="block text-sm font-bold mb-1 text-text-secondary">
-                      Reason
-                    </label>
-                    <textarea
-                      id="escalate-reason"
-                      className="input-field min-h-[100px]"
-                      value={escalateReason}
-                      onChange={(e) => setEscalateReason(e.target.value)}
-                      placeholder="Clinical concern, required review, etc."
-                      autoFocus
-                      required
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button
-                      type="button"
-                      className="btn btn-secondary !py-2"
-                      onClick={() => {
-                        setEscalateModalOpen(false);
-                        setEscalateReason('');
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button type="submit" className="btn btn-danger !py-2">
-                      Submit escalation
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-        )}
+        <EscalateModal 
+          isOpen={escalateModalOpen} 
+          onClose={() => setEscalateModalOpen(false)} 
+          onSubmit={submitEscalation} 
+          reason={escalateReason} 
+          setReason={setEscalateReason} 
+        />
 
-        {/* Discharge Modal / Form Overlay */}
-        {isDischarging && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="discharge-dialog-title">
-               <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-2xl border border-border my-8">
-                  <div className="p-6 border-b border-border bg-bg-tertiary rounded-t-2xl">
-                     <h2 id="discharge-dialog-title" className="text-2xl font-bold text-text-primary flex items-center gap-3">
-                         <FileText className="w-6 h-6 text-slate-600 dark:text-slate-400" aria-hidden /> Official Patient Discharge
-                     </h2>
-                     <p className="text-text-muted text-sm mt-1">Please completely fill out the clinical discharge summary for {patient.name}.</p>
-                  </div>
-                  <form onSubmit={handleDischargeCase} className="p-6 space-y-6">
-                     
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <div className="col-span-1 md:col-span-2">
-                             <label className="block text-sm font-bold mb-1 text-text-secondary">Reason for Admission</label>
-                             <input type="text" className="input-field" placeholder="e.g. Acute appendicitis" value={dischargeForm.reasonForAdmission} onChange={e => setDischargeForm({...dischargeForm, reasonForAdmission: e.target.value})} required />
-                         </div>
-                         <div>
-                             <label className="block text-sm font-bold mb-1 text-text-secondary">Duration of Stay</label>
-                             <input type="text" className="input-field" placeholder="e.g. 5 days" value={dischargeForm.duration} onChange={e => setDischargeForm({...dischargeForm, duration: e.target.value})} required />
-                         </div>
-                         <div className="col-span-1 md:col-span-2">
-                             <label className="block text-sm font-bold mb-1 text-text-secondary">Medication History during Admission</label>
-                             <textarea className="input-field min-h-[80px]" placeholder="Summary of administered meds..." value={dischargeForm.medicationsDuringAdmission} onChange={e => setDischargeForm({...dischargeForm, medicationsDuringAdmission: e.target.value})} required />
-                         </div>
-                     </div>
-
-                     <div className="bg-bg-tertiary p-5 rounded-xl border border-border">
-                         <h4 className="font-bold text-sm uppercase tracking-wider text-text-muted mb-4">Vitals at Time of Discharge</h4>
-                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                             <div>
-                                 <label className="block text-xs font-bold mb-1 text-text-secondary">Heart Rate</label>
-                                 <input type="text" className="input-field !text-sm" placeholder="72 bpm" value={dischargeForm.dischargeVitals.hr} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, hr: e.target.value}})} required />
-                             </div>
-                             <div>
-                                 <label className="block text-xs font-bold mb-1 text-text-secondary">BP</label>
-                                 <input type="text" className="input-field !text-sm" placeholder="120/80" value={dischargeForm.dischargeVitals.bp} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, bp: e.target.value}})} required />
-                             </div>
-                             <div>
-                                 <label className="block text-xs font-bold mb-1 text-text-secondary">SpO2</label>
-                                 <input type="text" className="input-field !text-sm" placeholder="98%" value={dischargeForm.dischargeVitals.o2} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, o2: e.target.value}})} required />
-                             </div>
-                             <div>
-                                 <label className="block text-xs font-bold mb-1 text-text-secondary">Temp</label>
-                                 <input type="text" className="input-field !text-sm" placeholder="98.6 °F" value={dischargeForm.dischargeVitals.temp} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, temp: e.target.value}})} required />
-                             </div>
-                             <div className="col-span-2 lg:col-span-1">
-                                 <label className="block text-xs font-bold mb-1 text-text-secondary">Lipid Panel / Labs</label>
-                                 <input type="text" className="input-field !text-sm" placeholder="e.g. LDL 90" value={dischargeForm.dischargeVitals.lipids} onChange={e => setDischargeForm({...dischargeForm, dischargeVitals: {...dischargeForm.dischargeVitals, lipids: e.target.value}})} />
-                             </div>
-                         </div>
-                     </div>
-
-                     <div className="col-span-1 md:col-span-2">
-                         <label className="block text-sm font-bold mb-1 text-text-secondary">Medications & Health Recommendations</label>
-                         <textarea className="input-field min-h-[100px]" placeholder="Post-discharge care, prescriptions, follow-up dates..." value={dischargeForm.dischargeRecommendations} onChange={e => setDischargeForm({...dischargeForm, dischargeRecommendations: e.target.value})} required />
-                     </div>
-
-                     <div className="flex justify-end gap-3 pt-4">
-                         <button type="button" onClick={() => setIsDischarging(false)} className="btn btn-secondary !py-3 !px-6">Cancel</button>
-                        <button type="submit" className="btn btn-primary !py-3 !px-6">Submit Discharge</button>
-                     </div>
-                  </form>
-               </div>
-            </div>
-        )}
+        <DischargeModal 
+          isOpen={isDischarging} 
+          onClose={() => setIsDischarging(false)} 
+          onSubmit={handleDischargeCase} 
+          form={dischargeForm} 
+          setForm={setDischargeForm} 
+          patientName={patient.name} 
+        />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList aria-label="Patient chart sections">

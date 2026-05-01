@@ -9,16 +9,14 @@ const { attachUserIfPresent, authenticateToken } = require('./middleware/auth');
 const { verifyCsrfForMutations } = require('./middleware/csrf');
 
 // Import routes
-// Import routes
 const authRoutes = require('./controllers/AuthController');
 const patientRoutes = require('./controllers/PatientController');
-const statRoutes = require('./controllers/ObservationController');
 const medicationRoutes = require('./controllers/MedicationController');
 const escalationRoutes = require('./controllers/EscalationController');
-const historyRoutes = require('./controllers/ObservationController');
 const tasksRoutes = require('./controllers/TaskController');
 const observationsRoutes = require('./controllers/ObservationController');
 const adminAuditRoutes = require('./routes/adminAudit');
+const errorHandler = require('./middleware/error');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,13 +47,6 @@ function getCorsMiddleware() {
         });
     }
 
-    // Frontend uses `credentials: 'include'` for cookie-based auth.
-    // Browsers will reject responses when:
-    // - `Access-Control-Allow-Origin` is `*`, while
-    // - the request is sent with credentials.
-    //
-    // For non-production with no explicit `CORS_ORIGIN`, we must echo the
-    // request's `Origin` header and enable credentials.
     return cors({
         origin: (origin, cb) => {
             if (!origin) return cb(null, false);
@@ -67,13 +58,10 @@ function getCorsMiddleware() {
 }
 
 // Middleware
-// Needed so `req.ip` and related rate-limiting/lockout logic work correctly behind proxies.
 app.set('trust proxy', 1);
 app.use(getCorsMiddleware());
 app.use(
     helmet({
-        // This API serves JSON; use a strict CSP in production/staging to reduce
-        // risk if any HTML endpoints are ever added.
         contentSecurityPolicy: config.isProdLike
             ? {
                   directives: {
@@ -81,7 +69,6 @@ app.use(
                       baseUri: ["'none'"],
                       formAction: ["'none'"],
                       frameAncestors: ["'none'"],
-                      // Allow same-origin connections (API clients); expand only if needed.
                       connectSrc: ["'self'"],
                       imgSrc: ["'self'", 'data:'],
                       scriptSrc: ["'self'"],
@@ -97,8 +84,8 @@ app.use(
 app.use(express.json({ limit: '512kb' }));
 app.use('/api', attachUserIfPresent);
 app.use('/api', verifyCsrfForMutations);
-app.use(auditLog); // Attach audit logging globally
-app.use(requestLogger); // Structured request logging
+app.use(auditLog);
+app.use(requestLogger);
 
 const backendVersion = require('./package.json').version;
 
@@ -110,7 +97,7 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/observations', observationsRoutes);
 app.use('/api/admin', adminAuditRoutes);
 
-// Health check — minimal public surface (no DB topology in body).
+// Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
@@ -119,7 +106,6 @@ app.get('/api/version', (req, res) => {
     res.json({ backendVersion });
 });
 
-// Authenticated ops may check DB readiness (avoids exposing infra in public /health).
 app.get('/api/health/detail', authenticateToken, async (req, res) => {
     try {
         const postgres = await checkPostgresConnectivity();
@@ -134,6 +120,14 @@ app.get('/api/health/detail', authenticateToken, async (req, res) => {
         });
     }
 });
+
+// Catch-all 404
+app.use((req, res) => {
+    res.status(404).json({ error: 'Endpoint not found', code: 'NOT_FOUND' });
+});
+
+// Global Error Handler
+app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
