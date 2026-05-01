@@ -12,12 +12,12 @@ const { verifyCsrfForMutations } = require('./middleware/csrf');
 // Import routes
 const authRoutes = require('./controllers/AuthController');
 const patientRoutes = require('./controllers/PatientController');
-const statRoutes = require('./routes/stats');
-const medicationRoutes = require('./routes/medications');
+const statRoutes = require('./controllers/ObservationController');
+const medicationRoutes = require('./controllers/MedicationController');
 const escalationRoutes = require('./controllers/EscalationController');
-const historyRoutes = require('./routes/history');
-const tasksRoutes = require('./routes/tasks');
-const observationsRoutes = require('./routes/observations');
+const historyRoutes = require('./controllers/ObservationController');
+const tasksRoutes = require('./controllers/TaskController');
+const observationsRoutes = require('./controllers/ObservationController');
 const adminAuditRoutes = require('./routes/adminAudit');
 
 const app = express();

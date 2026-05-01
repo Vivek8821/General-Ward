@@ -6,10 +6,26 @@ on:
     branches: [main]
 
 jobs:
+  security-audit:
+    name: Security Audit (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      
+      - name: Backend Audit
+        working-directory: ward-backend
+        run: npm audit --audit-level=high
+
+      - name: Frontend Audit
+        working-directory: ward-frontend
+        run: npm audit --audit-level=high
+
   backend-tests:
     name: Backend tests (SQLite)
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,10 +43,9 @@ jobs:
         working-directory: ward-backend
         run: npm test
 
-  frontend-build:
-    name: Frontend build and lint
+  frontend-qa:
+    name: Frontend Lint and Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,6 +62,10 @@ jobs:
       - name: Lint
         working-directory: ward-frontend
         run: npm run lint
+
+      - name: Run Frontend Tests
+        working-directory: ward-frontend
+        run: npm test
 
       - name: Build
         working-directory: ward-frontend

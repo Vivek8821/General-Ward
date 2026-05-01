@@ -1,5 +1,6 @@
 const express = require('express');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
+const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const dbAdapter = require('../dbAdapter');
 
 const router = express.Router();
@@ -41,7 +42,7 @@ function resolveRetentionDays(body) {
  * GET /api/admin/audit-logs
  * Query: limit, cursor (timestamp|id), success (0|1), from, to (ISO date strings)
  */
-router.get('/audit-logs', authenticateToken, requireRole(['admin']), async (req, res) => {
+router.get('/audit-logs', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const parsedLimit = parseLimit(req.query.limit);
@@ -99,7 +100,7 @@ router.get('/audit-logs', authenticateToken, requireRole(['admin']), async (req,
  * GET /api/admin/audit-logs/export.csv
  * Same query params as GET /audit-logs except no cursor pagination — capped export.
  */
-router.get('/audit-logs/export.csv', authenticateToken, requireRole(['admin']), async (req, res) => {
+router.get('/audit-logs/export.csv', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const exportMax = Math.min(parseLimit(req.query.limit) || DEFAULT_LIMIT, MAX_LIMIT);
@@ -177,7 +178,7 @@ router.get('/audit-logs/export.csv', authenticateToken, requireRole(['admin']), 
  * GET /api/admin/clinical-changes
  * Domain-level entity changes (tenant-scoped). Query: limit, cursor (timestamp|id), entityType, from, to
  */
-router.get('/clinical-changes', authenticateToken, requireRole(['admin']), async (req, res) => {
+router.get('/clinical-changes', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const parsedLimit = parseLimit(req.query.limit);
@@ -231,7 +232,7 @@ router.get('/clinical-changes', authenticateToken, requireRole(['admin']), async
   }
 });
 
-router.post('/audit/purge', authenticateToken, requireRole(['admin']), async (req, res) => {
+router.post('/audit/purge', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const { dryRun } = req.body || {};

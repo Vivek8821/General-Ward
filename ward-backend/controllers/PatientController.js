@@ -1,29 +1,34 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
+const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
 const patientService = require('../services/PatientService');
 const clinicalAuditService = require('../services/ClinicalAuditService');
-const medicationRoutes = require('../routes/medications');
-const historyRoutes = require('../routes/history');
-const statRoutes = require('../routes/stats');
+const medicationRoutes = require('./MedicationController');
+const historyRoutes = require('./ObservationController');
+const statRoutes = require('./ObservationController');
 const escalationRoutes = require('./EscalationController');
-const patientTasksRoutes = require('../routes/patientTasks');
-const patientNotesRoutes = require('../routes/patientNotes');
+const handoverRoutes = require('./HandoverController');
 
 // Sub-routers for nested resources
 router.use('/:patientId/medications', medicationRoutes);
 router.use('/:patientId/history', historyRoutes);
 router.use('/:patientId/stats', statRoutes);
 router.use('/:patientId/escalations', escalationRoutes);
-router.use('/:patientId/tasks', patientTasksRoutes);
-router.use('/:patientId/notes', patientNotesRoutes);
+router.use('/:patientId', handoverRoutes);
 
 // Create a patient (Doctor or Nurse)
-router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req, res) => {
+router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await patientService.createPatient({ ...req.body, tenantId });
+        await clinicalAuditService.recordPatientUpdate({
+            tenantId,
+            user: req.user,
+            patientId: result.id,
+            body: req.body,
+        });
         res.status(201).json(result);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -31,7 +36,7 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), async (req
 });
 
 // Get all patients
-router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
+router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const patients = await patientService.getAllPatients(tenantId);
@@ -42,7 +47,7 @@ router.get('/', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), as
 });
 
 // Get archived (discharged) patients
-router.get('/archives', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
+router.get('/archives', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const patients = await patientService.getArchivedPatients(tenantId);
@@ -53,7 +58,7 @@ router.get('/archives', authenticateToken, requireRole(['doctor', 'nurse', 'admi
 });
 
 // Full immutable file for one archived admission (snapshot at discharge)
-router.get('/archives/:archiveId', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
+router.get('/archives/:archiveId', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const record = await patientService.getHospitalArchive(req.params.archiveId, tenantId);
@@ -67,7 +72,7 @@ router.get('/archives/:archiveId', authenticateToken, requireRole(['doctor', 'nu
 });
 
 // Get patient by ID
-router.get('/:id', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('id'), async (req, res) => {
+router.get('/:id', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const patient = await patientService.getPatientById(req.params.id, tenantId);
@@ -81,7 +86,7 @@ router.get('/:id', authenticateToken, requireRole(['doctor', 'nurse', 'admin']),
 });
 
 // Get discharge summary
-router.get('/:id/discharge-summary', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantPatient('id'), async (req, res) => {
+router.get('/:id/discharge-summary', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const summary = await patientService.getDischargeSummary(req.params.id, tenantId);
@@ -95,7 +100,7 @@ router.get('/:id/discharge-summary', authenticateToken, requireRole(['doctor', '
 });
 
 // Update patient
-router.put('/:id', authenticateToken, requireRole(['doctor', 'nurse']), requireTenantPatient('id'), async (req, res) => {
+router.put('/:id', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]), requireTenantPatient('id'), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await patientService.updatePatient(req.params.id, req.body, tenantId);
@@ -119,11 +124,17 @@ router.put('/:id', authenticateToken, requireRole(['doctor', 'nurse']), requireT
 });
 
 // Discharge patient (Doctor only)
-router.post('/:id/discharge', authenticateToken, requireRole(['doctor']), requireTenantPatient('id'), async (req, res) => {
+router.post('/:id/discharge', authenticateToken, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'), async (req, res) => {
     try {
         const dischargedBy = req.user.name || 'Doctor';
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await patientService.dischargePatient(req.params.id, req.body, dischargedBy, tenantId);
+        await clinicalAuditService.recordPatientUpdate({
+            tenantId,
+            user: req.user,
+            patientId: req.params.id,
+            body: { status: 'discharged' },
+        });
         res.json(result);
     } catch (error) {
         if (error.message === 'Patient not found') {

@@ -8,8 +8,15 @@ function verifyCsrfForMutations(req, res, next) {
     return next();
   }
 
+  // Endpoints that MUST be accessible without a CSRF token (e.g., initial authentication).
+  const CSRF_ALLOWLIST = [
+    '/api/auth/login',
+    '/health',
+    '/api/version'
+  ];
+
   const path = req.originalUrl.split('?')[0];
-  if (path === '/api/auth/login') {
+  if (CSRF_ALLOWLIST.includes(path)) {
     return next();
   }
 

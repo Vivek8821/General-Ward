@@ -1,0 +1,20 @@
+# General Ward: AI Session Rules
+
+## MANDATORY SESSION INITIATION
+At the start of every session, you MUST:
+1.  **Verify Servers**: Check if the backend (3001) and frontend (5173) are running.
+2.  **Authenticate**: Log in using the development credentials for `Dr. Smith` (PIN `1234`).
+3.  **Refer to Protocol**: Follow the detailed steps in [cursorrules/SESSION_INIT.md](file:///home/vn/Documents/General-Ward/cursorrules/SESSION_INIT.md).
+
+## Project Guidelines
+- **Tech Stack**: Express, SQLite, React (Vite), Tailwind CSS 4.
+- **Architecture**: Layered (Controller -> Service -> Repository).
+- **Security**: Tenant-aware isolation is critical. Every query must include `tenantId`.
+- **Database**: SQLite WAL mode is enabled. Use `withTransaction` for multi-step writes.
+
+## Interaction Rules
+- Always check `IMPLEMENTATION_STATE.json` for current project status.
+- Use `CODENAV.md` for navigating the backend and frontend.
+- Never commit `JWT_SECRET`. Use `.env` files.
+
+Refer to [cursorrules.md](file:///home/vn/Documents/General-Ward/cursorrules.md) for full architectural directives.

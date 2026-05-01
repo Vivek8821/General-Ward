@@ -156,7 +156,12 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ## First-party file inventory
 
-**137** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**139** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+
+<a id="fp-cursorrules"></a>
+### `.cursorrules`
+
+First-party file (open to inspect exact behavior).
 
 <a id="fp-github-workflows-ci-yml"></a>
 ### `.github/workflows/ci.yml`
@@ -175,6 +180,11 @@ First-party file (open to inspect exact behavior).
 
 <a id="fp-cursorrules-md"></a>
 ### `cursorrules.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
+<a id="fp-cursorrules-session-init-md"></a>
+### `cursorrules/SESSION_INIT.md`
 
 Documentation file that explains how to work with this repo/subsystem.
 
@@ -845,6 +855,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 137**, **thirdParty 32056**, **data 1**, total 32194.
+- Inventory counts: **firstParty 139**, **thirdParty 32056**, **data 1**, total 32196.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.

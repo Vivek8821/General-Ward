@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
+const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantPatient, requireTenantEscalation } = require('../middleware/tenant');
 const escalationService = require('../services/EscalationService');
 
 // POST /api/patients/:patientId/escalations (Nurse or Doctor)
-router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), requireTenantPatient('patientId'), async (req, res) => {
+router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT, PERMISSIONS.WRITE_VITALS]), requireTenantPatient('patientId'), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await escalationService.createEscalation(req.params.patientId, req.body.reason, req.user.name, tenantId);
@@ -16,7 +17,7 @@ router.post('/', authenticateToken, requireRole(['doctor', 'nurse']), requireTen
 });
 
 // GET /api/escalations/all (Global triage endpoint)
-router.get('/all', authenticateToken, requireRole(['doctor']), async (req, res) => {
+router.get('/all', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const escalations = await escalationService.getPendingEscalations(tenantId);
@@ -27,7 +28,7 @@ router.get('/all', authenticateToken, requireRole(['doctor']), async (req, res) 
 });
 
 // Mark as reviewed (Doctor only)
-router.post('/:escalationId/review', authenticateToken, requireRole(['doctor']), requireTenantEscalation('escalationId'), async (req, res) => {
+router.post('/:escalationId/review', authenticateToken, authorize(PERMISSIONS.WRITE_PATIENT), requireTenantEscalation('escalationId'), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await escalationService.reviewEscalation(req.params.escalationId, tenantId);

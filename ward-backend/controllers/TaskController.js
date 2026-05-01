@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, requireRole } = require('../middleware/auth');
 const taskService = require('../services/TaskService');
+const { authenticateToken } = require('../middleware/auth');
+const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantTask } = require('../middleware/tenant');
 
-// GET /api/tasks/my - cross-patient tasks for the current user
-router.get('/my', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), async (req, res) => {
+// GET /api/tasks/my
+router.get('/my', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const { limit, cursor } = req.query;
@@ -17,7 +18,7 @@ router.get('/my', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), 
 });
 
 // PUT /api/tasks/:taskId/complete
-router.put('/:taskId/complete', authenticateToken, requireRole(['doctor', 'nurse', 'admin']), requireTenantTask('taskId'), async (req, res) => {
+router.put('/:taskId/complete', authenticateToken, authorizeAny([PERMISSIONS.WRITE_TASKS]), requireTenantTask('taskId'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const result = await taskService.completeTask(req.params.taskId, req.user.name, tenantId);
@@ -31,4 +32,3 @@ router.put('/:taskId/complete', authenticateToken, requireRole(['doctor', 'nurse
 });
 
 module.exports = router;
-

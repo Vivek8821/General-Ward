@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const logger = require('../utils/logger');
 
 function requestLogger(req, res, next) {
   const requestId = req.headers['x-request-id'] || crypto.randomUUID();
@@ -11,17 +12,15 @@ function requestLogger(req, res, next) {
     const resource = (req.originalUrl || '').split('?')[0];
 
     // Structured log line for easy ingestion by log systems.
-    console.log(
-      JSON.stringify({
-        requestId,
-        method: req.method,
-        resource,
-        statusCode: res.statusCode,
-        durationMs: Date.now() - start,
-        userId,
-        userRole
-      })
-    );
+    logger.info('Request handled', {
+      requestId,
+      method: req.method,
+      resource,
+      statusCode: res.statusCode,
+      durationMs: Date.now() - start,
+      userId,
+      userRole
+    });
   });
 
   next();

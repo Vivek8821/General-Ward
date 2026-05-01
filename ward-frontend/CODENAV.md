@@ -1,12 +1,20 @@
 # Code Navigation (Frontend)
 
+## Development Protocol
+Every session should start by following the [Session Initiation Sequence](file:///home/vn/Documents/General-Ward/cursorrules/SESSION_INIT.md).
+- Auth: Dr. Smith (PIN 1234)
+- Server: npm start
+
+
 ## Router entrypoints
-`ward-frontend/src/main.jsx`
+`ward-frontend/src/App.jsx` (Routing and Provider setup)
+`ward-frontend/src/main.jsx` (Entry point)
 
 - `/login` -> `ward-frontend/src/views/Login.jsx`
 - `/` (protected) -> `ward-frontend/src/views/Dashboard.jsx`
 - `/patient/:id` (protected) -> `ward-frontend/src/views/PatientDetail.jsx`
 - `/tasks` (protected) -> `ward-frontend/src/views/Tasks.jsx`
+- `/admin/audit` (protected admin) -> `ward-frontend/src/views/AdminAudit.jsx`
 
 ## API helper + auth token
 `ward-frontend/src/utils/api.js`
@@ -89,3 +97,7 @@ These are rendered inside `PatientDetail.jsx` based on the active tab:
 `ward-frontend/src/views/PatientDetail.jsx`
 
 - `PUT /tasks/:taskId/complete` (via “Tasks Due” panel)
+
+## Testing
+`ward-frontend/src/test/setup.js`: Vitest setup
+`ward-frontend/src/views/Login.test.jsx`: Example component test

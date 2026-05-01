@@ -1,5 +1,11 @@
 # Code Navigation (Backend)
 
+## Development Protocol
+Every session should start by following the [Session Initiation Sequence](file:///home/vn/Documents/General-Ward/cursorrules/SESSION_INIT.md).
+- Auth: Dr. Smith (PIN 1234)
+- Server: npm start
+
+
 ## Express app mounts
 `ward-backend/server.js`
 
@@ -13,19 +19,19 @@
 - `/api/escalations/*`
   - Controller entry: `ward-backend/controllers/EscalationController.js`
 - `/api/tasks/*`
-  - Route file: `ward-backend/routes/tasks.js`
+  - Controller entry: `ward-backend/controllers/TaskController.js`
 - `/api/observations/*`
-  - Route file: `ward-backend/routes/observations.js`
+  - Controller entry: `ward-backend/controllers/ObservationController.js`
 
 ## PatientController: nested resources under `/api/patients/:patientId`
 `ward-backend/controllers/PatientController.js`
 
-- `/:patientId/medications` -> `ward-backend/routes/medications.js`
-- `/:patientId/history` -> `ward-backend/routes/history.js`
-- `/:patientId/stats` -> `ward-backend/routes/stats.js`
+- `/:patientId/medications` -> `ward-backend/controllers/MedicationController.js`
+- `/:patientId/history` -> `ward-backend/controllers/ObservationController.js`
+- `/:patientId/stats` -> `ward-backend/controllers/ObservationController.js`
 - `/:patientId/escalations` -> `ward-backend/controllers/EscalationController.js`
-- `/:patientId/tasks` -> `ward-backend/routes/patientTasks.js`
-- `/:patientId/notes` -> `ward-backend/routes/patientNotes.js`
+- `/:patientId/tasks` -> `ward-backend/controllers/HandoverController.js`
+- `/:patientId/notes` -> `ward-backend/controllers/HandoverController.js`
 
 ### Patient endpoints
 `ward-backend/controllers/PatientController.js`
@@ -52,44 +58,45 @@
 
 - `POST /api/patients/:patientId/escalations`
 
-## Tasks
-`ward-backend/routes/tasks.js`
+## Tasks (General)
+`ward-backend/controllers/TaskController.js`
 
 - `GET /api/tasks/my`
 - `PUT /api/tasks/:taskId/complete`
 
-Patient tasks are under:
-`/api/patients/:patientId/tasks`
-Route file: `ward-backend/routes/patientTasks.js`
+## Observations & Stats
+`ward-backend/controllers/ObservationController.js`
 
+- `POST /api/observations/ingest`
+- `POST /api/patients/:patientId/stats`
+- `GET /api/patients/:patientId/stats`
+- `GET /api/patients/:patientId/stats/ews/latest`
+- `GET /api/patients/:patientId/stats/trends`
+- `POST /api/patients/:patientId/history`
+- `GET /api/patients/:patientId/history`
+
+## Medications
+`ward-backend/controllers/MedicationController.js`
+
+- `GET /api/patients/:patientId/medications`
+- `POST /api/patients/:patientId/medications`
+- `GET /api/patients/:patientId/medications/administrations`
+- `PUT /api/patients/:patientId/medications/administrations/:adminId`
+- `DELETE /api/patients/:patientId/medications/administrations/:adminId`
+- `PUT /api/patients/:patientId/medications/:medId`
+- `POST /api/patients/:patientId/medications/:medId/administer`
+
+## Handover (Notes & Patient Tasks)
+`ward-backend/controllers/HandoverController.js`
+
+- `POST /api/patients/:patientId/notes`
+- `GET /api/patients/:patientId/notes`
 - `POST /api/patients/:patientId/tasks`
 - `GET /api/patients/:patientId/tasks`
 
-## Observations ingest
-`ward-backend/routes/observations.js`
-
-- `POST /api/observations/ingest`
-
-## Stats, History, Notes, Medications (patient-bound)
-
-Route files (mounted under `/api/patients/:patientId/...` by `PatientController`):
-
-- Stats: `ward-backend/routes/stats.js`
-  - `POST /api/patients/:patientId/stats`
-  - `GET /api/patients/:patientId/stats`
-  - `GET /api/patients/:patientId/stats/ews/latest`
-  - `GET /api/patients/:patientId/stats/trends`
-- Medications: `ward-backend/routes/medications.js`
-  - `GET /api/patients/:patientId/medications`
-  - `POST /api/patients/:patientId/medications`
-  - `GET /api/patients/:patientId/medications/administrations`
-  - `PUT /api/patients/:patientId/medications/administrations/:adminId`
-  - `DELETE /api/patients/:patientId/medications/administrations/:adminId`
-  - `PUT /api/patients/:patientId/medications/:medId`
-  - `POST /api/patients/:patientId/medications/:medId/administer`
-- History: `ward-backend/routes/history.js`
-  - `POST /api/patients/:patientId/history`
-  - `GET /api/patients/:patientId/history`
-- Notes: `ward-backend/routes/patientNotes.js`
-  - `POST /api/patients/:patientId/notes`
-  - `GET /api/patients/:patientId/notes`
+## Core Infrastructure
+- `ward-backend/db.js`: Transaction management (`withTransaction`)
+- `ward-backend/dbAdapter.js`: DB abstraction (SQLite/Postgres)
+- `ward-backend/middleware/rbac.js`: Permission-based access control
+- `ward-backend/utils/logger.js`: Buffered structured JSON logger
+- `ward-backend/services/ClinicalAuditService.js`: Clinical intent logging
