@@ -187,17 +187,40 @@ CREATE TABLE IF NOT EXISTS IdempotencyKeys (
   PRIMARY KEY (idempotencyKey, tenantId, userId, patientId, endpoint)
 );
 
--- Pharmacy Stock (Essential Drug List)
+-- Pharmacy Stock (Essential Drug List - Enterprise)
 CREATE TABLE IF NOT EXISTS PharmacyStock (
   id TEXT PRIMARY KEY,
   tenantId TEXT NOT NULL,
   name TEXT NOT NULL,
+  composition TEXT, -- Chemical Composition
+  type TEXT, -- e.g. Tablet, Syrup, Injection
   category TEXT,
-  stockLevel INTEGER DEFAULT 0,
-  unit TEXT,
+  quantityPerUnit INTEGER DEFAULT 1, -- e.g. 10 tablets per strip
+  totalUnits INTEGER DEFAULT 0, -- e.g. 50 strips
+  totalQuantity INTEGER DEFAULT 0, -- Calculated: totalUnits * quantityPerUnit
+  unit TEXT, -- e.g. Strips, Bottles, Vials
+  itemUnit TEXT, -- e.g. Tablets, ml, mg
+  costPerUnit REAL DEFAULT 0,
+  expiryDate DATE,
+  manufacturer TEXT,
   minThreshold INTEGER DEFAULT 10,
   lastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(tenantId, name)
+  UNIQUE(tenantId, name, composition)
+);
+
+-- Pharmacy Transactions (Audit Trail)
+CREATE TABLE IF NOT EXISTS PharmacyTransactions (
+  id TEXT PRIMARY KEY,
+  tenantId TEXT NOT NULL,
+  medicationId TEXT NOT NULL,
+  type TEXT CHECK(type IN ('restock', 'dispense', 'adjustment', 'waste')) NOT NULL,
+  quantity INTEGER NOT NULL, -- positive for restock/adj, negative for dispense/waste
+  userId TEXT NOT NULL,
+  userName TEXT NOT NULL,
+  patientId TEXT, -- only for 'dispense'
+  notes TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (medicationId) REFERENCES PharmacyStock(id)
 );
 
 -- Auth Lockout State

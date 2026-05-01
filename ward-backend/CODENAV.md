@@ -1,102 +1,35 @@
-# Code Navigation (Backend)
+# Ward Backend - Architectural Navigation
 
-## Development Protocol
-Every session should start by following the [Session Initiation Sequence](file:///home/vn/Documents/General-Ward/cursorrules/SESSION_INIT.md).
-- Auth: Dr. Smith (PIN 1234)
-- Server: npm start
+## Structure Overview
+The backend is an Express.js application designed for tenant-isolated healthcare management.
 
+## Core Directories
+- `controllers/`: Request handling and response formatting.
+- `services/`: Business logic (e.g., EWS calculation, Inventory adjustment).
+- `repositories/`: Data access layer (Tenant-aware queries).
+- `middleware/`: Auth, RBAC, Tenant-Isolation, and Error handling.
+- `utils/`: Logging, crypto, and helpers.
 
-## Express app mounts
-`ward-backend/server.js`
+## Key Services
+- `MedicationService.js`: Handles prescriptions and MAR flow. Integrated with Pharmacy for auto-dispensing.
+- `PharmacyService.js`: Enterprise stock management with atomic transaction auditing.
+- `MigratorService.js`: Schema-first auto-migrations using `schema.sql`.
+- `ClinicalAuditService.js`: Clinical action logging for regulatory compliance.
 
-- `GET /health`
-- `GET /api/version`
-- `/api/admin/*` → `ward-backend/routes/adminAudit.js` (admin role): audit log CSV/export/purge, **`GET /api/admin/clinical-changes`** (domain change log)
-- `POST /api/auth/login`, `GET /api/auth/me`
-  - Route/controller entry: `ward-backend/controllers/AuthController.js`
-- `/api/patients/*`
-  - Route/controller entry: `ward-backend/controllers/PatientController.js`
-- `/api/escalations/*`
-  - Controller entry: `ward-backend/controllers/EscalationController.js`
-- `/api/tasks/*`
-  - Controller entry: `ward-backend/controllers/TaskController.js`
-- `/api/observations/*`
-  - Controller entry: `ward-backend/controllers/ObservationController.js`
+## Database Schema (Key Tables)
+- `Tenants`: Multi-tenant root.
+- `Patients`: Core patient demographic and clinical state.
+- `PharmacyStock`: Enterprise inventory tracking (Packs, Units per Pack, Total Quantity).
+- `PharmacyTransactions`: Immutable audit trail for stock movements (Restock, Dispense, Waste).
+- `MedicationAdministrations`: Clinical administration records.
 
-## PatientController: nested resources under `/api/patients/:patientId`
-`ward-backend/controllers/PatientController.js`
+## Integration Points
+- **MAR -> Pharmacy**: `administerMedication` triggers `PharmacyService.adjustStock`.
+- **EWS Trend**: Computed on-the-fly via `TrendService` based on `DailyStats`.
+- **RBAC**: Enforced via `rbac.js` middleware based on JWT roles.
 
-- `/:patientId/medications` -> `ward-backend/controllers/MedicationController.js`
-- `/:patientId/history` -> `ward-backend/controllers/ObservationController.js`
-- `/:patientId/stats` -> `ward-backend/controllers/ObservationController.js`
-- `/:patientId/escalations` -> `ward-backend/controllers/EscalationController.js`
-- `/:patientId/tasks` -> `ward-backend/controllers/HandoverController.js`
-- `/:patientId/notes` -> `ward-backend/controllers/HandoverController.js`
-
-### Patient endpoints
-`ward-backend/controllers/PatientController.js`
-
-- `POST /api/patients` (create a patient)
-- `GET /api/patients` (list patients)
-- `GET /api/patients/archives` (list discharged/archived patients)
-- `GET /api/patients/:id` (fetch patient)
-- `PUT /api/patients/:id` (update patient)
-- `GET /api/patients/:id/discharge-summary`
-- `POST /api/patients/:id/discharge` (discharge)
-
-## Escalations (two entrypoints)
-
-### Global triage
-`ward-backend/controllers/EscalationController.js`
-
-- `GET /api/escalations/all`
-- `POST /api/escalations/:escalationId/review`
-
-### Patient-bound escalation create
-`ward-backend/controllers/EscalationController.js` mounted under:
-`/api/patients/:patientId/escalations`
-
-- `POST /api/patients/:patientId/escalations`
-
-## Tasks (General)
-`ward-backend/controllers/TaskController.js`
-
-- `GET /api/tasks/my`
-- `PUT /api/tasks/:taskId/complete`
-
-## Observations & Stats
-`ward-backend/controllers/ObservationController.js`
-
-- `POST /api/observations/ingest`
-- `POST /api/patients/:patientId/stats`
-- `GET /api/patients/:patientId/stats`
-- `GET /api/patients/:patientId/stats/ews/latest`
-- `GET /api/patients/:patientId/stats/trends`
-- `POST /api/patients/:patientId/history`
-- `GET /api/patients/:patientId/history`
-
-## Medications
-`ward-backend/controllers/MedicationController.js`
-
-- `GET /api/patients/:patientId/medications`
-- `POST /api/patients/:patientId/medications`
-- `GET /api/patients/:patientId/medications/administrations`
-- `PUT /api/patients/:patientId/medications/administrations/:adminId`
-- `DELETE /api/patients/:patientId/medications/administrations/:adminId`
-- `PUT /api/patients/:patientId/medications/:medId`
-- `POST /api/patients/:patientId/medications/:medId/administer`
-
-## Handover (Notes & Patient Tasks)
-`ward-backend/controllers/HandoverController.js`
-
-- `POST /api/patients/:patientId/notes`
-- `GET /api/patients/:patientId/notes`
-- `POST /api/patients/:patientId/tasks`
-- `GET /api/patients/:patientId/tasks`
-
-## Core Infrastructure
-- `ward-backend/db.js`: Transaction management (`withTransaction`)
-- `ward-backend/dbAdapter.js`: DB abstraction (SQLite/Postgres)
-- `ward-backend/middleware/rbac.js`: Permission-based access control
-- `ward-backend/utils/logger.js`: Buffered structured JSON logger
-- `ward-backend/services/ClinicalAuditService.js`: Clinical intent logging
+## Critical Files
+- `server.js`: Entry point.
+- `db.js`: Database initialization.
+- `dbAdapter.js`: DB abstraction layer.
+- `schema.sql`: Source of truth for database structure.

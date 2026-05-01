@@ -10,6 +10,7 @@ import PatientDetail from './views/PatientDetail';
 import HospitalArchiveDetail from './views/HospitalArchiveDetail';
 import Tasks from './views/Tasks';
 import AdminAudit from './views/AdminAudit';
+import Pharmacy from './views/Pharmacy';
 import NotFound from './views/NotFound';
 import './App.css';
 
@@ -37,6 +38,7 @@ function App() {
               <Route path="/patient/:id" element={<PatientDetail />} />
               <Route path="/archive/:archiveId" element={<HospitalArchiveDetail />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/pharmacy" element={<Pharmacy />} />
             </Route>
 
             <Route element={<ProtectedLayout allowedRoles={['admin']} />}>

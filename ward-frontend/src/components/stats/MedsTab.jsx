@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../utils/api';
+import { queryKeys } from '../../utils/queryKeys';
 import { useAuth } from '../../context/AuthContext';
-import { ClipboardList, Plus, Save, Syringe, Trash2, CheckCircle, Clock, History, Ban, Edit2, X } from 'lucide-react';
+import { ClipboardList, Plus, Save, Syringe, Trash2, CheckCircle, Clock, History, Ban, Edit2, X, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function MedsTab({ patientId, readOnly }) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState('active'); // 'active', 'mar', 'history'
-  const [medications, setMedications] = useState([]);
-  const [administrations, setAdministrations] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [marInputs, setMarInputs] = useState({}); // { medId: { time: 'HH:mm', notes: '' } }
-  const { user } = useAuth();
+  const [adminNotes, setAdminNotes] = useState({}); // { adminId: notes }
   
   const [formData, setFormData] = useState({
     name: '',
@@ -22,111 +23,117 @@ export default function MedsTab({ patientId, readOnly }) {
     status: 'active'
   });
 
-  const [adminNotes, setAdminNotes] = useState({}); // { adminId: notes }
+  // 1. Data Fetching via React Query
+  const { data: medications = [], isLoading: medsLoading } = useQuery({
+    queryKey: ['patient', patientId, 'medications'],
+    queryFn: () => api.get(`/patients/${patientId}/medications`),
+    enabled: !!patientId,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [patientId]);
+  const { data: administrations = [], isLoading: adminLoading } = useQuery({
+    queryKey: ['patient', patientId, 'medications', 'administrations'],
+    queryFn: () => api.get(`/patients/${patientId}/medications/administrations?limit=50`),
+    enabled: !!patientId,
+  });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [meds, admins] = await Promise.all([
-        api.get(`/patients/${patientId}/medications`),
-        api.get(`/patients/${patientId}/medications/administrations?limit=50`)
-      ]);
-      setMedications(meds);
-      setAdministrations(admins);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load medication data: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: inventory = [] } = useQuery({
+    queryKey: ['pharmacy', 'inventory'],
+    queryFn: () => api.get('/pharmacy/inventory'),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (!formData.name || !formData.dosage) {
-         toast.error("Medication Name and Dosage are required.");
-         return;
-      }
-      
-      await api.post(`/patients/${patientId}/medications`, formData);
+  const loading = medsLoading || adminLoading;
+
+  // 2. Mutations
+  const prescribeMutation = useMutation({
+    mutationFn: (data) => api.post(`/patients/${patientId}/medications`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient', patientId, 'medications'] });
       setShowForm(false);
       setFormData({ name: '', dosage: '', frequency: 'Once daily', scheduledTimes: '', status: 'active' });
-      await fetchData();
       toast.success("Prescription confirmed!");
-    } catch (err) {
-      toast.error("Failed to prescribe: " + err.message);
-    }
-  };
+    },
+    onError: (err) => toast.error("Failed to prescribe: " + err.message),
+  });
 
-  const administerMed = async (medId, status = 'given') => {
-    try {
-      const inputs = marInputs[medId] || {};
-      const payload = { status, notes: inputs.notes };
+  const administerMutation = useMutation({
+    mutationFn: ({ medId, payload }) => api.post(`/patients/${patientId}/medications/${medId}/administer`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient', patientId, 'medications', 'administrations'] });
+      toast.success("Administration recorded");
+    },
+    onError: (err) => toast.error("Failed to record: " + err.message),
+  });
 
-      if ((status === 'refused' || status === 'missed') && (!payload.notes || payload.notes.trim().length === 0)) {
-        toast.error('Reason is required for refused/missed doses.');
+  const updateAdminMutation = useMutation({
+    mutationFn: ({ adminId, status, notes }) => api.put(`/patients/${patientId}/medications/administrations/${adminId}`, { status, notes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient', patientId, 'medications', 'administrations'] });
+      setEditingAdmin(null);
+      toast.success("Record updated");
+    },
+    onError: (err) => toast.error("Update failed: " + err.message),
+  });
+
+  const deleteAdminMutation = useMutation({
+    mutationFn: (adminId) => api.delete(`/patients/${patientId}/medications/administrations/${adminId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient', patientId, 'medications', 'administrations'] });
+      toast.success("Record deleted");
+    },
+    onError: (err) => toast.error("Delete failed"),
+  });
+
+  const updateMedStatusMutation = useMutation({
+    mutationFn: ({ medId, nextStatus }) => api.put(`/patients/${patientId}/medications/${medId}`, { status: nextStatus }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient', patientId, 'medications'] });
+      toast.success("Status updated");
+    },
+    onError: (err) => toast.error("Update failed"),
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.dosage) return toast.error("Required fields missing");
+    
+    // Check stock if in EDL
+    const stockItem = inventory.find(i => i.name.toLowerCase() === formData.name.toLowerCase());
+    if (stockItem && stockItem.totalQuantity === 0) {
+      if (!window.confirm(`${formData.name} is currently OUT OF STOCK in the pharmacy. Do you still want to prescribe it?`)) {
         return;
       }
-      
-      if (inputs.time) {
-        const [hours, minutes] = inputs.time.split(':');
-        const date = new Date();
-        date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        payload.timestamp = date.toISOString();
-      }
-
-      await api.post(`/patients/${patientId}/medications/${medId}/administer`, payload);
-      
-      // Clear inputs for this med
-      setMarInputs(prev => ({ ...prev, [medId]: { time: '', notes: '' } }));
-      
-      await fetchData();
-      const msg = status === 'given'
-        ? "Medication marked as Given"
-        : status === 'missed'
-          ? "Medication recorded as Missed"
-          : "Medication recorded as Refused";
-      toast.success(msg);
-    } catch (err) {
-      toast.error("Failed to record: " + err.message);
     }
+    
+    prescribeMutation.mutate(formData);
   };
 
-  const updateAdminStatus = async (adminId, status, notes = '') => {
-    try {
-      await api.put(`/patients/${patientId}/medications/administrations/${adminId}`, { status, notes });
-      setEditingAdmin(null);
-      fetchData();
-      toast.success("Administration record updated");
-    } catch (err) {
-      toast.error("Failed to update record: " + err.message);
+  const administerMed = (medId, status = 'given') => {
+    const inputs = marInputs[medId] || {};
+    const payload = { status, notes: inputs.notes };
+    if ((status === 'refused' || status === 'missed') && (!payload.notes || payload.notes.trim().length === 0)) {
+      return toast.error('Reason is required');
     }
+    if (inputs.time) {
+      const [h, m] = inputs.time.split(':');
+      const date = new Date();
+      date.setHours(parseInt(h), parseInt(m), 0, 0);
+      payload.timestamp = date.toISOString();
+    }
+    administerMutation.mutate({ medId, payload });
+    setMarInputs(prev => ({ ...prev, [medId]: { time: '', notes: '' } }));
   };
 
-  const deleteAdminRecord = async (adminId) => {
-    if (!window.confirm("Are you sure you want to delete this record?")) return;
-    try {
-      await api.delete(`/patients/${patientId}/medications/administrations/${adminId}`);
-      fetchData();
-      toast.success("Record deleted");
-    } catch (err) {
-      toast.error("Failed to delete: " + err.message);
-    }
+  const updateAdminStatus = (adminId, status, notes = '') => {
+    updateAdminMutation.mutate({ adminId, status, notes });
   };
 
-  const updateMedStatus = async (medId, nextStatus) => {
-    try {
-      await api.put(`/patients/${patientId}/medications/${medId}`, { status: nextStatus });
-      fetchData();
-      toast.success(`Medication ${nextStatus}`);
-    } catch (err) {
-      toast.error("Failed to update: " + err.message);
-    }
+  const deleteAdminRecord = (adminId) => {
+    if (!window.confirm("Delete this record?")) return;
+    deleteAdminMutation.mutate(adminId);
+  };
+
+  const updateMedStatus = (medId, nextStatus) => {
+    updateMedStatusMutation.mutate({ medId, nextStatus });
   };
 
   const isDoctor = user.role === 'doctor';
@@ -240,8 +247,48 @@ export default function MedsTab({ patientId, readOnly }) {
           <h4 className="font-bold mb-4 flex items-center gap-2"><Syringe className="w-5 h-5 text-info"/> New Prescription</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
-              <label className="block text-xs font-bold mb-1 text-text-secondary">Medication Name</label>
-              <input type="text" required className="input-field !py-2" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Amoxicillin" />
+              <label className="block text-xs font-bold mb-1 text-text-secondary">Medication Name (Pharmacy EDL)</label>
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  required 
+                  className="input-field !py-2" 
+                  value={formData.name} 
+                  onChange={e => setFormData({...formData, name: e.target.value})} 
+                  placeholder="Start typing or select..."
+                  list="pharmacy-edl"
+                />
+                <datalist id="pharmacy-edl">
+                  {inventory.map(i => (
+                    <option key={i.id} value={i.name}>
+                      {i.composition} ({i.type}) — {i.totalQuantity === 0 ? 'OUT OF STOCK' : `₹${i.costPerUnit}/${i.itemUnit}, ${i.totalQuantity} ${i.itemUnit} left`}
+                    </option>
+                  ))}
+                </datalist>
+                {inventory.find(i => i.name.toLowerCase() === formData.name.toLowerCase()) && (
+                  <div className="absolute -bottom-12 left-0 space-y-0.5 z-10 w-full">
+                    {(() => {
+                      const item = inventory.find(i => i.name.toLowerCase() === formData.name.toLowerCase());
+                      const isExpired = item.expiryDate && new Date(item.expiryDate) < new Date();
+                      return (
+                        <div className="bg-bg-tertiary p-2 rounded border border-border shadow-lg">
+                          <div className={`text-[10px] font-black uppercase flex items-center gap-1 ${item.totalQuantity === 0 ? 'text-danger' : 'text-success'}`}>
+                            {item.totalQuantity === 0 ? <><AlertCircle className="w-3 h-3" /> Out of Stock</> : <><CheckCircle className="w-3 h-3" /> In Stock ({item.totalQuantity} {item.itemUnit})</>}
+                          </div>
+                          <div className="text-[10px] text-text-muted font-bold">
+                             {item.totalUnits} {item.unit} available ({item.quantityPerUnit} {item.itemUnit}/unit) • ₹{item.costPerUnit}/{item.itemUnit}
+                          </div>
+                          {isExpired && (
+                            <div className="text-[10px] text-danger font-black uppercase flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" /> EXPIRED ON {new Date(item.expiryDate).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-xs font-bold mb-1 text-text-secondary">Dosage / Route</label>

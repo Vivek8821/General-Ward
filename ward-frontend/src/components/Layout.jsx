@@ -1,6 +1,6 @@
 import { Outlet, Navigate, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Moon, Sun, Hospital } from 'lucide-react';
+import { LogOut, Moon, Sun, Hospital, Package } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
 export const ProtectedLayout = ({ allowedRoles }) => {
@@ -67,6 +67,13 @@ export const ProtectedLayout = ({ allowedRoles }) => {
               </span>
             </div>
             
+            <Link
+              to="/pharmacy"
+              className="text-sm font-medium text-slate-700 hover:text-primary dark:text-slate-400 whitespace-nowrap"
+            >
+              Pharmacy
+            </Link>
+
             {user.role === 'admin' && (
               <Link
                 to="/admin/audit"

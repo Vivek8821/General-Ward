@@ -1,5 +1,7 @@
 const medicationRepository = require('../repositories/MedicationRepository');
 const patientRepository = require('../repositories/PatientRepository');
+const pharmacyRepository = require('../repositories/PharmacyRepository');
+const pharmacyService = require('../services/PharmacyService');
 const clinicalAuditService = require('../services/ClinicalAuditService');
 const crypto = require('crypto');
 
@@ -80,6 +82,31 @@ class MedicationService {
 
     const reasonCode = status === 'given' ? null : status;
     const doseActuallyGiven = status === 'given' ? med.dosage : null;
+
+    // Phase 3: Inventory Integration
+    // If the medication is being GIVEN, try to deduct from pharmacy stock
+    if (status === 'given') {
+      try {
+        // Find by name in EDL
+        const inventoryItem = await pharmacyRepository.findByName(med.name, tenantId);
+        if (inventoryItem) {
+          await pharmacyService.adjustStock(
+            inventoryItem.id, 
+            tenantId, 
+            -1, // Deduct 1 itemUnit (e.g. 1 tablet)
+            'dispense', 
+            user, 
+            { 
+              patientId, 
+              notes: `Dispensed for administration to ${patientId}. Medication record: ${medId}` 
+            }
+          );
+        }
+      } catch (err) {
+        console.error('[MedicationService] Stock deduction failed:', err.message);
+        // We log but don't block administration (clinical priority)
+      }
+    }
 
     await medicationRepository.createAdministration({
       id,

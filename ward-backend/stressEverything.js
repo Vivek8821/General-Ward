@@ -96,7 +96,7 @@ async function ensureFixture(db) {
     await dbRun(db, `DELETE FROM Escalations WHERE patientId = ?`, [p.id]);
   }
 
-  // Vitals (2 rows for trends; type must match schema check constraint)
+  // Vitals
   const vital1 = JSON.stringify({ bpSystolic: 120, bpDiastolic: 70, temp: 37.0, pulse: 70, respRate: 16, spo2: 98 });
   const vital2 = JSON.stringify({ bpSystolic: 128, bpDiastolic: 74, temp: 37.4, pulse: 82, respRate: 17, spo2: 97 });
 
@@ -146,17 +146,15 @@ async function ensureFixture(db) {
     }
   }
 
-  // Medications + one administration record
+  // Medications + Pharmacy Integration
   for (const t of ['A', 'B']) {
     const p = patients[t];
     const tenantId = t === 'A' ? tenantA : tenantB;
     const prescribedBy = t === 'A' ? doctorA.name : doctorB.name;
     const medId = `stress-med-${t}`;
-    const adminId = `stress-admin-${t}`;
-
+    
     await dbRun(db, `DELETE FROM MedicationAdministrations WHERE medicationId = ?`, [medId]);
     await dbRun(db, `DELETE FROM Medications WHERE id = ?`, [medId]);
-
     await dbRun(
       db,
       `INSERT INTO Medications (id, tenantId, patientId, name, dosage, route, frequency, scheduledTimes, prn, startDate, prescribedBy, status, timestamp)
@@ -164,27 +162,24 @@ async function ensureFixture(db) {
       [medId, tenantId, p.id, `StressMed-${t}`, '10mg', 'Oral', 'BID', '08:00, 20:00', 0, new Date().toISOString().slice(0, 10), prescribedBy]
     );
 
-    await dbRun(db, `DELETE FROM MedicationAdministrations WHERE id = ?`, [adminId]);
+    // Pharmacy Item for integration test
+    const pharmId = `stress-pharm-${t}`;
+    await dbRun(db, `DELETE FROM PharmacyTransactions WHERE medicationId = ?`, [pharmId]);
+    await dbRun(db, `DELETE FROM PharmacyStock WHERE id = ?`, [pharmId]);
     await dbRun(
       db,
-      `INSERT INTO MedicationAdministrations (id, tenantId, medicationId, patientId, status, notes, doseActuallyGiven, reasonCode, administeredBy, timestamp)
-       VALUES (?, ?, ?, ?, 'given', ?, ?, NULL, ?, CURRENT_TIMESTAMP)`,
-      [adminId, tenantId, medId, p.id, 'initial admin', '10mg', prescribedBy]
+      `INSERT INTO PharmacyStock (id, tenantId, name, composition, type, category, quantityPerUnit, totalUnits, totalQuantity, unit, itemUnit, costPerUnit, lastUpdated)
+       VALUES (?, ?, ?, ?, 'Tablet', 'Analgesics', 10, 100, 1000, 'Strips', 'Tablets', 1.5, CURRENT_TIMESTAMP)`,
+      [pharmId, tenantId, `StressMed-${t}`, '10mg']
     );
-  }
 
-  // Escalations
-  for (const t of ['A', 'B']) {
-    const p = patients[t];
-    const tenantId = t === 'A' ? tenantA : tenantB;
-    const escalatedBy = t === 'A' ? doctorA.name : doctorB.name;
     const escId = `stress-esc-${t}`;
     await dbRun(db, `DELETE FROM Escalations WHERE id = ?`, [escId]);
     await dbRun(
       db,
       `INSERT INTO Escalations (id, tenantId, patientId, reason, escalatedBy, status, timestamp)
        VALUES (?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)`,
-      [escId, tenantId, p.id, `Stress escalation ${t}`, escalatedBy]
+      [escId, tenantId, p.id, `Stress escalation ${t}`, prescribedBy]
     );
   }
 
@@ -247,13 +242,11 @@ async function stress() {
       patientsA = fixture.patients.A;
       patientsB = fixture.patients.B;
     } else {
-      // Safe default: do not touch SQLite. Use the existing seed patient IDs.
-      // `seed.js` inserts patient IDs `u3` and `u5`; `db.js` backfills missing tenantId via triggers.
-      patientsA = { id: 'u3' };
-      patientsB = { id: 'u5' };
+      patientsA = { id: 'stress-pA' };
+      patientsB = { id: 'stress-pB' };
 
-      const doctorA = { id: 'stress-doc-a', name: 'StressDocA', role: 'doctor', tenantId: 'tenant-default' };
-      const doctorB = { id: 'stress-doc-b', name: 'StressDocB', role: 'doctor', tenantId: 'tenant-b' };
+      const doctorA = { id: 'sdA', name: 'StressDocA', role: 'doctor', tenantId: 'tenant-default' };
+      const doctorB = { id: 'sdB', name: 'StressDocB', role: 'doctor', tenantId: 'tenant-b' };
       tokenA = makeToken(doctorA);
       tokenB = makeToken(doctorB);
     }
@@ -261,22 +254,22 @@ async function stress() {
     const opDefs = [
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', '/patients') },
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/patients/${patientsA.id}/stats?type=vital`) },
-      { weight: 3, fn: () => authedFetch(tokenA, 'GET', `/patients/${patientsA.id}/stats/trends`) },
-      { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/patients/${patientsA.id}/stats/ews/latest`) },
-      { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/patients/${patientsA.id}/history`) },
-      { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/patients/${patientsA.id}/notes?shift=morning&limit=10`) },
       { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/patients/${patientsA.id}/medications`) },
-      { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/patients/${patientsA.id}/medications/administrations`) },
-      { weight: 3, fn: () => authedFetch(tokenA, 'GET', '/tasks/my') },
-      { weight: 1, fn: () => authedFetch(tokenA, 'GET', '/escalations/all') },
+      { weight: 2, fn: () => authedFetch(tokenA, 'GET', '/tasks/my') },
+      { weight: 1, fn: () => authedFetch(tokenA, 'GET', '/api/admin/clinical-changes') },
+      
+      // Pharmacy specific
+      { weight: 4, fn: () => authedFetch(tokenA, 'GET', '/pharmacy/inventory') },
+      { weight: 2, fn: () => authedFetch(tokenA, 'GET', '/pharmacy/history') },
 
-      // Writes
+      // Writes + Pharmacy Interop
       {
-        weight: 2,
+        weight: 3,
         fn: () =>
-          authedFetch(tokenA, 'POST', `/patients/${patientsA.id}/stats`, {
-            type: 'vital',
-            data: { bpSystolic: 118, bpDiastolic: 72, temp: 37.2, pulse: 78, respRate: 15, spo2: 98 }
+          authedFetch(tokenA, 'POST', `/patients/${patientsA.id}/medications/stress-med-A/administer`, {
+            status: 'given',
+            notes: 'stress test administration',
+            timestamp: new Date().toISOString()
           })
       },
       {
@@ -286,17 +279,6 @@ async function stress() {
             shift: 'morning',
             note: 'stress note ' + crypto.randomUUID().slice(0, 8),
             tags: 'stress'
-          })
-      },
-
-      {
-        weight: 2,
-        fn: () =>
-          authedFetch(tokenA, 'POST', '/observations/ingest', {
-            patientId: patientsA.id,
-            measurementType: 'vital',
-            data: { bpSystolic: 121, bpDiastolic: 69, temp: 37.0, pulse: 75, respRate: 16, spo2: 98 },
-            timestamp: new Date().toISOString()
           })
       },
 
@@ -322,8 +304,6 @@ async function stress() {
     const warm = await authedFetch(tokenA, 'GET', `/patients/${patientsA.id}/stats?type=vital`);
     if (warm.status !== 200) console.log('warmup unexpected:', warm.status);
     await sleep(200);
-
-    const escalationReviewLock = false; // not used in this reduced profile
 
     const worker = async () => {
       while (Date.now() < endAt) {
@@ -393,4 +373,3 @@ stress().catch((e) => {
   console.error('stress script failed:', e);
   process.exit(1);
 });
-

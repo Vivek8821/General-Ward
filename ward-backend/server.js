@@ -15,8 +15,10 @@ const medicationRoutes = require('./controllers/MedicationController');
 const escalationRoutes = require('./controllers/EscalationController');
 const tasksRoutes = require('./controllers/TaskController');
 const observationsRoutes = require('./controllers/ObservationController');
+const pharmacyRoutes = require('./controllers/PharmacyController');
 const adminAuditRoutes = require('./routes/adminAudit');
 const errorHandler = require('./middleware/error');
+const migratorService = require('./services/MigratorService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -95,6 +97,7 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/escalations', escalationRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/observations', observationsRoutes);
+app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/admin', adminAuditRoutes);
 
 // Health check
@@ -129,6 +132,16 @@ app.use((req, res) => {
 // Global Error Handler
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+async function startServer() {
+  try {
+    await migratorService.runMigrations();
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Critical failure during startup:', err);
+    process.exit(1);
+  }
+}
+
+startServer();
