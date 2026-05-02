@@ -223,6 +223,25 @@ CREATE TABLE IF NOT EXISTS PharmacyTransactions (
   FOREIGN KEY (medicationId) REFERENCES PharmacyStock(id)
 );
 
+-- Pharmacy Batches (Lot/Batch Tracking)
+CREATE TABLE IF NOT EXISTS PharmacyBatches (
+  id TEXT PRIMARY KEY,
+  tenantId TEXT NOT NULL,
+  stockId TEXT NOT NULL,
+  batchNumber TEXT NOT NULL,
+  expiryDate DATE NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 0,
+  costPerUnit REAL DEFAULT 0,
+  manufacturer TEXT,
+  receivedDate DATE,
+  status TEXT DEFAULT 'active' CHECK(status IN ('active', 'expired', 'recalled', 'depleted')),
+  notes TEXT,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  lastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (stockId) REFERENCES PharmacyStock(id),
+  UNIQUE(tenantId, stockId, batchNumber)
+);
+
 -- Auth Lockout State
 CREATE TABLE IF NOT EXISTS AuthLoginAttempts (
   username TEXT NOT NULL,
@@ -249,3 +268,7 @@ CREATE INDEX IF NOT EXISTS idx_tasks_status ON Tasks(status);
 CREATE INDEX IF NOT EXISTS idx_handovernots_patient ON HandoverNotes(patientId);
 CREATE INDEX IF NOT EXISTS idx_handovernots_timestamp ON HandoverNotes(timestamp);
 CREATE INDEX IF NOT EXISTS idx_pharmacy_tenant_name ON PharmacyStock(tenantId, name);
+CREATE INDEX IF NOT EXISTS idx_batches_stock ON PharmacyBatches(stockId);
+CREATE INDEX IF NOT EXISTS idx_batches_tenant_expiry ON PharmacyBatches(tenantId, expiryDate ASC);
+CREATE INDEX IF NOT EXISTS idx_batches_lot ON PharmacyBatches(tenantId, batchNumber);
+CREATE INDEX IF NOT EXISTS idx_batches_status ON PharmacyBatches(tenantId, status);

@@ -4,6 +4,30 @@ const pharmacyService = require('../services/PharmacyService');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 
+// ── Input Validators ────────────────────────────────────────────────
+
+function validateBatchPayload(body) {
+  const errors = [];
+  if (!body.batchNumber || typeof body.batchNumber !== 'string' || body.batchNumber.trim().length === 0) {
+    errors.push('batchNumber is required (non-empty string)');
+  }
+  if (body.batchNumber && body.batchNumber.length > 100) {
+    errors.push('batchNumber must be 100 characters or less');
+  }
+  if (!body.expiryDate || isNaN(Date.parse(body.expiryDate))) {
+    errors.push('expiryDate is required (valid ISO date)');
+  }
+  if (!body.quantity || parseInt(body.quantity) <= 0) {
+    errors.push('quantity must be a positive integer');
+  }
+  if (body.costPerUnit !== undefined && (isNaN(body.costPerUnit) || Number(body.costPerUnit) < 0)) {
+    errors.push('costPerUnit must be a non-negative number');
+  }
+  return errors;
+}
+
+// ── Existing Inventory Endpoints ────────────────────────────────────
+
 // GET /api/pharmacy/inventory
 router.get('/inventory', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
   try {
@@ -73,6 +97,112 @@ router.delete('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_A
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// ── Batch / Lot Tracking Endpoints ──────────────────────────────────
+
+// GET /api/pharmacy/inventory/:stockId/batches
+router.get('/inventory/:stockId/batches', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const batches = await pharmacyService.getBatches(req.params.stockId, tenantId);
+    res.json(batches);
+  } catch (err) {
+    if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/pharmacy/inventory/:stockId/batches
+router.post('/inventory/:stockId/batches', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+  const errors = validateBatchPayload(req.body);
+  if (errors.length > 0) {
+    return res.status(400).json({ error: 'Validation failed', details: errors, code: 'VALIDATION_ERROR' });
+  }
+
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await pharmacyService.addBatch(req.params.stockId, tenantId, req.body, req.user);
+    res.status(201).json(result);
+  } catch (err) {
+    if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
+    if (err.message.includes('UNIQUE constraint')) return res.status(409).json({ error: 'A batch with this lot number already exists for this medication', code: 'DUPLICATE_BATCH' });
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// POST /api/pharmacy/batches/:batchId/recall
+router.post('/batches/:batchId/recall', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+  const { reason } = req.body;
+  if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
+    return res.status(400).json({ error: 'Recall reason is required', code: 'VALIDATION_ERROR' });
+  }
+
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await pharmacyService.recallBatch(req.params.batchId, tenantId, req.user, reason.trim());
+    res.json(result);
+  } catch (err) {
+    if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/pharmacy/recall-trace/:batchId
+router.get('/recall-trace/:batchId', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const trace = await pharmacyService.getRecallTrace(req.params.batchId, tenantId);
+    res.json(trace);
+  } catch (err) {
+    if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/pharmacy/batches/search?lotNumber=XXX
+router.get('/batches/search', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  const { lotNumber } = req.query;
+  if (!lotNumber || lotNumber.trim().length === 0) {
+    return res.status(400).json({ error: 'lotNumber query parameter is required', code: 'VALIDATION_ERROR' });
+  }
+
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const results = await pharmacyService.searchByLotNumber(lotNumber.trim(), tenantId);
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/pharmacy/inventory/:stockId/sync
+// Safety endpoint to recalculate aggregate stock from batch totals
+router.post('/inventory/:stockId/sync', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await pharmacyService.syncStockTotals(req.params.stockId, tenantId);
+    res.json(result);
+  } catch (err) {
+    if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const pharmacyAnalyticsService = require('../services/PharmacyAnalyticsService');
+
+// ... (validators remain same) ...
+
+// GET /api/pharmacy/analytics/consumption
+router.get('/analytics/consumption', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const days = parseInt(req.query.days) || 7;
+    const stats = await pharmacyAnalyticsService.getConsumptionStats(tenantId, days);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

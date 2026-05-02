@@ -164,6 +164,7 @@ async function ensureFixture(db) {
 
     // Pharmacy Item for integration test
     const pharmId = `stress-pharm-${t}`;
+    await dbRun(db, `DELETE FROM PharmacyBatches WHERE stockId = ?`, [pharmId]);
     await dbRun(db, `DELETE FROM PharmacyTransactions WHERE medicationId = ?`, [pharmId]);
     await dbRun(db, `DELETE FROM PharmacyStock WHERE id = ?`, [pharmId]);
     await dbRun(
@@ -172,6 +173,16 @@ async function ensureFixture(db) {
        VALUES (?, ?, ?, ?, 'Tablet', 'Analgesics', 10, 100, 1000, 'Strips', 'Tablets', 1.5, CURRENT_TIMESTAMP)`,
       [pharmId, tenantId, `StressMed-${t}`, '10mg']
     );
+    // Add batches for each pharmacy item
+    for (let bi = 1; bi <= 3; bi++) {
+      const batchId = `stress-batch-${t}-${bi}`;
+      const expMonth = String(5 + bi).padStart(2, '0');
+      await dbRun(db,
+        `INSERT INTO PharmacyBatches (id, tenantId, stockId, batchNumber, expiryDate, quantity, costPerUnit, manufacturer, receivedDate, status)
+         VALUES (?, ?, ?, ?, ?, ?, 1.5, 'StressPharma', '2026-01-01', 'active')`,
+        [batchId, tenantId, pharmId, `STRESS-LOT-${t}${bi}`, `2026-${expMonth}-28`, Math.floor(1000 / 3)]
+      );
+    }
 
     const escId = `stress-esc-${t}`;
     await dbRun(db, `DELETE FROM Escalations WHERE id = ?`, [escId]);
@@ -261,6 +272,9 @@ async function stress() {
       // Pharmacy specific
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', '/pharmacy/inventory') },
       { weight: 2, fn: () => authedFetch(tokenA, 'GET', '/pharmacy/history') },
+      // Batch-specific operations
+      { weight: 3, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/inventory/stress-pharm-A/batches`) },
+      { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/batches/search?lotNumber=STRESS-LOT-A1`) },
 
       // Writes + Pharmacy Interop
       {

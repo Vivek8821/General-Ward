@@ -83,14 +83,14 @@ class MedicationService {
     const reasonCode = status === 'given' ? null : status;
     const doseActuallyGiven = status === 'given' ? med.dosage : null;
 
-    // Phase 3: Inventory Integration
+    // Phase 3: Inventory Integration (with Batch/FEFO awareness)
     // If the medication is being GIVEN, try to deduct from pharmacy stock
     if (status === 'given') {
       try {
         // Find by name in EDL
         const inventoryItem = await pharmacyRepository.findByName(med.name, tenantId);
         if (inventoryItem) {
-          await pharmacyService.adjustStock(
+          const stockResult = await pharmacyService.adjustStock(
             inventoryItem.id, 
             tenantId, 
             -1, // Deduct 1 itemUnit (e.g. 1 tablet)
@@ -101,6 +101,9 @@ class MedicationService {
               notes: `Dispensed for administration to ${patientId}. Medication record: ${medId}` 
             }
           );
+          if (stockResult.batchId) {
+            console.info(`[MedicationService] FEFO dispensed from batch ${stockResult.batchId} for med ${medId}`);
+          }
         }
       } catch (err) {
         console.error('[MedicationService] Stock deduction failed:', err.message);

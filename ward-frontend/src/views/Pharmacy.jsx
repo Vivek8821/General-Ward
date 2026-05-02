@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
 import { 
   Package, AlertCircle, Plus, Trash2, Edit3, Check, X, 
   History, TrendingDown, ArrowRightLeft, Info, Search,
-  Filter, MoreHorizontal
+  Filter, MoreHorizontal, ChevronDown, ChevronRight, ShieldAlert, Layers
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -13,6 +13,11 @@ export default function Pharmacy() {
   const [isAdding, setIsAdding] = useState(false);
   const [showHistory, setShowHistory] = useState(null);
   const [search, setSearch] = useState('');
+  const [expandedRow, setExpandedRow] = useState(null);
+  const [addingBatchFor, setAddingBatchFor] = useState(null);
+  const [newBatch, setNewBatch] = useState({ batchNumber: '', expiryDate: '', quantity: 0, costPerUnit: 0, manufacturer: '' });
+  const [lotSearch, setLotSearch] = useState('');
+  const [lotResults, setLotResults] = useState(null);
   
   const [newItem, setNewItem] = useState({ 
     name: '', 
@@ -36,6 +41,19 @@ export default function Pharmacy() {
     queryKey: ['pharmacy', 'inventory'],
     queryFn: () => api.get('/pharmacy/inventory'),
   });
+
+  const { data: analytics = [] } = useQuery({
+    queryKey: ['pharmacy', 'analytics', 'consumption'],
+    queryFn: () => api.get('/pharmacy/analytics/consumption?days=7'),
+    refetchInterval: 60000, // Refresh every minute for real-time runway
+  });
+
+  const analyticsMap = analytics.reduce((acc, curr) => {
+    acc[curr.medicationId] = curr;
+    return acc;
+  }, {});
+
+  const highRiskItems = analytics.filter(s => s.status !== 'healthy' || s.totalQuantity === 0);
 
   const { data: history = [], isLoading: isHistoryLoading } = useQuery({
     queryKey: ['pharmacy', 'history', showHistory],
@@ -72,6 +90,34 @@ export default function Pharmacy() {
     },
     onError: (err) => toast.error('Delete failed'),
   });
+
+  const addBatchMutation = useMutation({
+    mutationFn: ({ stockId, data }) => api.post(`/pharmacy/inventory/${stockId}/batches`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pharmacy', 'inventory'] });
+      setAddingBatchFor(null);
+      setNewBatch({ batchNumber: '', expiryDate: '', quantity: 0, costPerUnit: 0, manufacturer: '' });
+      toast.success('Batch added successfully');
+    },
+    onError: (err) => toast.error('Failed: ' + (err.message || 'Error')),
+  });
+
+  const recallMutation = useMutation({
+    mutationFn: ({ batchId, reason }) => api.post(`/pharmacy/batches/${batchId}/recall`, { reason }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['pharmacy', 'inventory'] });
+      toast.success(`Recalled batch: ${data.batchNumber}. ${data.quantityWasted} units wasted.`);
+    },
+    onError: (err) => toast.error('Recall failed: ' + (err.message || 'Error')),
+  });
+
+  const handleLotSearch = async () => {
+    if (!lotSearch.trim()) return;
+    try {
+      const results = await api.get(`/pharmacy/batches/search?lotNumber=${encodeURIComponent(lotSearch.trim())}`);
+      setLotResults(results);
+    } catch { setLotResults([]); }
+  };
 
   const filteredInventory = inventory.filter(item => 
     item.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -124,6 +170,14 @@ export default function Pharmacy() {
            <span className="text-[10px] font-black uppercase text-danger">Out of Stock</span>
            <span className="text-xl font-black text-danger">{inventory.filter(i => i.totalQuantity === 0).length}</span>
         </div>
+        <div className="flex-1 min-w-[200px] bg-orange-500/5 p-3 rounded-lg border border-orange-500/20 flex items-center justify-between">
+           <span className="text-[10px] font-black uppercase text-orange-500">Expiring ≤30d</span>
+           <span className="text-xl font-black text-orange-500">{inventory.reduce((c, i) => c + (i.batches || []).filter(b => b.status === 'active' && new Date(b.expiryDate) <= new Date(Date.now() + 30*86400000)).length, 0)}</span>
+        </div>
+        <div className="flex-1 min-w-[200px] bg-danger/5 p-3 rounded-lg border border-danger/20 flex items-center justify-between">
+           <span className="text-[10px] font-black uppercase text-danger">At Risk (Runway)</span>
+           <span className="text-xl font-black text-danger">{highRiskItems.length}</span>
+        </div>
         <button 
           onClick={() => setShowHistory(true)}
           className="flex-1 min-w-[200px] bg-primary/5 p-3 rounded-lg border border-primary/20 flex items-center justify-between hover:bg-primary/10 transition-colors group"
@@ -133,58 +187,81 @@ export default function Pharmacy() {
         </button>
       </div>
 
+      {/* Consumption Alert Banner */}
+      {highRiskItems.length > 0 && (
+        <div className="bg-danger/10 border border-danger/20 p-4 rounded-xl flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="bg-danger p-2 rounded-lg">
+            <TrendingDown className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-black text-danger uppercase tracking-wider">Critical Supply Warnings</h3>
+            <p className="text-xs text-text-primary font-bold">
+              {highRiskItems.slice(0, 3).map(item => `${item.name} (${item.runwayDays || 0}d left)`).join(', ')}
+              {highRiskItems.length > 3 ? ` and ${highRiskItems.length - 3} others` : ''} are nearing stockout.
+            </p>
+          </div>
+          <button className="btn btn-danger py-1 text-[10px] px-4 font-black">Generate Order</button>
+        </div>
+      )}
+
+      {/* Lot Number Search */}
+      <div className="flex gap-2 items-center bg-bg-tertiary p-3 rounded-xl border border-border/50">
+        <ShieldAlert className="w-5 h-5 text-warning" />
+        <span className="text-[10px] font-black uppercase text-text-muted tracking-widest">Lot Lookup</span>
+        <input placeholder="Enter lot/batch number..." className="input-field !bg-bg-secondary/50 !text-sm flex-1 max-w-xs" value={lotSearch} onChange={e => { setLotSearch(e.target.value); setLotResults(null); }} onKeyDown={e => e.key === 'Enter' && handleLotSearch()} />
+        <button onClick={handleLotSearch} className="btn btn-secondary text-xs px-4">Search</button>
+        {lotResults !== null && <span className="text-xs font-bold text-text-muted">{lotResults.length} result(s)</span>}
+        {lotResults?.length > 0 && <div className="text-xs text-primary font-bold">{lotResults.map(r => `${r.drugName} - ${r.batchNumber} (${r.status})`).join(', ')}</div>}
+      </div>
+
       {/* Inventory Table */}
       <div className="card p-0 overflow-hidden border border-border/50 shadow-xl bg-bg-tertiary">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-bg-secondary border-b border-border">
+                <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted w-8"></th>
                 <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted">Medicine & Composition</th>
                 <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted">Category</th>
                 <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted text-center">Type</th>
-                <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted">Pack Config</th>
+                <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted text-center">Batches</th>
+                <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted text-right">Consumption</th>
                 <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted text-right">In Stock (Packs)</th>
                 <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted text-right">Total Units</th>
-                <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted">Expiry</th>
+                <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted text-center">Runway</th>
+                <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted">Nearest Expiry</th>
                 <th className="p-4 text-[11px] font-black uppercase tracking-widest text-text-muted text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
               {filteredInventory.map(item => (
-                <tr key={item.id} className="group hover:bg-bg-secondary/40 transition-colors">
+                <React.Fragment key={item.id}>
+                <tr className="group hover:bg-bg-secondary/40 transition-colors cursor-pointer" onClick={() => setExpandedRow(expandedRow === item.id ? null : item.id)}>
+                  <td className="p-4 w-8">
+                    {expandedRow === item.id ? <ChevronDown className="w-4 h-4 text-primary" /> : <ChevronRight className="w-4 h-4 text-text-muted" />}
+                  </td>
                   <td className="p-4">
                     <div className="font-black text-text-primary text-sm tracking-tight">{item.name}</div>
                     <div className="text-[10px] font-bold text-text-muted uppercase tracking-tighter">{item.composition}</div>
                   </td>
-                  <td className="p-4">
-                    <span className="text-xs font-bold text-text-secondary">{item.category || 'N/A'}</span>
+                  <td className="p-4"><span className="text-xs font-bold text-text-secondary">{item.category || 'N/A'}</span></td>
+                  <td className="p-4 text-center">
+                    <span className="text-[9px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/10 uppercase">{item.type}</span>
                   </td>
                   <td className="p-4 text-center">
-                    <span className="text-[9px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/10 uppercase">
-                      {item.type}
-                    </span>
+                    <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">{item.batchCount || 0}</span>
                   </td>
-                  <td className="p-4">
-                    <div className="text-xs text-text-primary font-bold">
-                      {item.quantityPerUnit} {item.itemUnit} <span className="text-text-muted font-normal text-[10px]">per {item.unit}</span>
+                  <td className="p-4 text-right">
+                    <div className="text-xs font-black text-text-primary">
+                      {analyticsMap[item.id]?.dailyBurnRate || 0} <span className="text-[10px] text-text-muted">/ day</span>
                     </div>
                   </td>
                   <td className="p-4 text-right">
                     {editingId === item.id ? (
-                      <div className="flex items-center justify-end gap-1">
-                        <input 
-                          type="number" 
-                          className="w-16 !py-1 text-right font-black border border-primary rounded text-sm bg-bg-secondary" 
-                          value={editLevel} 
-                          onChange={e => setEditLevel(parseInt(e.target.value))} 
-                          autoFocus
-                        />
-                        <button onClick={() => updateMutation.mutate({ id: item.id, totalUnits: editLevel })} className="p-1 text-success hover:bg-success/10 rounded">
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setEditingId(null)} className="p-1 text-text-muted hover:bg-bg-tertiary rounded">
-                          <X className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+                        <input type="number" className="w-16 !py-1 text-right font-black border border-primary rounded text-sm bg-bg-secondary" value={editLevel} onChange={e => setEditLevel(parseInt(e.target.value))} autoFocus />
+                        <button onClick={() => updateMutation.mutate({ id: item.id, totalUnits: editLevel })} className="p-1 text-success hover:bg-success/10 rounded"><Check className="w-4 h-4" /></button>
+                        <button onClick={() => setEditingId(null)} className="p-1 text-text-muted hover:bg-bg-tertiary rounded"><X className="w-4 h-4" /></button>
                       </div>
                     ) : (
                       <div className={`font-black text-lg ${item.totalUnits <= 5 ? 'text-warning' : 'text-text-primary'}`}>
@@ -193,46 +270,74 @@ export default function Pharmacy() {
                     )}
                   </td>
                   <td className="p-4 text-right">
-                    <div className={`text-xl font-black ${item.totalQuantity === 0 ? 'text-danger' : item.isLowStock ? 'text-warning' : 'text-primary'}`}>
-                      {item.totalQuantity}
-                    </div>
+                    <div className={`text-xl font-black ${item.totalQuantity === 0 ? 'text-danger' : item.isLowStock ? 'text-warning' : 'text-primary'}`}>{item.totalQuantity}</div>
                     <div className="text-[9px] font-black text-text-muted uppercase tracking-tighter">{item.itemUnit}</div>
                   </td>
-                  <td className="p-4">
-                    {item.expiryDate ? (
-                      <div className={`text-xs font-black ${new Date(item.expiryDate) < new Date() ? 'text-danger animate-pulse' : 'text-text-secondary'}`}>
-                        {new Date(item.expiryDate).toLocaleDateString()}
+                  <td className="p-4 text-center">
+                    {analyticsMap[item.id]?.runwayDays !== null ? (
+                      <div className={`text-sm font-black px-2 py-1 rounded-lg inline-block min-w-[60px] ${
+                        analyticsMap[item.id].status === 'critical' ? 'bg-danger text-white' :
+                        analyticsMap[item.id].status === 'warning' ? 'bg-warning/20 text-warning border border-warning/30' :
+                        'bg-success/10 text-success'
+                      }`}>
+                        {analyticsMap[item.id].runwayDays >= 999 ? '∞' : `${analyticsMap[item.id].runwayDays}d`}
                       </div>
-                    ) : (
-                      <span className="text-[10px] text-text-muted">N/A</span>
-                    )}
+                    ) : <span className="text-text-muted">—</span>}
                   </td>
                   <td className="p-4">
+                    {item.nearestExpiry ? (
+                      <div className={`text-xs font-black ${new Date(item.nearestExpiry) < new Date() ? 'text-danger animate-pulse' : new Date(item.nearestExpiry) < new Date(Date.now()+30*86400000) ? 'text-warning' : 'text-text-secondary'}`}>
+                        {new Date(item.nearestExpiry).toLocaleDateString()}
+                      </div>
+                    ) : <span className="text-[10px] text-text-muted">N/A</span>}
+                  </td>
+                  <td className="p-4" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => { setEditingId(item.id); setEditLevel(item.totalUnits); }} 
-                        className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                        title="Edit Stock"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => setShowHistory(item.id)}
-                        className="p-1.5 text-text-muted hover:text-info hover:bg-info/10 rounded-lg transition-colors"
-                        title="View Audit"
-                      >
-                        <History className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => deleteMutation.mutate(item.id)} 
-                        className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                        title="Delete Item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <button onClick={() => setAddingBatchFor(item.id)} className="p-1.5 text-text-muted hover:text-success hover:bg-success/10 rounded-lg transition-colors" title="Add Batch"><Layers className="w-4 h-4" /></button>
+                      <button onClick={() => { setEditingId(item.id); setEditLevel(item.totalUnits); }} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit Stock"><Edit3 className="w-4 h-4" /></button>
+                      <button onClick={() => setShowHistory(item.id)} className="p-1.5 text-text-muted hover:text-info hover:bg-info/10 rounded-lg transition-colors" title="View Audit"><History className="w-4 h-4" /></button>
+                      <button onClick={() => deleteMutation.mutate(item.id)} className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors" title="Delete Item"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>
+                {expandedRow === item.id && (
+                  <tr><td colSpan="9" className="p-0 bg-bg-secondary/30">
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Batch / Lot Details</span>
+                        <button onClick={() => setAddingBatchFor(item.id)} className="text-[10px] font-black uppercase text-success hover:underline flex items-center gap-1"><Plus className="w-3 h-3" /> Add Batch</button>
+                      </div>
+                      {(item.batches || []).length === 0 ? (
+                        <div className="text-xs text-text-muted italic p-4 text-center">No batches recorded for this item (legacy stock).</div>
+                      ) : (
+                        <table className="w-full text-xs">
+                          <thead><tr className="text-[9px] font-black uppercase text-text-muted tracking-widest">
+                            <th className="p-2 text-left">Lot #</th><th className="p-2 text-left">Expiry</th><th className="p-2 text-right">Qty</th><th className="p-2 text-right">Cost/Unit</th><th className="p-2">Manufacturer</th><th className="p-2 text-center">Status</th><th className="p-2 text-center">Actions</th>
+                          </tr></thead>
+                          <tbody>{(item.batches || []).map(b => (
+                            <tr key={b.id} className="border-t border-border/20 hover:bg-bg-tertiary/50">
+                              <td className="p-2 font-bold text-text-primary">{b.batchNumber}</td>
+                              <td className={`p-2 font-bold ${new Date(b.expiryDate) < new Date() ? 'text-danger' : new Date(b.expiryDate) < new Date(Date.now()+30*86400000) ? 'text-warning' : 'text-text-secondary'}`}>{new Date(b.expiryDate).toLocaleDateString()}</td>
+                              <td className="p-2 text-right font-black text-text-primary">{b.quantity}</td>
+                              <td className="p-2 text-right text-text-muted">₹{Number(b.costPerUnit).toFixed(2)}</td>
+                              <td className="p-2 text-text-muted">{b.manufacturer || '—'}</td>
+                              <td className="p-2 text-center"><span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                b.status === 'active' ? 'bg-success/10 text-success border border-success/20' :
+                                b.status === 'recalled' ? 'bg-danger/10 text-danger border border-danger/20 animate-pulse' :
+                                b.status === 'expired' ? 'bg-warning/10 text-warning border border-warning/20' :
+                                'bg-gray-500/10 text-gray-500 border border-gray-500/20'
+                              }`}>{b.status}</span></td>
+                              <td className="p-2 text-center">{b.status === 'active' && (
+                                <button onClick={() => { if(confirm(`Recall batch ${b.batchNumber}? This will waste ${b.quantity} remaining units.`)) recallMutation.mutate({ batchId: b.id, reason: prompt('Enter recall reason:') || 'Recalled' }); }} className="text-[9px] font-black text-danger hover:underline">RECALL</button>
+                              )}</td>
+                            </tr>
+                          ))}</tbody>
+                        </table>
+                      )}
+                    </div>
+                  </td></tr>
+                )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
@@ -243,6 +348,32 @@ export default function Pharmacy() {
           )}
         </div>
       </div>
+
+      {/* Add Batch Modal */}
+      {addingBatchFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddingBatchFor(null)} />
+          <div className="relative w-full max-w-lg bg-bg-tertiary rounded-2xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-border bg-bg-secondary flex justify-between items-center">
+              <h2 className="text-xl font-black text-text-primary flex items-center gap-2"><Layers className="w-6 h-6 text-success" /> Add Batch</h2>
+              <button onClick={() => setAddingBatchFor(null)} className="p-2 hover:bg-bg-tertiary rounded-full"><X className="w-5 h-5 text-text-muted" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="label-enterprise">Lot / Batch Number</label><input className="input-field-enterprise" value={newBatch.batchNumber} onChange={e => setNewBatch({...newBatch, batchNumber: e.target.value})} placeholder="e.g. AMX-2026-B01" /></div>
+                <div><label className="label-enterprise">Expiry Date</label><input type="date" className="input-field-enterprise" value={newBatch.expiryDate} onChange={e => setNewBatch({...newBatch, expiryDate: e.target.value})} /></div>
+                <div><label className="label-enterprise">Quantity (units)</label><input type="number" className="input-field-enterprise" value={newBatch.quantity} onChange={e => setNewBatch({...newBatch, quantity: parseInt(e.target.value) || 0})} /></div>
+                <div><label className="label-enterprise">Cost per Unit</label><input type="number" step="0.01" className="input-field-enterprise" value={newBatch.costPerUnit} onChange={e => setNewBatch({...newBatch, costPerUnit: parseFloat(e.target.value) || 0})} /></div>
+                <div className="col-span-2"><label className="label-enterprise">Manufacturer</label><input className="input-field-enterprise" value={newBatch.manufacturer} onChange={e => setNewBatch({...newBatch, manufacturer: e.target.value})} placeholder="e.g. Cipla Ltd" /></div>
+              </div>
+            </div>
+            <div className="p-6 bg-bg-secondary border-t border-border flex justify-end gap-3">
+              <button onClick={() => setAddingBatchFor(null)} className="btn btn-secondary px-8 font-black">Cancel</button>
+              <button onClick={() => addBatchMutation.mutate({ stockId: addingBatchFor, data: newBatch })} className="btn btn-primary px-10 font-black">Add Batch</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Item Modal (Overlay instead of inline for tabular view) */}
       {isAdding && (

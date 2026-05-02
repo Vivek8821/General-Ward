@@ -76,13 +76,27 @@ flowchart LR
   - `ward-backend/routes/observations.js`
   - `ward-backend/services/ScoringService.js`
 
+### Pharmacy and Inventory
+
+- UI: `ward-frontend/src/views/Pharmacy.jsx`.
+- API: `/api/pharmacy/*`.
+- Key Features: Lot/Batch tracking, FEFO dispensing, Consumption Forecasting, Recall tracing.
+
+- Key implementation files:
+  - `ward-backend/controllers/PharmacyController.js`
+  - `ward-backend/services/PharmacyService.js`
+  - `ward-backend/services/PharmacyAnalyticsService.js`
+  - `ward-backend/repositories/PharmacyRepository.js`
+
 ### Medications and MAR
 
 - UI: `ward-frontend/src/components/stats/MedsTab.jsx`.
 - API: `/api/patients/:patientId/medications`.
+- Integration: Automatically deducts from pharmacy stock using FEFO batch logic.
 
 - Key implementation files:
-  - `ward-backend/routes/medications.js`
+  - `ward-backend/controllers/MedicationController.js`
+  - `ward-backend/services/MedicationService.js`
 
 ### History timeline
 
@@ -144,7 +158,15 @@ flowchart LR
 
 ## Data model (SQLite)
 
-Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` with a JSON/text `data` payload for multiple types.
+Schema is defined/bootstrapped in `ward-backend/db.js` and `ward-backend/schema.sql`.
+
+### Core Tables
+- `Patients`: Root clinical entity.
+- `PharmacyStock`: Drug catalog and aggregate inventory levels.
+- `PharmacyBatches`: Granular lot/batch tracking (lot#, expiry, quantity, cost).
+- `PharmacyTransactions`: Full audit history linked to medications and batches.
+- `MedicationAdministrations`: Patient-specific medication events.
+- `DailyStats`: Time-series clinical observations.
 
 ### Data files on disk
 
