@@ -5,6 +5,9 @@ const logger = require('../utils/logger');
 
 class MigratorService {
   async runMigrations() {
+    if (process.env.STARTUP_MODE === 'perf') {
+      return;
+    }
     const schemaPath = path.resolve(__dirname, '..', 'schema.sql');
     if (!fs.existsSync(schemaPath)) {
       logger.warn('[Migrator] schema.sql not found, skipping migrations');

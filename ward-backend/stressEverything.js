@@ -184,6 +184,18 @@ async function ensureFixture(db) {
       );
     }
 
+    // Seed dispense history for analytics testing (50 units/day for last 7 days)
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const ts = date.toISOString().replace('T', ' ').split('.')[0];
+      await dbRun(db,
+        `INSERT INTO PharmacyTransactions (id, tenantId, medicationId, type, quantity, userId, userName, timestamp)
+         VALUES (?, ?, ?, 'dispense', -50, ?, 'StressDoc', ?)`,
+        [crypto.randomUUID(), tenantId, pharmId, doctorA.id, ts]
+      );
+    }
+
     const escId = `stress-esc-${t}`;
     await dbRun(db, `DELETE FROM Escalations WHERE id = ?`, [escId]);
     await dbRun(
@@ -275,6 +287,7 @@ async function stress() {
       // Batch-specific operations
       { weight: 3, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/inventory/stress-pharm-A/batches`) },
       { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/batches/search?lotNumber=STRESS-LOT-A1`) },
+      { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/consumption?days=7`) },
 
       // Writes + Pharmacy Interop
       {

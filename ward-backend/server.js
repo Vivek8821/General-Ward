@@ -19,6 +19,7 @@ const pharmacyRoutes = require('./controllers/PharmacyController');
 const adminAuditRoutes = require('./routes/adminAudit');
 const errorHandler = require('./middleware/error');
 const migratorService = require('./services/MigratorService');
+const { initDb } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -133,10 +134,21 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 async function startServer() {
+  const startupMode = process.env.STARTUP_MODE || 'full';
+  
   try {
-    await migratorService.runMigrations();
+    if (startupMode === 'perf') {
+      console.log('🚀 [Protocol] Starting in PERFORMANCE mode (skipping migrations)');
+    } else {
+      console.log('📦 [Protocol] Starting in FULL mode (running migrations)');
+      // Run the legacy initialization (backfills, triggers, etc.)
+      await initDb();
+      // Run schema migrations from SQL file
+      await migratorService.runMigrations();
+    }
+
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+      console.log(`Server is running on port ${PORT} [Mode: ${startupMode}]`);
     });
   } catch (err) {
     console.error('Critical failure during startup:', err);

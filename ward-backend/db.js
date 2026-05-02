@@ -409,7 +409,5 @@ const initDb = () => {
   });
 };
 
-// Auto-init on load for normal server runs
-initDb();
-
+// Export for explicit initialization in server.js or setup scripts
 module.exports = { db, initDb, withTransaction, runAsync, getAsync, allAsync };
