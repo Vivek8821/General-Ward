@@ -88,6 +88,11 @@ flowchart LR
   - `ward-backend/services/PatientService.js` (EWS integration)
 
 ### Pharmacy Intelligence & Analytics
+- **Phase 8: Automated Re-order Workflow**
+  - `PurchaseOrders` Table: Tracks automated and manual procurement records.
+  - `PharmacyReorderService.js`: Logic for stock monitoring and PO generation.
+  - `PurchaseOrderRepository.js`: Persistence layer for POs.
+  - `Procurement Dashboard`: Frontend UI in `Pharmacy.jsx` for managing active orders.
 
 - UI: `ward-frontend/src/views/Pharmacy.jsx` (Replenishment and Financial dashboards).
 - API: `/api/pharmacy/analytics/*`.

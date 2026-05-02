@@ -1,6 +1,6 @@
 {
-  "lastPhase": "phase7",
-  "lastStep": "phase7-complete",
+  "lastPhase": "phase8",
+  "lastStep": "phase8-complete",
   "startedAt": "2026-03-19T17:32:31Z",
   "finishedAt": "2026-05-02T15:26:00Z",
   "notes": [
@@ -40,8 +40,8 @@
     "Phase 4 frontend enterprise UX: improved tenant-scope 403 handling by showing toast messaging before redirecting to `/login` (updated `ward-frontend/src/utils/api.js`); added `limit=50` page-windowing to large list reads in vitals/diet/sleep stats, handover notes, patient tasks (and my tasks), and medication administrations history; verified frontend lint/build succeeded.",
     "## [Phase 7.4] Hardening & Documentation\n- [x] Stress test new endpoints\n- [x] Update documentation (`CODEMAP.md`)\n- [x] Final system audit",
     "Phase 5.1 tenant isolation tests: added `tests/integration/tenantIsolation.test.js` to validate same-tenant success and cross-tenant 403 behavior across stats, medications, tasks, notes, observations ingest, and escalations global triage; fixed `POST /api/patients/:patientId/medications` SQL placeholder mismatch uncovered by these tests. Verified with `ward-backend npm test` passing (including new suite).",
-    "Phase 5.2 crash-resilience validation: set `lastStep` to `phase5-2-crash-recovery-validation` and simulated a crash (short Node process exit(1)). Next ran `ward-backend npm test` to confirm resume-ready behavior."
-    ,
+    "Phase 5.2 crash-resilience validation: set `lastStep` to `phase5-2-crash-recovery-validation` and simulated a crash (short Node process exit(1)). Next ran `ward-backend npm test` to confirm resume-ready behavior.",
+    "Phase 8 Automated Re-order Workflow: implemented `PurchaseOrders` system with duplicate prevention and automated triggering in `PharmacyService.adjustStock`. Added `PharmacyReorderService` and `PurchaseOrderRepository`. Developed a new Procurement dashboard in `Pharmacy.jsx` for widescreen tracking of active orders. Verified via `tests/integration/reorder.test.js` (passed).",
     "Enterprise product compliance: added `idx_auditlogs_tenant_timestamp`, admin routes `ward-backend/routes/adminAudit.js` (list JSON, CSV export, tenant-scoped purge with dryRun), mounted at `/api/admin` in `server.js`. Integration tests `tests/integration/adminAudit.test.js`. Seed user Ward Admin (`admin-1`, PIN 9999, tenant-default). Frontend `AdminAudit.jsx`, route `/admin/audit`, Layout link. Docs: `README.md`, `docs/COMPLIANCE.md`, `ward-backend/.env.example`. Verified `ward-backend npm test` (44 tests), `ward-frontend` build, `npm run codemap`, stress `server5xx: 0` (12s, concurrency 8)."
   ],
   "artifacts": [

@@ -14,6 +14,7 @@ The backend is an Express.js application designed for tenant-isolated healthcare
 - `MedicationService.js`: Handles prescriptions and MAR flow. Integrated with Pharmacy for auto-dispensing.
 - `PharmacyService.js`: Enterprise stock management with FEFO (First-Expiry, First-Out) dispensing and batch recall tracing.
 - `PharmacyAnalyticsService.js`: 30-day replenishment forecasting and financial valuation logic.
+- `PharmacyReorderService.js`: Automated procurement logic and PO generation. [NEW]
 - `ScoringService.js`: NEWS2 (National Early Warning Score 2) calculation and clinical risk stratification.
 - `MigratorService.js`: Schema-first auto-migrations using `schema.sql`.
 - `ClinicalAuditService.js`: Clinical action logging for regulatory compliance.
@@ -24,6 +25,7 @@ The backend is an Express.js application designed for tenant-isolated healthcare
 - `PharmacyStock`: Enterprise inventory tracking (Packs, Units per Pack, Total Quantity).
 - `PharmacyBatches`: Lot/Batch tracking with expiry dates and per-batch costing.
 - `PharmacyTransactions`: Immutable audit trail for stock movements (Restock, Dispense, Adjustment, Waste). Traceable to specific batches.
+- `PurchaseOrders`: Automated and manual procurement records for stock replenishment. [NEW]
 - `MedicationAdministrations`: Clinical administration records.
 
 ## Integration Points

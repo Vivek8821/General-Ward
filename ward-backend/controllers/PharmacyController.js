@@ -228,4 +228,40 @@ router.get('/analytics/replenishment', authenticateToken, authorizeAny([PERMISSI
   }
 });
 
+const reorderService = require('../services/PharmacyReorderService');
+
+// GET /api/pharmacy/orders - List POs
+router.get('/orders', authenticateToken, async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const orders = await reorderService.getOrders(tenantId);
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH /api/pharmacy/orders/:id/status - Update PO status
+router.patch('/orders/:id/status', authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const tenantId = req.user.tenantId || 'tenant-default';
+    await reorderService.updateOrderStatus(req.params.id, tenantId, status, req.user);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/pharmacy/orders/check-all - Manual reorder trigger
+router.post('/orders/check-all', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const results = await reorderService.checkAllInventory(tenantId);
+    res.json({ success: true, ordersGenerated: results });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

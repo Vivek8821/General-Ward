@@ -252,7 +252,23 @@ CREATE TABLE IF NOT EXISTS AuthLoginAttempts (
   PRIMARY KEY (username, ipAddress)
 );
 
+-- Purchase Orders (Automated Procurement)
+CREATE TABLE IF NOT EXISTS PurchaseOrders (
+  id TEXT PRIMARY KEY,
+  tenantId TEXT NOT NULL,
+  stockId TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  status TEXT CHECK(status IN ('pending', 'ordered', 'received', 'cancelled')) DEFAULT 'pending',
+  generatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  orderedAt DATETIME,
+  receivedAt DATETIME,
+  createdBy TEXT, -- 'system' or userId
+  notes TEXT,
+  FOREIGN KEY (stockId) REFERENCES PharmacyStock(id)
+);
+
 -- Indexes
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_tenant_stock ON PurchaseOrders(tenantId, stockId, status);
 CREATE INDEX IF NOT EXISTS idx_dailystats_patient ON DailyStats(patientId);
 CREATE INDEX IF NOT EXISTS idx_medications_patient ON Medications(patientId);
 CREATE INDEX IF NOT EXISTS idx_escalations_patient ON Escalations(patientId);

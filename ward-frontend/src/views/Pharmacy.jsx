@@ -4,13 +4,17 @@ import { api } from '../utils/api';
 import { 
   Package, AlertCircle, Plus, Trash2, Edit3, Check, X, 
   History, TrendingDown, ArrowRightLeft, Info, Search,
-  Filter, MoreHorizontal, ChevronDown, ChevronRight, ShieldAlert, Layers
+  Filter, MoreHorizontal, ChevronDown, ChevronRight, ShieldAlert, Layers, ShoppingCart, Truck, AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const NOW = new Date();
+const THIRTY_DAYS_LATER = new Date(Date.now() + 30 * 86400000);
 
 export default function Pharmacy() {
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
+  const [activeTab, setActiveTab] = useState('inventory');
   const [showHistory, setShowHistory] = useState(null);
   const [search, setSearch] = useState('');
   const [expandedRow, setExpandedRow] = useState(null);
@@ -53,12 +57,28 @@ export default function Pharmacy() {
     queryFn: () => api.get('/pharmacy/analytics/financial'),
   });
 
-  const analyticsMap = analytics.reduce((acc, curr) => {
+  const analyticsMap = (Array.isArray(replenishment) ? replenishment : []).reduce((acc, curr) => {
     acc[curr.medicationId] = curr;
     return acc;
   }, {});
 
-  const highRiskItems = analytics.filter(s => s.status !== 'healthy' || s.totalQuantity === 0);
+  const highRiskItems = (Array.isArray(replenishment) ? replenishment : []).filter(s => s.status !== 'healthy' || s.totalQuantity === 0);
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ['pharmacy', 'orders'],
+    queryFn: () => api.get('/pharmacy/orders'),
+    enabled: activeTab === 'procurement',
+    refetchInterval: 30000,
+  });
+
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: ({ id, status }) => api.patch(`/pharmacy/orders/${id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pharmacy', 'orders'] });
+      toast.success('Order status updated');
+    },
+    onError: (err) => toast.error('Failed: ' + (err.message || 'Error')),
+  });
 
   const { data: history = [], isLoading: isHistoryLoading } = useQuery({
     queryKey: ['pharmacy', 'history', showHistory],
@@ -93,7 +113,7 @@ export default function Pharmacy() {
       queryClient.invalidateQueries({ queryKey: ['pharmacy', 'inventory'] });
       toast.success('Removed from inventory');
     },
-    onError: (err) => toast.error('Delete failed'),
+    onError: () => toast.error('Delete failed'),
   });
 
   const addBatchMutation = useMutation({
@@ -124,10 +144,10 @@ export default function Pharmacy() {
     } catch { setLotResults([]); }
   };
 
-  const filteredInventory = inventory.filter(item => 
-    item.name.toLowerCase().includes(search.toLowerCase()) || 
-    item.composition.toLowerCase().includes(search.toLowerCase()) ||
-    item.category.toLowerCase().includes(search.toLowerCase())
+  const filteredInventory = (Array.isArray(inventory) ? inventory : []).filter(item => 
+    (item.name || '').toLowerCase().includes(search.toLowerCase()) || 
+    (item.composition || '').toLowerCase().includes(search.toLowerCase()) ||
+    (item.category || '').toLowerCase().includes(search.toLowerCase())
   );
 
   if (isLoading) return <div className="p-10 text-center text-text-muted animate-pulse">Loading enterprise inventory...</div>;
@@ -135,13 +155,35 @@ export default function Pharmacy() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-bg-tertiary p-4 rounded-xl border border-border/50 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-black text-text-primary flex items-center gap-2">
-            <Package className="w-8 h-8 text-primary" /> Pharmacy Inventory
-          </h1>
-          <p className="text-text-muted text-[10px] uppercase font-black tracking-widest ml-10">Central Essential Drug List (EDL)</p>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-bg-tertiary p-4 rounded-xl border border-border/50 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 p-2 rounded-xl border border-primary/20">
+            <Package className="w-8 h-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-text-primary tracking-tight">Pharmacy</h1>
+            <p className="text-[10px] font-black uppercase tracking-widest text-text-muted">Automated Stock & Procurement</p>
+          </div>
         </div>
+
+        <div className="flex bg-bg-secondary p-1 rounded-xl border border-border/40">
+           <button 
+             onClick={() => setActiveTab('inventory')}
+             className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${activeTab === 'inventory' ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:text-text-primary'}`}
+           >
+             Inventory
+           </button>
+           <button 
+             onClick={() => setActiveTab('procurement')}
+             className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'procurement' ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:text-text-primary'}`}
+           >
+             Procurement
+             {(Array.isArray(orders) ? orders : []).filter((o) => o.status === 'pending').length > 0 && (
+               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+             )}
+           </button>
+        </div>
+
         <div className="flex gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-80">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -161,6 +203,8 @@ export default function Pharmacy() {
         </div>
       </div>
 
+      {activeTab === 'inventory' ? (
+        <>
       {/* Quick Stats Banner - Optimized for Widescreen */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <div className="bg-bg-tertiary p-4 rounded-xl border border-border/50 flex flex-col justify-between min-h-[100px]">
@@ -173,15 +217,15 @@ export default function Pharmacy() {
         </div>
         <div className="bg-warning/5 p-4 rounded-xl border border-warning/20 flex flex-col justify-between min-h-[100px]">
            <span className="text-[10px] font-black uppercase text-warning tracking-widest">Low Stock Items</span>
-           <span className="text-2xl font-black text-warning">{inventory.filter(i => i.isLowStock).length}</span>
+           <span className="text-2xl font-black text-warning">{(Array.isArray(inventory) ? inventory : []).filter(i => i.isLowStock).length}</span>
         </div>
-        <div className="bg-danger/5 p-4 rounded-xl border border-danger/20 flex flex-col justify-between min-h-[100px]">
+        <div className="bg-danger/5 p-4 rounded-xl border border-border/50 flex flex-col justify-between min-h-[100px]">
            <span className="text-[10px] font-black uppercase text-danger tracking-widest">Stockout Risk</span>
-           <span className="text-2xl font-black text-danger">{inventory.filter(i => i.totalQuantity === 0).length}</span>
+           <span className="text-2xl font-black text-danger">{(Array.isArray(inventory) ? inventory : []).filter(i => i.totalQuantity === 0).length}</span>
         </div>
         <div className="bg-orange-500/5 p-4 rounded-xl border border-orange-500/20 flex flex-col justify-between min-h-[100px]">
            <span className="text-[10px] font-black uppercase text-orange-500 tracking-widest">Expiring Items</span>
-           <span className="text-2xl font-black text-orange-500">{inventory.reduce((c, i) => c + (i.batches || []).filter(b => b.status === 'active' && new Date(b.expiryDate) <= new Date(Date.now() + 30*86400000)).length, 0)}</span>
+           <span className="text-2xl font-black text-orange-500">{(Array.isArray(inventory) ? inventory : []).reduce((c, i) => c + (i.batches || []).filter(b => b.status === 'active' && new Date(b.expiryDate) <= THIRTY_DAYS_LATER).length, 0)}</span>
         </div>
         <button 
           onClick={() => setShowHistory(true)}
@@ -193,9 +237,9 @@ export default function Pharmacy() {
       </div>
 
       {/* Consumption & Replenishment Alert Banner */}
-      {(highRiskItems.length > 0 || replenishment.length > 0) && (
+      {((highRiskItems || []).length > 0 || (replenishment || []).length > 0) && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-          {highRiskItems.length > 0 && (
+          {(highRiskItems || []).length > 0 && (
             <div className="bg-danger/10 border border-danger/20 p-4 rounded-xl flex items-center gap-4">
               <div className="bg-danger p-2 rounded-lg">
                 <TrendingDown className="w-6 h-6 text-white" />
@@ -203,7 +247,7 @@ export default function Pharmacy() {
               <div className="flex-1">
                 <h3 className="text-sm font-black text-danger uppercase tracking-wider">Supply Alerts</h3>
                 <p className="text-xs text-text-primary font-bold">
-                  {highRiskItems.slice(0, 3).map(item => `${item.name} (${item.runwayDays || 0}d left)`).join(', ')}...
+                  {(highRiskItems || []).slice(0, 3).map(item => `${item.name} (${item.runwayDays || 0}d left)`).join(', ')}...
                 </p>
               </div>
             </div>
@@ -216,7 +260,7 @@ export default function Pharmacy() {
               <div className="flex-1">
                 <h3 className="text-sm font-black text-primary uppercase tracking-wider">Replenishment Suggestions</h3>
                 <p className="text-xs text-text-primary font-bold">
-                  {replenishment.slice(0, 2).map(r => `Order ${r.suggestedOrder} units of ${r.name}`).join('; ')}
+                  {(Array.isArray(replenishment) ? replenishment : []).slice(0, 2).map(r => `Order ${r.suggestedOrder} units of ${r.name}`).join('; ')}
                 </p>
               </div>
               <button className="btn btn-primary py-1 text-[10px] px-4 font-black">Review Order</button>
@@ -297,17 +341,17 @@ export default function Pharmacy() {
                   <td className="p-4 text-center">
                     {analyticsMap[item.id]?.runwayDays !== null ? (
                       <div className={`text-sm font-black px-2 py-1 rounded-lg inline-block min-w-[60px] ${
-                        analyticsMap[item.id].status === 'critical' ? 'bg-danger text-white' :
-                        analyticsMap[item.id].status === 'warning' ? 'bg-warning/20 text-warning border border-warning/30' :
+                        analyticsMap[item.id]?.status === 'critical' ? 'bg-danger text-white' :
+                        analyticsMap[item.id]?.status === 'warning' ? 'bg-warning/20 text-warning border border-warning/30' :
                         'bg-success/10 text-success'
                       }`}>
-                        {analyticsMap[item.id].runwayDays >= 999 ? '∞' : `${analyticsMap[item.id].runwayDays}d`}
+                        {analyticsMap[item.id]?.runwayDays != null ? (analyticsMap[item.id].runwayDays >= 999 ? 'Inf' : `${analyticsMap[item.id].runwayDays}d`) : 'N/A'}
                       </div>
-                    ) : <span className="text-text-muted">—</span>}
+                    ) : <span className="text-text-muted">-</span>}
                   </td>
                   <td className="p-4">
                     {item.nearestExpiry ? (
-                      <div className={`text-xs font-black ${new Date(item.nearestExpiry) < new Date() ? 'text-danger animate-pulse' : new Date(item.nearestExpiry) < new Date(Date.now()+30*86400000) ? 'text-warning' : 'text-text-secondary'}`}>
+                      <div className={`text-xs font-black ${new Date(item.nearestExpiry) < NOW ? 'text-danger animate-pulse' : new Date(item.nearestExpiry) < THIRTY_DAYS_LATER ? 'text-warning' : 'text-text-secondary'}`}>
                         {new Date(item.nearestExpiry).toLocaleDateString()}
                       </div>
                     ) : <span className="text-[10px] text-text-muted">N/A</span>}
@@ -373,7 +417,7 @@ export default function Pharmacy() {
       {/* Add Batch Modal */}
       {addingBatchFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddingBatchFor(null)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddingBatchFor(null)}></div>
           <div className="relative w-full max-w-lg bg-bg-tertiary rounded-2xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="p-6 border-b border-border bg-bg-secondary flex justify-between items-center">
               <h2 className="text-xl font-black text-text-primary flex items-center gap-2"><Layers className="w-6 h-6 text-success" /> Add Batch</h2>
@@ -399,7 +443,7 @@ export default function Pharmacy() {
       {/* Add Item Modal (Overlay instead of inline for tabular view) */}
       {isAdding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAdding(false)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAdding(false)}></div>
           <div className="relative w-full max-w-2xl bg-bg-tertiary rounded-2xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95 duration-300">
              <div className="p-6 border-b border-border bg-bg-secondary flex justify-between items-center">
                 <h2 className="text-xl font-black text-text-primary flex items-center gap-2">
@@ -476,7 +520,7 @@ export default function Pharmacy() {
       {/* History Slide-over */}
       {showHistory && (
         <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowHistory(null)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowHistory(null)}></div>
           <div className="relative w-full max-w-xl bg-bg-tertiary h-full shadow-2xl border-l border-border animate-in slide-in-from-right duration-500">
             <div className="p-6 border-b border-border flex justify-between items-center bg-bg-secondary">
               <div>
@@ -526,15 +570,130 @@ export default function Pharmacy() {
         </div>
       )}
 
-      {/* Styles */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .label-enterprise {
-          @apply block text-[10px] font-black uppercase tracking-widest mb-1.5 text-text-muted;
-        }
-        .input-field-enterprise {
-          @apply input-field !bg-bg-secondary !border-border/50 focus:!border-primary/50 text-sm font-semibold;
-        }
-      `}} />
+        </>
+      ) : (
+        <ProcurementTab 
+          orders={orders} 
+          updateStatus={(id, status) => updateOrderStatusMutation.mutate({ id, status })}
+          replenishment={replenishment}
+        />
+      )}
+
+    </div>
+  );
+}
+
+function ProcurementTab({ orders = [], updateStatus, replenishment = [] }) {
+  return (
+    <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* PO List */}
+        <div className="xl:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-primary" /> Active Purchase Orders
+            </h2>
+            <span className="text-[10px] font-black text-text-muted uppercase bg-bg-tertiary px-2 py-1 rounded border border-border">
+              {orders.length} Total Orders
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {(Array.isArray(orders) ? orders : []).length === 0 ? (
+              <div className="card p-10 text-center text-text-muted flex flex-col items-center gap-3">
+                <Truck className="w-12 h-12 opacity-20" />
+                <p className="font-bold">No active purchase orders.</p>
+                <p className="text-[10px] uppercase tracking-widest">System will auto-generate orders when stock levels hit threshold.</p>
+              </div>
+            ) : (
+              (Array.isArray(orders) ? orders : []).map((order) => (
+                <div key={order.id} className="card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-primary/30 transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-xl border ${
+                      order.status === 'pending' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' :
+                      order.status === 'ordered' ? 'bg-info/10 border-info/20 text-info' :
+                      'bg-success/10 border-success/20 text-success'
+                    }`}>
+                      <Package className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-text-primary uppercase tracking-tight">{order.stockName || 'Medication Order'}</h3>
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">
+                        <span>Qty: <span className="text-text-primary">{order.quantity}</span></span>
+                        <span>•</span>
+                        <span>Ref: {order.id.slice(0, 8)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                    <div className="text-right hidden md:block">
+                      <div className="text-[9px] font-black uppercase text-text-muted tracking-widest">Generated On</div>
+                      <div className="text-xs font-bold text-text-primary">{new Date(order.generatedAt).toLocaleDateString()}</div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {order.status === 'pending' && (
+                        <button 
+                          onClick={() => updateStatus(order.id, 'ordered')}
+                          className="btn btn-primary py-1.5 text-[10px] px-4 font-black uppercase tracking-widest"
+                        >
+                          Mark Ordered
+                        </button>
+                      )}
+                      {order.status === 'ordered' && (
+                        <button 
+                          onClick={() => updateStatus(order.id, 'received')}
+                          className="btn btn-success py-1.5 text-[10px] px-4 font-black uppercase tracking-widest"
+                        >
+                          Confirm Receipt
+                        </button>
+                      )}
+                      <div className={`px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest ${
+                        order.status === 'pending' ? 'bg-amber-500/5 border-amber-500/20 text-amber-600' :
+                        order.status === 'ordered' ? 'bg-info/5 border-info/20 text-info' :
+                        'bg-success/5 border-success/20 text-success'
+                      }`}>
+                        {order.status}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Replenishment Intelligence Sidebar */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-warning" /> Procurement Intel
+          </h2>
+          <div className="card p-5 bg-primary/5 border-primary/20 space-y-4">
+            <p className="text-xs font-bold text-text-secondary leading-relaxed">
+              Based on current 30-day burn rates, the following items require immediate procurement attention.
+            </p>
+            <div className="space-y-3">
+              {(Array.isArray(replenishment) ? replenishment : []).slice(0, 5).map((r) => (
+                <div key={r.medicationId} className="flex items-center justify-between bg-bg-primary p-3 rounded-lg border border-border/40">
+                  <div>
+                    <div className="text-xs font-black text-text-primary uppercase tracking-tight">{r.name}</div>
+                    <div className="text-[9px] font-bold text-danger uppercase tracking-widest">Suggested Order: {r.suggestedOrder}</div>
+                  </div>
+                  <div className={`text-[10px] font-black px-2 py-0.5 rounded ${
+                    r.urgency === 'HIGH' ? 'bg-red-500 text-white' : 'bg-amber-500 text-white'
+                  }`}>
+                    {r.urgency}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-secondary w-full text-[10px] font-black uppercase tracking-widest py-3">
+              Export Procurement Report
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

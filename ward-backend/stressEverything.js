@@ -290,6 +290,7 @@ async function stress() {
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/consumption?days=7`) },
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/financial`) },
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/replenishment`) },
+      { weight: 2, fn: () => authedFetch(tokenA, 'GET', '/pharmacy/orders') },
 
       // Writes + Pharmacy Interop
       {

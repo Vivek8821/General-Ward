@@ -21,6 +21,7 @@ A React + Vite application using TanStack Query for state management and Tailwin
 ## State Management (Query Keys)
 - `['pharmacy', 'inventory']`: EDL Stock data (includes batches).
 - `['pharmacy', 'history']`: Transaction audit logs.
+- `['pharmacy', 'orders']`: Active Purchase Orders for procurement. [NEW]
 - `['pharmacy', 'batches', id]`: Specific batch/lot details.
 - `['pharmacy', 'recall-trace', id]`: Tracing patients for a recalled batch.
 - `['patient', id, 'medications']`: Active and discontinued prescriptions.

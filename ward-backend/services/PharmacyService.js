@@ -168,7 +168,7 @@ class PharmacyService {
    * Falls back to aggregate-only adjustment if no batches exist (legacy compatibility).
    */
   async adjustStock(id, tenantId, amount, type, user, options = {}) {
-    return await dbAdapter.withTransaction(async (tx) => {
+    const result = await dbAdapter.withTransaction(async (tx) => {
       const item = await pharmacyRepository.findById(id, tenantId);
       if (!item) throw new Error('Medication not found');
 
@@ -260,6 +260,17 @@ class PharmacyService {
 
       return { success: true, newTotalQuantity, batchId };
     });
+
+    // After transaction succeeds, check if we need to trigger an auto-reorder (only for decreases)
+    if (amount < 0) {
+      // Fire and forget (don't block the API response)
+      const pharmacyReorderService = require('./PharmacyReorderService');
+      pharmacyReorderService.triggerReorderCheck(tenantId, id).catch(err => {
+        console.error('[PharmacyService] Failed to trigger reorder check:', err);
+      });
+    }
+
+    return result;
   }
 
   /**

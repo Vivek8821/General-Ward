@@ -226,4 +226,11 @@ body {
   .sidebar {
     @apply h-screen sticky top-0 w-64 bg-bg-secondary border-r border-border p-6 flex flex-col gap-8;
   }
+
+  .label-enterprise {
+    @apply block text-[10px] font-black uppercase tracking-widest mb-1.5 text-text-muted;
+  }
+  .input-field-enterprise {
+    @apply w-full px-4 py-3 rounded-xl !bg-bg-secondary !border-border/50 focus:outline-none focus:!border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 text-sm font-semibold;
+  }
 }
