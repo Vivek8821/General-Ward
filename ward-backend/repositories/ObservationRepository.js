@@ -101,6 +101,22 @@ class ObservationRepository {
       [idempotencyKey, tenantId, userId, patientId, endpoint]
     );
   }
+
+  async findLatestVitalsByTenant(tenantId) {
+    // This query gets the most recent 'vital' record for each patient in the tenant.
+    return dbAdapter.all(
+      `SELECT ds.* 
+       FROM DailyStats ds
+       INNER JOIN (
+         SELECT patientId, MAX(timestamp) as max_ts
+         FROM DailyStats
+         WHERE tenantId = ? AND type = 'vital'
+         GROUP BY patientId
+       ) latest ON ds.patientId = latest.patientId AND ds.timestamp = latest.max_ts
+       WHERE ds.tenantId = ? AND ds.type = 'vital'`,
+      [tenantId, tenantId]
+    );
+  }
 }
 
 module.exports = new ObservationRepository();

@@ -76,17 +76,26 @@ flowchart LR
   - `ward-backend/routes/observations.js`
   - `ward-backend/services/ScoringService.js`
 
-### Pharmacy and Inventory
+### Clinical Safety & Risk Scoring (EWS)
 
-- UI: `ward-frontend/src/views/Pharmacy.jsx`.
-- API: `/api/pharmacy/*`.
-- Key Features: Lot/Batch tracking, FEFO dispensing, Consumption Forecasting, Recall tracing.
+- UI: `ward-frontend/src/views/Dashboard.jsx` (High-density telemetry & risk badges).
+- API: `/api/patients` (Enriched with real-time EWS scores).
+- Protocol: NEWS2 (National Early Warning Score 2).
 
 - Key implementation files:
-  - `ward-backend/controllers/PharmacyController.js`
-  - `ward-backend/services/PharmacyService.js`
+  - `ward-backend/services/ScoringService.js` (NEWS2 Logic)
+  - `ward-backend/repositories/ObservationRepository.js` (Bulk vitals retrieval)
+  - `ward-backend/services/PatientService.js` (EWS integration)
+
+### Pharmacy Intelligence & Analytics
+
+- UI: `ward-frontend/src/views/Pharmacy.jsx` (Replenishment and Financial dashboards).
+- API: `/api/pharmacy/analytics/*`.
+- Features: 30-day stock replenishment forecasting, total inventory valuation, daily burn value.
+
+- Key implementation files:
   - `ward-backend/services/PharmacyAnalyticsService.js`
-  - `ward-backend/repositories/PharmacyRepository.js`
+  - `ward-backend/controllers/PharmacyController.js`
 
 ### Medications and MAR
 

@@ -102,6 +102,10 @@ app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/admin', adminAuditRoutes);
 
 // Health check
+app.get('/', (req, res) => {
+    res.json({ status: 'General Ward API is running', version: backendVersion });
+});
+
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });

@@ -265,8 +265,8 @@ async function stress() {
       patientsA = fixture.patients.A;
       patientsB = fixture.patients.B;
     } else {
-      patientsA = { id: 'stress-pA' };
-      patientsB = { id: 'stress-pB' };
+      patientsA = { id: 'p1' };
+      patientsB = { id: 'p2' };
 
       const doctorA = { id: 'sdA', name: 'StressDocA', role: 'doctor', tenantId: 'tenant-default' };
       const doctorB = { id: 'sdB', name: 'StressDocB', role: 'doctor', tenantId: 'tenant-b' };
@@ -288,6 +288,8 @@ async function stress() {
       { weight: 3, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/inventory/stress-pharm-A/batches`) },
       { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/batches/search?lotNumber=STRESS-LOT-A1`) },
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/consumption?days=7`) },
+      { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/financial`) },
+      { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/replenishment`) },
 
       // Writes + Pharmacy Interop
       {

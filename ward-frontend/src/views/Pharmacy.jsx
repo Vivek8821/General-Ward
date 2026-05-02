@@ -42,10 +42,15 @@ export default function Pharmacy() {
     queryFn: () => api.get('/pharmacy/inventory'),
   });
 
-  const { data: analytics = [] } = useQuery({
-    queryKey: ['pharmacy', 'analytics', 'consumption'],
-    queryFn: () => api.get('/pharmacy/analytics/consumption?days=7'),
-    refetchInterval: 60000, // Refresh every minute for real-time runway
+  const { data: replenishment = [] } = useQuery({
+    queryKey: ['pharmacy', 'analytics', 'replenishment'],
+    queryFn: () => api.get('/pharmacy/analytics/replenishment'),
+    refetchInterval: 60000,
+  });
+
+  const { data: financial = { totalValuation: 0, totalDailyBurnValue: 0 } } = useQuery({
+    queryKey: ['pharmacy', 'analytics', 'financial'],
+    queryFn: () => api.get('/pharmacy/analytics/financial'),
   });
 
   const analyticsMap = analytics.reduce((acc, curr) => {
@@ -156,51 +161,67 @@ export default function Pharmacy() {
         </div>
       </div>
 
-      {/* Quick Stats Banner */}
-      <div className="flex gap-4 overflow-x-auto pb-2">
-        <div className="flex-1 min-w-[200px] bg-bg-tertiary p-3 rounded-lg border border-border/50 flex items-center justify-between">
-           <span className="text-[10px] font-black uppercase text-text-muted">Total Items</span>
-           <span className="text-xl font-black text-text-primary">{inventory.length}</span>
+      {/* Quick Stats Banner - Optimized for Widescreen */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="bg-bg-tertiary p-4 rounded-xl border border-border/50 flex flex-col justify-between min-h-[100px]">
+           <span className="text-[10px] font-black uppercase text-text-muted tracking-widest">Total Valuation</span>
+           <span className="text-2xl font-black text-primary">₹{financial.totalValuation?.toLocaleString()}</span>
         </div>
-        <div className="flex-1 min-w-[200px] bg-warning/5 p-3 rounded-lg border border-warning/20 flex items-center justify-between">
-           <span className="text-[10px] font-black uppercase text-warning">Low Stock</span>
-           <span className="text-xl font-black text-warning">{inventory.filter(i => i.isLowStock).length}</span>
+        <div className="bg-bg-tertiary p-4 rounded-xl border border-border/50 flex flex-col justify-between min-h-[100px]">
+           <span className="text-[10px] font-black uppercase text-text-muted tracking-widest">Daily Burn Value</span>
+           <span className="text-2xl font-black text-warning">₹{financial.totalDailyBurnValue?.toLocaleString()}</span>
         </div>
-        <div className="flex-1 min-w-[200px] bg-danger/5 p-3 rounded-lg border border-danger/20 flex items-center justify-between">
-           <span className="text-[10px] font-black uppercase text-danger">Out of Stock</span>
-           <span className="text-xl font-black text-danger">{inventory.filter(i => i.totalQuantity === 0).length}</span>
+        <div className="bg-warning/5 p-4 rounded-xl border border-warning/20 flex flex-col justify-between min-h-[100px]">
+           <span className="text-[10px] font-black uppercase text-warning tracking-widest">Low Stock Items</span>
+           <span className="text-2xl font-black text-warning">{inventory.filter(i => i.isLowStock).length}</span>
         </div>
-        <div className="flex-1 min-w-[200px] bg-orange-500/5 p-3 rounded-lg border border-orange-500/20 flex items-center justify-between">
-           <span className="text-[10px] font-black uppercase text-orange-500">Expiring ≤30d</span>
-           <span className="text-xl font-black text-orange-500">{inventory.reduce((c, i) => c + (i.batches || []).filter(b => b.status === 'active' && new Date(b.expiryDate) <= new Date(Date.now() + 30*86400000)).length, 0)}</span>
+        <div className="bg-danger/5 p-4 rounded-xl border border-danger/20 flex flex-col justify-between min-h-[100px]">
+           <span className="text-[10px] font-black uppercase text-danger tracking-widest">Stockout Risk</span>
+           <span className="text-2xl font-black text-danger">{inventory.filter(i => i.totalQuantity === 0).length}</span>
         </div>
-        <div className="flex-1 min-w-[200px] bg-danger/5 p-3 rounded-lg border border-danger/20 flex items-center justify-between">
-           <span className="text-[10px] font-black uppercase text-danger">At Risk (Runway)</span>
-           <span className="text-xl font-black text-danger">{highRiskItems.length}</span>
+        <div className="bg-orange-500/5 p-4 rounded-xl border border-orange-500/20 flex flex-col justify-between min-h-[100px]">
+           <span className="text-[10px] font-black uppercase text-orange-500 tracking-widest">Expiring Items</span>
+           <span className="text-2xl font-black text-orange-500">{inventory.reduce((c, i) => c + (i.batches || []).filter(b => b.status === 'active' && new Date(b.expiryDate) <= new Date(Date.now() + 30*86400000)).length, 0)}</span>
         </div>
         <button 
           onClick={() => setShowHistory(true)}
-          className="flex-1 min-w-[200px] bg-primary/5 p-3 rounded-lg border border-primary/20 flex items-center justify-between hover:bg-primary/10 transition-colors group"
+          className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-col justify-between min-h-[100px] hover:bg-primary/10 transition-colors group text-left"
         >
-           <span className="text-[10px] font-black uppercase text-primary">Master Audit</span>
-           <History className="w-5 h-5 text-primary group-hover:rotate-12 transition-transform" />
+           <span className="text-[10px] font-black uppercase text-primary tracking-widest">Master Audit Log</span>
+           <History className="w-6 h-6 text-primary group-hover:rotate-12 transition-transform" />
         </button>
       </div>
 
-      {/* Consumption Alert Banner */}
-      {highRiskItems.length > 0 && (
-        <div className="bg-danger/10 border border-danger/20 p-4 rounded-xl flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="bg-danger p-2 rounded-lg">
-            <TrendingDown className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-black text-danger uppercase tracking-wider">Critical Supply Warnings</h3>
-            <p className="text-xs text-text-primary font-bold">
-              {highRiskItems.slice(0, 3).map(item => `${item.name} (${item.runwayDays || 0}d left)`).join(', ')}
-              {highRiskItems.length > 3 ? ` and ${highRiskItems.length - 3} others` : ''} are nearing stockout.
-            </p>
-          </div>
-          <button className="btn btn-danger py-1 text-[10px] px-4 font-black">Generate Order</button>
+      {/* Consumption & Replenishment Alert Banner */}
+      {(highRiskItems.length > 0 || replenishment.length > 0) && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          {highRiskItems.length > 0 && (
+            <div className="bg-danger/10 border border-danger/20 p-4 rounded-xl flex items-center gap-4">
+              <div className="bg-danger p-2 rounded-lg">
+                <TrendingDown className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-black text-danger uppercase tracking-wider">Supply Alerts</h3>
+                <p className="text-xs text-text-primary font-bold">
+                  {highRiskItems.slice(0, 3).map(item => `${item.name} (${item.runwayDays || 0}d left)`).join(', ')}...
+                </p>
+              </div>
+            </div>
+          )}
+          {replenishment.length > 0 && (
+            <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-center gap-4">
+              <div className="bg-primary p-2 rounded-lg">
+                <Layers className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-black text-primary uppercase tracking-wider">Replenishment Suggestions</h3>
+                <p className="text-xs text-text-primary font-bold">
+                  {replenishment.slice(0, 2).map(r => `Order ${r.suggestedOrder} units of ${r.name}`).join('; ')}
+                </p>
+              </div>
+              <button className="btn btn-primary py-1 text-[10px] px-4 font-black">Review Order</button>
+            </div>
+          )}
         </div>
       )}
 

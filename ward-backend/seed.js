@@ -22,12 +22,42 @@ async function seed() {
   await run('INSERT INTO Users (id, tenantId, name, role, passwordHash) VALUES (?, ?, ?, ?, ?)', ['u2', 'tenant-default', 'Nurse Joy', 'nurse', nurseHash]);
   await run('INSERT INTO Users (id, tenantId, name, role, passwordHash) VALUES (?, ?, ?, ?, ?)', ['u3', 'tenant-default', 'Dr. Smith', 'doctor', doctorHash]);
 
-  // Patients
+  // Patients - Expanded for Widescreen Demo (12 Total)
   await run('DELETE FROM Patients');
-  await run('INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-    ['p1', 'tenant-default', 'John Doe', 'MRN001', 'Ward A-1', '1985-05-15', 'Type 2 Diabetes', 'Penicillin', 2, 'active']);
-  await run('INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-    ['p2', 'tenant-default', 'Jane Roe', 'MRN002', 'Ward B-3', '1992-11-20', 'Hypertension', 'None', 1, 'active']);
+  const patientData = [
+    ['p1', 'tenant-default', 'John Doe', 'MRN001', 'Ward A-1', '1985-05-15', 'Type 2 Diabetes', 'Penicillin', 2, 'active'],
+    ['p2', 'tenant-default', 'Jane Roe', 'MRN002', 'Ward B-3', '1992-11-20', 'Hypertension', 'None', 1, 'active'],
+    ['p3', 'tenant-default', 'Robert Smith', 'MRN003', 'Ward A-2', '1955-03-10', 'Post-Op Hip Replacement', 'Latex', 3, 'active'],
+    ['p4', 'tenant-default', 'Alice Williams', 'MRN004', 'Ward C-1', '1978-08-22', 'Acute Bronchitis', 'None', 2, 'active'],
+    ['p5', 'tenant-default', 'Michael Brown', 'MRN005', 'Ward A-3', '1942-12-05', 'Congestive Heart Failure', 'Sulfa', 4, 'escalated'],
+    ['p6', 'tenant-default', 'Emily Davis', 'MRN006', 'Ward B-1', '2001-01-30', 'Appendicitis', 'Aspirin', 2, 'active'],
+    ['p7', 'tenant-default', 'William Wilson', 'MRN007', 'Ward C-2', '1963-07-12', 'Pneumonia', 'None', 3, 'active'],
+    ['p8', 'tenant-default', 'Sarah Miller', 'MRN008', 'Ward A-4', '1989-04-25', 'Gastroenteritis', 'Dairy', 1, 'active'],
+    ['p9', 'tenant-default', 'James Taylor', 'MRN009', 'Ward B-2', '1950-09-18', 'COPD Exacerbation', 'None', 3, 'active'],
+    ['p10', 'tenant-default', 'Linda Anderson', 'MRN010', 'Ward C-3', '1972-02-14', 'Urinary Tract Infection', 'None', 1, 'active'],
+    ['p11', 'tenant-default', 'David Thomas', 'MRN011', 'Ward A-5', '1982-06-28', 'Dengue Fever', 'None', 2, 'active'],
+    ['p12', 'tenant-default', 'Susan Moore', 'MRN012', 'Ward B-4', '1995-12-03', 'Migraine', 'None', 1, 'active']
+  ];
+
+  for (const p of patientData) {
+    await run('INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', p);
+  }
+
+  // Seed Initial Vitals for EWS Calculation
+  await run('DELETE FROM DailyStats');
+  const vitalMocks = [
+    { pId: 'p1', data: { pulse: 72, bpSystolic: 120, respRate: 16, temp: 36.6, spo2: 98, levelOfConsciousness: 'alert' } },
+    { pId: 'p2', data: { pulse: 85, bpSystolic: 145, respRate: 18, temp: 37.2, spo2: 96, levelOfConsciousness: 'alert' } },
+    { pId: 'p3', data: { pulse: 92, bpSystolic: 110, respRate: 20, temp: 37.8, spo2: 95, levelOfConsciousness: 'alert' } },
+    { pId: 'p5', data: { pulse: 115, bpSystolic: 95, respRate: 26, temp: 38.5, spo2: 91, levelOfConsciousness: 'voice' } }, // High risk
+    { pId: 'p7', data: { pulse: 105, bpSystolic: 105, respRate: 22, temp: 38.0, spo2: 93, levelOfConsciousness: 'alert' } }, // Medium risk
+    { pId: 'p9', data: { pulse: 88, bpSystolic: 130, respRate: 24, temp: 37.0, spo2: 90, levelOfConsciousness: 'alert' } }, // Respiratory risk
+  ];
+
+  for (const v of vitalMocks) {
+    await run('INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+      [crypto.randomUUID(), 'tenant-default', v.pId, 'vital', JSON.stringify(v.data), 'System Seed', new Date().toISOString()]);
+  }
 
   // Pharmacy Inventory (EDL) - Real Medications with Batch Data
   await run('DELETE FROM PharmacyBatches');

@@ -5,8 +5,10 @@
   "scripts": {
     "install-all": "npm install --prefix ward-backend && npm install --prefix ward-frontend",
     "start-backend": "npm start --prefix ward-backend",
+    "start-backend:perf": "npm run start:perf --prefix ward-backend",
     "start-frontend": "npm run dev --prefix ward-frontend",
     "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
+    "start:perf": "concurrently \"npm run start-backend:perf\" \"npm run start-frontend\"",
     "build": "npm run build --prefix ward-frontend",
     "codemap:inventory": "node codemap/generate-codemap-index.mjs",
     "codemap:md": "node codemap/build-codemap-md.mjs",

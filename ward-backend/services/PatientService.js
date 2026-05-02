@@ -1,4 +1,6 @@
 const patientRepository = require('../repositories/PatientRepository');
+const observationRepository = require('../repositories/ObservationRepository');
+const scoringService = require('../services/ScoringService');
 const crypto = require('crypto');
 
 class PatientService {
@@ -31,7 +33,21 @@ class PatientService {
     }
 
     async getAllPatients(tenantId) {
-        return await patientRepository.findAll(tenantId);
+        const patients = await patientRepository.findAll(tenantId);
+        const latestVitals = await observationRepository.findLatestVitalsByTenant(tenantId);
+        
+        // Map vitals to patients
+        const vitalsMap = latestVitals.reduce((acc, v) => {
+            let data = v.data;
+            try { data = JSON.parse(v.data); } catch (e) {}
+            acc[v.patientId] = scoringService.calculateFromVital(data, v.timestamp);
+            return acc;
+        }, {});
+
+        return patients.map(p => ({
+            ...p,
+            ews: vitalsMap[p.id] || null
+        }));
     }
 
     async getArchivedPatients(tenantId) {

@@ -206,4 +206,26 @@ router.get('/analytics/consumption', authenticateToken, authorizeAny([PERMISSION
   }
 });
 
+// GET /api/pharmacy/analytics/financial
+router.get('/analytics/financial', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await pharmacyAnalyticsService.getFinancialAnalytics(tenantId);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/pharmacy/analytics/replenishment
+router.get('/analytics/replenishment', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await pharmacyAnalyticsService.getReplenishmentPlan(tenantId);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -4,8 +4,8 @@
 A React + Vite application using TanStack Query for state management and Tailwind CSS for styling.
 
 ## Core Views
-- `Pharmacy.jsx`: High-density enterprise inventory management with batch/lot tracking, FEFO-aware dispensing, and recall tracing.
-- `Dashboard.jsx`: Central ward status overview.
+- `Dashboard.jsx`: Widescreen-optimized ward status overview with real-time NEWS2 EWS risk stratification and telemetry previews.
+- `Pharmacy.jsx`: High-density enterprise inventory management with batch/lot tracking, financial analytics, and replenishment forecasting.
 - `PatientDetails.jsx`: Comprehensive patient profile (Vitals, MAR, Handover).
 - `Trends.jsx`: Multi-parameter clinical data visualization.
 

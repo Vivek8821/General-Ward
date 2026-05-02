@@ -1,11 +1,12 @@
-import { Outlet, Navigate, useNavigate, Link } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Moon, Sun, Hospital, Package } from 'lucide-react';
+import { LogOut, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
 export const ProtectedLayout = ({ allowedRoles }) => {
-  const { user, logout, setTheme } = useAuth();
+  const { user, logout, setTheme, theme } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -24,76 +25,74 @@ export const ProtectedLayout = ({ allowedRoles }) => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  const NavItem = ({ to, icon: Icon, label }) => {
+    const isActive = location.pathname === to;
+    return (
+      <Link to={to} className={`nav-link ${isActive ? 'nav-link-active' : ''}`}>
+        <Icon className="w-5 h-5" strokeWidth={isActive ? 2.25 : 1.75} />
+        <span className="font-medium">{label}</span>
+      </Link>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary transition-colors duration-300">
-      <div className="max-w-[1400px] mx-auto p-5">
-        
-        {/* Header Ribbon */}
-        <header className="nav-ribbon p-5 px-8 flex justify-between items-center mb-8">
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-bg-tertiary text-slate-700 dark:text-slate-400"
-              aria-hidden
-            >
-              <Hospital className="h-5 w-5" strokeWidth={1.75} />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
-                General Ward
-              </h1>
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                Clinical operations
-              </p>
-            </div>
+    <div className="flex min-h-screen bg-bg-primary text-text-primary transition-colors duration-300">
+      {/* Sidebar Navigation */}
+      <aside className="sidebar shrink-0">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <Hospital className="h-5 w-5" strokeWidth={2} />
           </div>
+          <div className="min-w-0">
+            <h1 className="text-base font-bold tracking-tight truncate">General Ward</h1>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Clinical Ops</p>
+          </div>
+        </div>
+
+        <nav className="flex flex-col gap-2 flex-1">
+          <NavItem to="/" icon={Users} label="Patients" />
+          <NavItem to="/pharmacy" icon={Package} label="Pharmacy" />
+          <NavItem to="/tasks" icon={ClipboardList} label="Tasks" />
           
-          <div className="flex items-center gap-4 sm:gap-5 shrink-0">
+          {user.role === 'admin' && (
+            <NavItem to="/admin/audit" icon={ShieldCheck} label="Audit Log" />
+          )}
+        </nav>
+
+        <div className="mt-auto flex flex-col gap-6 pt-6 border-t border-border">
+          <div className="flex flex-col gap-1 px-1">
+            <div className="text-sm font-bold truncate text-text-primary">{user.name}</div>
+            <div className="text-[10px] uppercase font-black tracking-widest text-text-muted">{user.role}</div>
+          </div>
+
+          <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-lg border border-border bg-bg-tertiary text-slate-700 hover:bg-bg-primary hover:border-slate-400/40 dark:text-slate-400 dark:hover:border-slate-500 transition-colors"
-              aria-label="Toggle color theme"
+              className="nav-link w-full border border-transparent"
             >
-              <Sun className="w-5 h-5 hidden dark:block" />
-              <Moon className="w-5 h-5 dark:hidden" />
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              <span className="font-medium">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
             </button>
             
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 max-w-[120px] sm:max-w-[200px] truncate">
-                {user.name}
-              </span>
-              <span className="rounded-md border border-border bg-bg-tertiary px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">
-                {user.role}
-              </span>
-            </div>
-            
-            <Link
-              to="/pharmacy"
-              className="text-sm font-medium text-slate-700 hover:text-primary dark:text-slate-400 whitespace-nowrap"
+            <button 
+              onClick={handleLogout} 
+              className="nav-link w-full text-danger hover:bg-danger/10 hover:text-danger"
             >
-              Pharmacy
-            </Link>
-
-            {user.role === 'admin' && (
-              <Link
-                to="/admin/audit"
-                className="text-sm font-medium text-slate-700 hover:text-primary dark:text-slate-400 whitespace-nowrap"
-              >
-                Audit log
-              </Link>
-            )}
-
-            <button onClick={handleLogout} className="btn btn-secondary !py-2 !px-4 text-sm">
-              <LogOut className="w-4 h-4" aria-hidden /> Logout
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Logout</span>
             </button>
           </div>
-        </header>
+        </div>
+      </aside>
 
-        {/* Dynamic Page Content */}
-        <main>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 overflow-y-auto p-8 w-full">
           <Outlet />
         </main>
       </div>
+
       <Toaster position="top-right" />
     </div>
   );

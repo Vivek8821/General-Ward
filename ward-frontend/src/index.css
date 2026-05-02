@@ -214,4 +214,16 @@ body {
   .dark .nav-ribbon {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
   }
+
+  .nav-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-text-secondary hover:bg-bg-tertiary hover:text-text-primary;
+  }
+
+  .nav-link-active {
+    @apply bg-primary/10 text-primary border border-primary/20;
+  }
+
+  .sidebar {
+    @apply h-screen sticky top-0 w-64 bg-bg-secondary border-r border-border p-6 flex flex-col gap-8;
+  }
 }
