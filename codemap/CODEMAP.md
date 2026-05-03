@@ -76,41 +76,13 @@ flowchart LR
   - `ward-backend/routes/observations.js`
   - `ward-backend/services/ScoringService.js`
 
-### Clinical Safety & Risk Scoring (EWS)
-
-- UI: `ward-frontend/src/views/Dashboard.jsx` (High-density telemetry & risk badges).
-- API: `/api/patients` (Enriched with real-time EWS scores).
-- Protocol: NEWS2 (National Early Warning Score 2).
-
-- Key implementation files:
-  - `ward-backend/services/ScoringService.js` (NEWS2 Logic)
-  - `ward-backend/repositories/ObservationRepository.js` (Bulk vitals retrieval)
-  - `ward-backend/services/PatientService.js` (EWS integration)
-
-### Pharmacy Intelligence & Analytics
-- **Phase 8: Automated Re-order Workflow**
-  - `PurchaseOrders` Table: Tracks automated and manual procurement records.
-  - `PharmacyReorderService.js`: Logic for stock monitoring and PO generation.
-  - `PurchaseOrderRepository.js`: Persistence layer for POs.
-  - `Procurement Dashboard`: Frontend UI in `Pharmacy.jsx` for managing active orders.
-
-- UI: `ward-frontend/src/views/Pharmacy.jsx` (Replenishment and Financial dashboards).
-- API: `/api/pharmacy/analytics/*`.
-- Features: 30-day stock replenishment forecasting, total inventory valuation, daily burn value.
-
-- Key implementation files:
-  - `ward-backend/services/PharmacyAnalyticsService.js`
-  - `ward-backend/controllers/PharmacyController.js`
-
 ### Medications and MAR
 
 - UI: `ward-frontend/src/components/stats/MedsTab.jsx`.
 - API: `/api/patients/:patientId/medications`.
-- Integration: Automatically deducts from pharmacy stock using FEFO batch logic.
 
 - Key implementation files:
-  - `ward-backend/controllers/MedicationController.js`
-  - `ward-backend/services/MedicationService.js`
+  - `ward-backend/routes/medications.js`
 
 ### History timeline
 
@@ -172,15 +144,7 @@ flowchart LR
 
 ## Data model (SQLite)
 
-Schema is defined/bootstrapped in `ward-backend/db.js` and `ward-backend/schema.sql`.
-
-### Core Tables
-- `Patients`: Root clinical entity.
-- `PharmacyStock`: Drug catalog and aggregate inventory levels.
-- `PharmacyBatches`: Granular lot/batch tracking (lot#, expiry, quantity, cost).
-- `PharmacyTransactions`: Full audit history linked to medications and batches.
-- `MedicationAdministrations`: Patient-specific medication events.
-- `DailyStats`: Time-series clinical observations.
+Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` with a JSON/text `data` payload for multiple types.
 
 ### Data files on disk
 
@@ -192,7 +156,7 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and `ward-backend/schema.
 
 ## First-party file inventory
 
-**139** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**173** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
 
 <a id="fp-cursorrules"></a>
 ### `.cursorrules`
@@ -211,6 +175,16 @@ First-party file (open to inspect exact behavior).
 
 <a id="fp-gitignore"></a>
 ### `.gitignore`
+
+First-party file (open to inspect exact behavior).
+
+<a id="fp-admin-cookies-txt"></a>
+### `admin_cookies.txt`
+
+First-party file (open to inspect exact behavior).
+
+<a id="fp-cookies-txt"></a>
+### `cookies.txt`
 
 First-party file (open to inspect exact behavior).
 
@@ -309,6 +283,11 @@ Documentation file that explains how to work with this repo/subsystem.
 
 Documentation file that explains how to work with this repo/subsystem.
 
+<a id="fp-doctor-cookies-txt"></a>
+### `doctor_cookies.txt`
+
+First-party file (open to inspect exact behavior).
+
 <a id="fp-package-lock-json"></a>
 ### `package-lock.json`
 
@@ -349,8 +328,33 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-controllers-handovercontroller-js"></a>
+### `ward-backend/controllers/HandoverController.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-controllers-medicationcontroller-js"></a>
+### `ward-backend/controllers/MedicationController.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-controllers-observationcontroller-js"></a>
+### `ward-backend/controllers/ObservationController.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-controllers-patientcontroller-js"></a>
 ### `ward-backend/controllers/PatientController.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-controllers-pharmacycontroller-js"></a>
+### `ward-backend/controllers/PharmacyController.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-controllers-taskcontroller-js"></a>
+### `ward-backend/controllers/TaskController.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -414,6 +418,16 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-middleware-error-js"></a>
+### `ward-backend/middleware/error.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-middleware-rbac-js"></a>
+### `ward-backend/middleware/rbac.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-middleware-requestlogger-js"></a>
 ### `ward-backend/middleware/requestLogger.js`
 
@@ -454,6 +468,26 @@ First-party file (open to inspect exact behavior).
 
 First-party file (open to inspect exact behavior).
 
+<a id="fp-ward-backend-postgres-migrations-migrations-004-pharmacy-v2-sql"></a>
+### `ward-backend/postgres-migrations/migrations/004_pharmacy_v2.sql`
+
+First-party file (open to inspect exact behavior).
+
+<a id="fp-ward-backend-postgres-migrations-migrations-005-pharmacy-batches-sql"></a>
+### `ward-backend/postgres-migrations/migrations/005_pharmacy_batches.sql`
+
+First-party file (open to inspect exact behavior).
+
+<a id="fp-ward-backend-postgres-migrations-migrations-006-purchase-orders-sql"></a>
+### `ward-backend/postgres-migrations/migrations/006_purchase_orders.sql`
+
+First-party file (open to inspect exact behavior).
+
+<a id="fp-ward-backend-postgres-migrations-migrations-007-waste-records-sql"></a>
+### `ward-backend/postgres-migrations/migrations/007_waste_records.sql`
+
+First-party file (open to inspect exact behavior).
+
 <a id="fp-ward-backend-postgres-migrations-planmigrations-js"></a>
 ### `ward-backend/postgres-migrations/planMigrations.js`
 
@@ -489,13 +523,38 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-repositories-medicationrepository-js"></a>
+### `ward-backend/repositories/MedicationRepository.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-repositories-observationrepository-js"></a>
+### `ward-backend/repositories/ObservationRepository.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-repositories-patientrepository-js"></a>
 ### `ward-backend/repositories/PatientRepository.js`
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-repositories-pharmacyrepository-js"></a>
+### `ward-backend/repositories/PharmacyRepository.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-repositories-purchaseorderrepository-js"></a>
+### `ward-backend/repositories/PurchaseOrderRepository.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-repositories-taskrepository-js"></a>
 ### `ward-backend/repositories/TaskRepository.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-repositories-wasterepository-js"></a>
+### `ward-backend/repositories/WasteRepository.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -509,38 +568,13 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
-<a id="fp-ward-backend-routes-history-js"></a>
-### `ward-backend/routes/history.js`
+<a id="fp-ward-backend-schema-sql"></a>
+### `ward-backend/schema.sql`
 
-First-party source code in the backend/frontend layer.
+First-party file (open to inspect exact behavior).
 
-<a id="fp-ward-backend-routes-medications-js"></a>
-### `ward-backend/routes/medications.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-routes-observations-js"></a>
-### `ward-backend/routes/observations.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-routes-patientnotes-js"></a>
-### `ward-backend/routes/patientNotes.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-routes-patienttasks-js"></a>
-### `ward-backend/routes/patientTasks.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-routes-stats-js"></a>
-### `ward-backend/routes/stats.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-routes-tasks-js"></a>
-### `ward-backend/routes/tasks.js`
+<a id="fp-ward-backend-scratch-stress-test-js"></a>
+### `ward-backend/scratch/stress_test.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -579,8 +613,38 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-services-medicationservice-js"></a>
+### `ward-backend/services/MedicationService.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-services-migratorservice-js"></a>
+### `ward-backend/services/MigratorService.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-services-observationservice-js"></a>
+### `ward-backend/services/ObservationService.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-backend-services-patientservice-js"></a>
 ### `ward-backend/services/PatientService.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-services-pharmacyanalyticsservice-js"></a>
+### `ward-backend/services/PharmacyAnalyticsService.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-services-pharmacyreorderservice-js"></a>
+### `ward-backend/services/PharmacyReorderService.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-services-pharmacyservice-js"></a>
+### `ward-backend/services/PharmacyService.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -591,6 +655,11 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-services-taskservice-js"></a>
 ### `ward-backend/services/TaskService.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-services-wasteservice-js"></a>
+### `ward-backend/services/WasteService.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -644,6 +713,11 @@ Integration test validating service/routes behavior (run via `npm test` in `ward
 
 Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
 
+<a id="fp-ward-backend-tests-integration-reorder-test-js"></a>
+### `ward-backend/tests/integration/reorder.test.js`
+
+Integration test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
 <a id="fp-ward-backend-tests-integration-stats-test-js"></a>
 ### `ward-backend/tests/integration/stats.test.js`
 
@@ -679,10 +753,25 @@ Unit test validating service/routes behavior (run via `npm test` in `ward-backen
 
 Unit test validating service/routes behavior (run via `npm test` in `ward-backend`).
 
+<a id="fp-ward-backend-tests-services-scoring-test-js"></a>
+### `ward-backend/tests/services/scoring.test.js`
+
+Unit test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
 <a id="fp-ward-backend-tests-services-scoringservice-test-js"></a>
 ### `ward-backend/tests/services/ScoringService.test.js`
 
 Unit test validating service/routes behavior (run via `npm test` in `ward-backend`).
+
+<a id="fp-ward-backend-utils-logger-js"></a>
+### `ward-backend/utils/logger.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-utils-validation-js"></a>
+### `ward-backend/utils/validation.js`
+
+First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-ward-db-shm"></a>
 ### `ward-backend/ward.db-shm`
@@ -759,6 +848,21 @@ SVG asset (icon/illustration).
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-frontend-src-components-modals-dischargemodal-jsx"></a>
+### `ward-frontend/src/components/modals/DischargeModal.jsx`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-frontend-src-components-modals-editpatientmodal-jsx"></a>
+### `ward-frontend/src/components/modals/EditPatientModal.jsx`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-frontend-src-components-modals-escalatemodal-jsx"></a>
+### `ward-frontend/src/components/modals/EscalateModal.jsx`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-frontend-src-components-stats-diettab-jsx"></a>
 ### `ward-frontend/src/components/stats/DietTab.jsx`
 
@@ -814,6 +918,11 @@ Frontend styling (global/app styles).
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-frontend-src-test-setup-js"></a>
+### `ward-frontend/src/test/setup.js`
+
+First-party source code in the backend/frontend layer.
+
 <a id="fp-ward-frontend-src-utils-api-ts"></a>
 ### `ward-frontend/src/utils/api.ts`
 
@@ -834,10 +943,20 @@ First-party file (open to inspect exact behavior).
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-frontend-src-views-close-divs-txt"></a>
+### `ward-frontend/src/views/close_divs.txt`
+
+First-party file (open to inspect exact behavior).
+
 <a id="fp-ward-frontend-src-views-dashboard-jsx"></a>
 ### `ward-frontend/src/views/Dashboard.jsx`
 
 First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-frontend-src-views-divs-txt"></a>
+### `ward-frontend/src/views/divs.txt`
+
+First-party file (open to inspect exact behavior).
 
 <a id="fp-ward-frontend-src-views-hospitalarchivedetail-jsx"></a>
 ### `ward-frontend/src/views/HospitalArchiveDetail.jsx`
@@ -846,6 +965,11 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-frontend-src-views-login-jsx"></a>
 ### `ward-frontend/src/views/Login.jsx`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-frontend-src-views-login-test-jsx"></a>
+### `ward-frontend/src/views/Login.test.jsx`
 
 First-party source code in the backend/frontend layer.
 
@@ -858,6 +982,16 @@ First-party source code in the backend/frontend layer.
 ### `ward-frontend/src/views/PatientDetail.jsx`
 
 First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-frontend-src-views-pharmacy-jsx"></a>
+### `ward-frontend/src/views/Pharmacy.jsx`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-frontend-src-views-pharmacy-jsx-bak"></a>
+### `ward-frontend/src/views/Pharmacy.jsx.bak`
+
+First-party file (open to inspect exact behavior).
 
 <a id="fp-ward-frontend-src-views-signup-jsx"></a>
 ### `ward-frontend/src/views/Signup.jsx`
@@ -891,6 +1025,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 139**, **thirdParty 32056**, **data 1**, total 32196.
+- Inventory counts: **firstParty 173**, **thirdParty 32056**, **data 1**, total 32230.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.

@@ -267,8 +267,36 @@ CREATE TABLE IF NOT EXISTS PurchaseOrders (
   FOREIGN KEY (stockId) REFERENCES PharmacyStock(id)
 );
 
+-- Waste Records (Clinical Waste & Spillage Management)
+CREATE TABLE IF NOT EXISTS WasteRecords (
+  id TEXT PRIMARY KEY,
+  tenantId TEXT NOT NULL,
+  stockId TEXT NOT NULL,
+  batchId TEXT,
+  quantityWasted INTEGER NOT NULL CHECK(quantityWasted > 0),
+  unit TEXT NOT NULL,
+  reasonCode TEXT NOT NULL CHECK(reasonCode IN ('EXPIRED','DAMAGED','CONTAMINATED','SPILL','OTHER')),
+  reasonNotes TEXT,
+  status TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN ('PENDING','CONFIRMED','CANCELLED')),
+  initiatedByUserId TEXT NOT NULL,
+  initiatedByUserName TEXT NOT NULL,
+  initiatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  witnessUserId TEXT,
+  witnessUserName TEXT,
+  witnessedAt DATETIME,
+  pharmacyTransactionId TEXT,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (stockId) REFERENCES PharmacyStock(id),
+  FOREIGN KEY (batchId) REFERENCES PharmacyBatches(id),
+  FOREIGN KEY (pharmacyTransactionId) REFERENCES PharmacyTransactions(id)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_tenant_stock ON PurchaseOrders(tenantId, stockId, status);
+CREATE INDEX IF NOT EXISTS idx_wasterecords_tenant ON WasteRecords(tenantId);
+CREATE INDEX IF NOT EXISTS idx_wasterecords_status ON WasteRecords(status, tenantId);
+CREATE INDEX IF NOT EXISTS idx_wasterecords_stock ON WasteRecords(stockId, tenantId);
 CREATE INDEX IF NOT EXISTS idx_dailystats_patient ON DailyStats(patientId);
 CREATE INDEX IF NOT EXISTS idx_medications_patient ON Medications(patientId);
 CREATE INDEX IF NOT EXISTS idx_escalations_patient ON Escalations(patientId);

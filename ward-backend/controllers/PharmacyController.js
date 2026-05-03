@@ -264,4 +264,68 @@ router.post('/orders/check-all', authenticateToken, authorize(PERMISSIONS.PURGE_
   }
 });
 
+// ── Waste & Spillage Management (Phase 9) ─────────────────────────
+
+const wasteService = require('../services/WasteService');
+
+// POST /api/pharmacy/waste
+router.post('/waste', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await wasteService.initiateWaste(tenantId, req.body, req.user);
+    res.status(201).json(result);
+  } catch (err) {
+    const status = err.statusCode || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+// GET /api/pharmacy/waste/pending
+router.get('/waste/pending', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const records = await wasteService.listPending(tenantId);
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/pharmacy/waste
+router.get('/waste', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const limit = parseInt(req.query.limit) || 50;
+    const cursor = req.query.cursor || null;
+    const records = await wasteService.listAll(tenantId, limit, cursor);
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/pharmacy/waste/:id/confirm
+router.post('/waste/:id/confirm', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await wasteService.confirmWaste(req.params.id, tenantId, req.user);
+    res.json(result);
+  } catch (err) {
+    const status = err.statusCode || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+// POST /api/pharmacy/waste/:id/cancel
+router.post('/waste/:id/cancel', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || 'tenant-default';
+    const result = await wasteService.cancelWaste(req.params.id, tenantId, req.user);
+    res.json(result);
+  } catch (err) {
+    const status = err.statusCode || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
 module.exports = router;

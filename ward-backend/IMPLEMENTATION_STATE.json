@@ -1,6 +1,6 @@
 {
-  "lastPhase": "phase8",
-  "lastStep": "phase8-complete",
+  "lastPhase": "phase9",
+  "lastStep": "phase9-complete",
   "startedAt": "2026-03-19T17:32:31Z",
   "finishedAt": "2026-05-02T15:26:00Z",
   "notes": [
@@ -42,7 +42,9 @@
     "Phase 5.1 tenant isolation tests: added `tests/integration/tenantIsolation.test.js` to validate same-tenant success and cross-tenant 403 behavior across stats, medications, tasks, notes, observations ingest, and escalations global triage; fixed `POST /api/patients/:patientId/medications` SQL placeholder mismatch uncovered by these tests. Verified with `ward-backend npm test` passing (including new suite).",
     "Phase 5.2 crash-resilience validation: set `lastStep` to `phase5-2-crash-recovery-validation` and simulated a crash (short Node process exit(1)). Next ran `ward-backend npm test` to confirm resume-ready behavior.",
     "Phase 8 Automated Re-order Workflow: implemented `PurchaseOrders` system with duplicate prevention and automated triggering in `PharmacyService.adjustStock`. Added `PharmacyReorderService` and `PurchaseOrderRepository`. Developed a new Procurement dashboard in `Pharmacy.jsx` for widescreen tracking of active orders. Verified via `tests/integration/reorder.test.js` (passed).",
-    "Enterprise product compliance: added `idx_auditlogs_tenant_timestamp`, admin routes `ward-backend/routes/adminAudit.js` (list JSON, CSV export, tenant-scoped purge with dryRun), mounted at `/api/admin` in `server.js`. Integration tests `tests/integration/adminAudit.test.js`. Seed user Ward Admin (`admin-1`, PIN 9999, tenant-default). Frontend `AdminAudit.jsx`, route `/admin/audit`, Layout link. Docs: `README.md`, `docs/COMPLIANCE.md`, `ward-backend/.env.example`. Verified `ward-backend npm test` (44 tests), `ward-frontend` build, `npm run codemap`, stress `server5xx: 0` (12s, concurrency 8)."
+    "Enterprise product compliance: added `idx_auditlogs_tenant_timestamp`, admin routes `ward-backend/routes/adminAudit.js` (list JSON, CSV export, tenant-scoped purge with dryRun), mounted at `/api/admin` in `server.js`. Integration tests `tests/integration/adminAudit.test.js`. Seed user Ward Admin (`admin-1`, PIN 9999, tenant-default). Frontend `AdminAudit.jsx`, route `/admin/audit`, Layout link. Docs: `README.md`, `docs/COMPLIANCE.md`, `ward-backend/.env.example`. Verified `ward-backend npm test` (44 tests), `ward-frontend` build, `npm run codemap`, stress `server5xx: 0` (12s, concurrency 8).",
+    "Phase 9 Step 1 (DB Migration): Added WasteRecords table to schema.sql, db.js initDb(), and postgres-migrations/migrations/007_waste_records.sql. Schema: TEXT PK (UUID), tenant-scoped, status workflow PENDING→CONFIRMED→CANCELLED, reason codes EXPIRED/DAMAGED/CONTAMINATED/SPILL/OTHER, witness sign-off fields, FK to PharmacyStock/PharmacyBatches/PharmacyTransactions. Three indexes added. Server restart verified (43 statements migrated). Test baseline unchanged (29 pass, 7 fail pre-existing).",
+    "Phase 9 Completion: Built robust 2-step witness flow. Added `WasteRepository.js` and `WasteService.js` (atomic `withTransaction` for stock deduction, batch FEFO resolution, audit logging). Mounted 5 endpoints in `PharmacyController.js`. Updated `Pharmacy.jsx` with a dedicated 'Waste & Spillage' dashboard (Initiate form, Pending Witness queue, Ledger History). Integrated React Query hooks. Zero backend 5xx errors under stress. CODEMAP updated."
   ],
   "artifacts": [
     "ward-backend:npm-test:passed",
