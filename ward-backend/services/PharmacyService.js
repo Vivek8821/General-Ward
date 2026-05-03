@@ -128,14 +128,23 @@ class PharmacyService {
         batchData.notes || null
       ]);
 
-      // Update aggregate stock totals
-      const newTotalQuantity = item.totalQuantity + batchQty;
-      const newTotalUnits = Math.floor(newTotalQuantity / (item.quantityPerUnit || 1));
-      await tx.run(`
+      // Update aggregate stock totals atomically
+      await tx.runAsync(`
         UPDATE PharmacyStock
-        SET totalUnits = ?, totalQuantity = ?, lastUpdated = CURRENT_TIMESTAMP
+        SET totalQuantity = totalQuantity + ?, 
+            lastUpdated = CURRENT_TIMESTAMP
         WHERE id = ? AND tenantId = ?
-      `, [newTotalUnits, newTotalQuantity, stockId, tenantId]);
+      `, [batchQty, stockId, tenantId]);
+
+      // Re-fetch to sync totalUnits
+      const updatedItem = await tx.getAsync(`SELECT totalQuantity, quantityPerUnit FROM PharmacyStock WHERE id = ?`, [stockId]);
+      const newTotalUnits = Math.floor(updatedItem.totalQuantity / (updatedItem.quantityPerUnit || 1));
+      
+      await tx.runAsync(`
+        UPDATE PharmacyStock
+        SET totalUnits = ?
+        WHERE id = ? AND tenantId = ?
+      `, [newTotalUnits, stockId, tenantId]);
 
       // Record restock transaction
       await pharmacyRepository.recordTransaction({
@@ -169,7 +178,8 @@ class PharmacyService {
    */
   async adjustStock(id, tenantId, amount, type, user, options = {}) {
     const result = await dbAdapter.withTransaction(async (tx) => {
-      const item = await pharmacyRepository.findById(id, tenantId);
+      // 1. Read current state within the transaction context using tx
+      const item = await tx.getAsync(`SELECT * FROM PharmacyStock WHERE id = ? AND tenantId = ?`, [id, tenantId]);
       if (!item) throw new Error('Medication not found');
 
       let batchId = null;
@@ -230,19 +240,29 @@ class PharmacyService {
         }
       }
 
-      // Update aggregate PharmacyStock totals
-      const newTotalQuantity = item.totalQuantity + amount;
+      // Update aggregate PharmacyStock totals atomically
+      await tx.runAsync(`
+        UPDATE PharmacyStock 
+        SET totalQuantity = totalQuantity + ?, 
+            lastUpdated = CURRENT_TIMESTAMP
+        WHERE id = ? AND tenantId = ?
+      `, [amount, id, tenantId]);
+
+      // Re-fetch totalQuantity after atomic update to sync totalUnits
+      const updatedItem = await tx.getAsync(`SELECT totalQuantity, quantityPerUnit FROM PharmacyStock WHERE id = ?`, [id]);
+      const newTotalQuantity = updatedItem.totalQuantity;
+      
       if (newTotalQuantity < 0 && type === 'dispense') {
         console.warn(`[Pharmacy] Negative stock for ${item.name} after dispense`);
       }
 
       const newTotalUnits = Math.floor(Math.max(0, newTotalQuantity) / (item.quantityPerUnit || 1));
       
-      await tx.run(`
+      await tx.runAsync(`
         UPDATE PharmacyStock 
-        SET totalUnits = ?, totalQuantity = ?, lastUpdated = CURRENT_TIMESTAMP
+        SET totalUnits = ?
         WHERE id = ? AND tenantId = ?
-      `, [newTotalUnits, newTotalQuantity, id, tenantId]);
+      `, [newTotalUnits, id, tenantId]);
 
       // Record Transaction with batch traceability
       const txNotes = (options.notes || '') + (batchId ? ` (batchId:${batchId})` : '') + batchInfo;

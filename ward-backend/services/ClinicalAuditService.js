@@ -74,6 +74,21 @@ class ClinicalAuditService {
   }
 
   /**
+   * Records generation of a patient treatment report.
+   */
+  async recordReportGeneration({ tenantId, user, patientId, reportId, reportType }) {
+    const summary = `generated patient treatment report: type=${reportType}`;
+    await this._log({
+      tenantId,
+      user,
+      entityType: 'report',
+      entityId: reportId,
+      action: 'generate',
+      summary,
+    });
+  }
+
+  /**
    * Internal helper to write to the repository.
    */
   async _log({ tenantId, user, entityType, entityId, action, summary }) {

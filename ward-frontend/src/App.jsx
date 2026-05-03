@@ -11,6 +11,7 @@ import HospitalArchiveDetail from './views/HospitalArchiveDetail';
 import Tasks from './views/Tasks';
 import AdminAudit from './views/AdminAudit';
 import Pharmacy from './views/Pharmacy';
+import VerifyReport from './views/VerifyReport';
 import NotFound from './views/NotFound';
 import './App.css';
 
@@ -32,6 +33,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/verify" element={<VerifyReport />} />
             
             <Route element={<ProtectedLayout />}>
               <Route path="/" element={<Dashboard />} />

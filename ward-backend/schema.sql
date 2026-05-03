@@ -1,7 +1,7 @@
 -- Users Table
 CREATE TABLE IF NOT EXISTS Users (
   id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL UNIQUE,
   role TEXT CHECK(role IN ('doctor', 'nurse', 'admin')) NOT NULL,
   tenantId TEXT,
   passwordHash TEXT NOT NULL
@@ -204,6 +204,7 @@ CREATE TABLE IF NOT EXISTS PharmacyStock (
   expiryDate DATE,
   manufacturer TEXT,
   minThreshold INTEGER DEFAULT 10,
+  barcode TEXT,
   lastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(tenantId, name, composition)
 );
@@ -235,6 +236,7 @@ CREATE TABLE IF NOT EXISTS PharmacyBatches (
   manufacturer TEXT,
   receivedDate DATE,
   status TEXT DEFAULT 'active' CHECK(status IN ('active', 'expired', 'recalled', 'depleted')),
+  barcode TEXT,
   notes TEXT,
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   lastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -292,6 +294,18 @@ CREATE TABLE IF NOT EXISTS WasteRecords (
   FOREIGN KEY (pharmacyTransactionId) REFERENCES PharmacyTransactions(id)
 );
 
+-- Barcode Registrations (Audit & History — Phase 10)
+CREATE TABLE IF NOT EXISTS BarcodeRegistrations (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenantId      TEXT    NOT NULL,
+  targetType    TEXT    NOT NULL CHECK(targetType IN ('STOCK','BATCH')),
+  targetId      TEXT    NOT NULL, -- UUID string
+  barcode       TEXT    NOT NULL,
+  registeredBy  TEXT    NOT NULL, -- userId
+  registeredAt  TEXT    NOT NULL DEFAULT (datetime('now')),
+  notes         TEXT
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_tenant_stock ON PurchaseOrders(tenantId, stockId, status);
 CREATE INDEX IF NOT EXISTS idx_wasterecords_tenant ON WasteRecords(tenantId);
@@ -316,3 +330,39 @@ CREATE INDEX IF NOT EXISTS idx_batches_stock ON PharmacyBatches(stockId);
 CREATE INDEX IF NOT EXISTS idx_batches_tenant_expiry ON PharmacyBatches(tenantId, expiryDate ASC);
 CREATE INDEX IF NOT EXISTS idx_batches_lot ON PharmacyBatches(tenantId, batchNumber);
 CREATE INDEX IF NOT EXISTS idx_batches_status ON PharmacyBatches(tenantId, status);
+
+-- Barcode Indexes
+CREATE UNIQUE INDEX IF NOT EXISTS idx_pharmacystock_barcode
+    ON PharmacyStock(barcode) WHERE barcode IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_pharmacybatches_barcode
+    ON PharmacyBatches(barcode) WHERE barcode IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_barcoderegistrations_tenant
+    ON BarcodeRegistrations(tenantId);
+
+CREATE INDEX IF NOT EXISTS idx_barcode_registrations_barcode
+    ON BarcodeRegistrations(barcode, tenantId);
+
+-- ── Patient Treatment Reports ─────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS PatientReports (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenantId        TEXT    NOT NULL,
+  patientId       TEXT    NOT NULL REFERENCES Patients(id),
+  reportType      TEXT    NOT NULL DEFAULT 'FULL_TREATMENT'
+                      CHECK(reportType IN ('FULL_TREATMENT','DISCHARGE_SUMMARY')),
+  reportHash      TEXT    NOT NULL, -- HMAC-SHA256 of report data
+  generatedByUserId TEXT  NOT NULL REFERENCES Users(id),
+  generatedAt     TEXT    NOT NULL DEFAULT (datetime('now')),
+  periodFrom      TEXT    NOT NULL, -- admission date
+  periodTo        TEXT    NOT NULL, -- discharge date or report gen date
+  pdfStoredAt     TEXT,             -- local file path if persisted
+  metadata        TEXT              -- JSON blob: page count, section flags
+);
+
+CREATE INDEX IF NOT EXISTS idx_patientreports_patient
+    ON PatientReports(patientId, tenantId);
+
+CREATE INDEX IF NOT EXISTS idx_patientreports_hash
+    ON PatientReports(reportHash);

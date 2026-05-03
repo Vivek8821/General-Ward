@@ -16,6 +16,7 @@ const escalationRoutes = require('./controllers/EscalationController');
 const tasksRoutes = require('./controllers/TaskController');
 const observationsRoutes = require('./controllers/ObservationController');
 const pharmacyRoutes = require('./controllers/PharmacyController');
+const barcodeRoutes = require('./controllers/BarcodeController');
 const adminAuditRoutes = require('./routes/adminAudit');
 const errorHandler = require('./middleware/error');
 const migratorService = require('./services/MigratorService');
@@ -99,7 +100,9 @@ app.use('/api/escalations', escalationRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/observations', observationsRoutes);
 app.use('/api/pharmacy', pharmacyRoutes);
+app.use('/api/pharmacy', barcodeRoutes);
 app.use('/api/admin', adminAuditRoutes);
+app.use('/api/reports', require('./routes/reports'));
 
 // Health check
 app.get('/', (req, res) => {

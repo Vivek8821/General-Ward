@@ -1,27 +1,73 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
-import { Archive, HeartPulse, Pill, CalendarClock, Activity } from 'lucide-react';
+import { Archive, HeartPulse, Pill, CalendarClock, Activity, FileText, Download, History, RefreshCcw } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function DischargeSummaryTab({ patientId }) {
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchSummary = async () => {
-            try {
-                const data = await api.get(`/patients/${patientId}/discharge-summary`);
-                if (data.dischargeVitals) {
-                    data.dischargeVitals = JSON.parse(data.dischargeVitals);
-                }
-                setSummary(data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
+    const [reports, setReports] = useState([]);
+    const [generating, setGenerating] = useState(false);
+
+    const fetchSummary = async () => {
+        try {
+            const data = await api.get(`/patients/${patientId}/discharge-summary`);
+            if (data.dischargeVitals) {
+                data.dischargeVitals = JSON.parse(data.dischargeVitals);
             }
-        };
+            setSummary(data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchHistory = async () => {
+        try {
+            const data = await api.get(`/reports/patient/${patientId}/history`);
+            setReports(data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    useEffect(() => {
         fetchSummary();
+        fetchHistory();
     }, [patientId]);
+
+    const handleGenerateReport = async () => {
+        setGenerating(true);
+        const tid = toast.loading('Generating comprehensive treatment report...');
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/reports/patient/${patientId}/generate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to generate report');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `PTR-${patientId}-${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            
+            toast.success('Report generated successfully', { id: tid });
+            fetchHistory(); // Refresh history
+        } catch (err) {
+            toast.error(err.message, { id: tid });
+        } finally {
+            setGenerating(false);
+        }
+    };
 
     return (
         <div className="space-y-6 mt-4 animate-in fade-in duration-500">
@@ -37,6 +83,69 @@ export default function DischargeSummaryTab({ patientId }) {
                 </div>
             ) : (
                 <>
+                    <div className="bg-bg-tertiary p-6 rounded-2xl border border-border shadow-sm">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                            <div>
+                                <h3 className="text-lg font-black flex items-center gap-2">
+                                    <FileText className="text-primary w-5 h-5" /> Patient Treatment Reports
+                                </h3>
+                                <p className="text-xs text-text-muted">Generate a tamper-evident clinical summary with QR verification</p>
+                            </div>
+                            <button 
+                                onClick={handleGenerateReport}
+                                disabled={generating}
+                                className="btn btn-primary flex items-center gap-2 py-3 px-6 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+                            >
+                                {generating ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                {generating ? 'Generating PDF...' : 'Generate Treatment Report'}
+                            </button>
+                        </div>
+
+                        {reports.length > 0 ? (
+                            <div className="overflow-hidden rounded-xl border border-border bg-bg-primary">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-bg-tertiary border-b border-border">
+                                        <tr>
+                                            <th className="px-4 py-3 font-bold text-xs uppercase text-text-muted tracking-wider">Date Generated</th>
+                                            <th className="px-4 py-3 font-bold text-xs uppercase text-text-muted tracking-wider">Type</th>
+                                            <th className="px-4 py-3 font-bold text-xs uppercase text-text-muted tracking-wider">Period Covered</th>
+                                            <th className="px-4 py-3 text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {reports.map(r => (
+                                            <tr key={r.id} className="hover:bg-bg-tertiary/50 transition-colors group">
+                                                <td className="px-4 py-3 font-medium text-text-primary">
+                                                    {new Date(r.generatedAt).toLocaleString()}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className="badge badge-info text-[10px] uppercase">{r.reportType.replace('_', ' ')}</span>
+                                                </td>
+                                                <td className="px-4 py-3 text-xs text-text-muted italic">
+                                                    {r.periodFrom} to {r.periodTo}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <button 
+                                                        className="p-2 text-text-muted hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                                                        title="Re-generate this exact report"
+                                                        onClick={handleGenerateReport}
+                                                    >
+                                                        <RefreshCcw size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 bg-bg-primary/50 rounded-xl border border-dashed border-border flex flex-col items-center gap-2">
+                                <History className="w-8 h-8 text-text-muted opacity-20" />
+                                <p className="text-sm font-medium text-text-muted">No previous reports generated for this patient.</p>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="bg-warning/10 border-l-4 border-warning p-5 rounded-r-xl shadow-sm mb-6">
                         <h3 className="text-warning font-black text-lg flex items-center gap-2 mb-2">
                             <Archive className="w-5 h-5" /> Official Discharge Summary

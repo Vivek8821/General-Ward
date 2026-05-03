@@ -46,7 +46,8 @@ const validateStats = (type, data) => {
             // Physiological ranges
             if (sys < 50 || sys > 260) return false;
             if (dia < 30 || dia > 150) return false;
-            if (temperature < 30 || temperature > 43) return false;
+            // Support both Celsius (30-45) and Fahrenheit (86-115)
+            if (temperature < 30 || (temperature > 45 && temperature < 86) || temperature > 115) return false;
             if (heartRate < 20 || heartRate > 250) return false;
 
             if (rr !== null) {

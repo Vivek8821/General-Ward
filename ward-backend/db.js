@@ -83,7 +83,7 @@ const initDb = () => {
         db.run(`
           CREATE TABLE IF NOT EXISTS Users (
             id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
+            name TEXT NOT NULL UNIQUE,
             role TEXT CHECK(role IN ('doctor', 'nurse', 'admin')) NOT NULL,
             tenantId TEXT,
             passwordHash TEXT NOT NULL
@@ -409,6 +409,23 @@ const initDb = () => {
             FOREIGN KEY (pharmacyTransactionId) REFERENCES PharmacyTransactions(id)
           )
         `);
+        
+        // Barcode Extensions (Phase 10)
+        runIgnoreDuplicateColumn(`ALTER TABLE PharmacyStock ADD COLUMN barcode TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE PharmacyBatches ADD COLUMN barcode TEXT`);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS BarcodeRegistrations (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenantId      TEXT    NOT NULL,
+            targetType    TEXT    NOT NULL CHECK(targetType IN ('STOCK','BATCH')),
+            targetId      TEXT    NOT NULL,
+            barcode       TEXT    NOT NULL,
+            registeredBy  TEXT    NOT NULL,
+            registeredAt  TEXT    NOT NULL DEFAULT (datetime('now')),
+            notes         TEXT
+          )
+        `);
 
         // Production Indexes for query performance and cascading speed
         db.run(`CREATE INDEX IF NOT EXISTS idx_dailystats_patient ON DailyStats(patientId);`);
@@ -433,6 +450,30 @@ const initDb = () => {
         db.run(`CREATE INDEX IF NOT EXISTS idx_wasterecords_status ON WasteRecords(status, tenantId);`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_wasterecords_stock ON WasteRecords(stockId, tenantId);`);
         
+        // Barcode Indexes (Phase 10)
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_pharmacystock_barcode ON PharmacyStock(barcode) WHERE barcode IS NOT NULL;`);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_pharmacybatches_barcode ON PharmacyBatches(barcode) WHERE barcode IS NOT NULL;`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_barcoderegistrations_tenant ON BarcodeRegistrations(tenantId);`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_barcoderegistrations_barcode ON BarcodeRegistrations(barcode);`);
+        
+        // 7. PatientReports Table (Phase 11)
+        db.run(`
+          CREATE TABLE IF NOT EXISTS PatientReports (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenantId        TEXT    NOT NULL,
+            patientId       TEXT    NOT NULL,
+            reportType      TEXT    NOT NULL DEFAULT 'FULL_TREATMENT',
+            reportHash      TEXT    NOT NULL,
+            generatedByUserId TEXT  NOT NULL,
+            generatedAt     TEXT    NOT NULL DEFAULT (datetime('now')),
+            periodFrom      TEXT    NOT NULL,
+            periodTo        TEXT    NOT NULL,
+            pdfStoredAt     TEXT,
+            metadata        TEXT
+          )
+        `);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_patientreports_patient ON PatientReports(patientId, tenantId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_patientreports_hash ON PatientReports(reportHash)`);
         resolve();
       } catch (err) {
         reject(err);

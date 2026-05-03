@@ -4,7 +4,9 @@ import { api } from '../../utils/api';
 import { queryKeys } from '../../utils/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 import { ClipboardList, Plus, Save, Syringe, Trash2, CheckCircle, Clock, History, Ban, Edit2, X, AlertCircle } from 'lucide-react';
+import BarcodeScanner from '../BarcodeScanner';
 import toast from 'react-hot-toast';
+
 
 export default function MedsTab({ patientId, readOnly }) {
   const queryClient = useQueryClient();
@@ -14,6 +16,9 @@ export default function MedsTab({ patientId, readOnly }) {
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [marInputs, setMarInputs] = useState({}); // { medId: { time: 'HH:mm', notes: '' } }
   const [adminNotes, setAdminNotes] = useState({}); // { adminId: notes }
+  const [verifyingMedId, setVerifyingMedId] = useState(null);
+  const [verifiedMeds, setVerifiedMeds] = useState({}); // { medId: true }
+
   
   const [formData, setFormData] = useState({
     name: '',
@@ -390,6 +395,23 @@ export default function MedsTab({ patientId, readOnly }) {
                               </button>
                            </div>
                         )}
+                        {isNurse && !isCompleted && !readOnly && !verifiedMeds[med.id] && (
+                           <div className="flex justify-end">
+                              <button 
+                                onClick={() => setVerifyingMedId(med.id)}
+                                className="btn btn-secondary !py-1.5 !px-3 text-xs flex items-center gap-1 border-primary/20 text-primary hover:bg-primary/5"
+                              >
+                                <Layers className="h-3 w-3" /> Verify with Scan
+                              </button>
+                           </div>
+                        )}
+                        {isNurse && !isCompleted && !readOnly && verifiedMeds[med.id] && (
+                           <div className="flex justify-end">
+                              <span className="flex items-center gap-1 text-[10px] font-black text-success uppercase bg-success/10 px-2 py-1 rounded">
+                                <CheckCircle className="w-3 h-3" /> Drug Verified
+                              </span>
+                           </div>
+                        )}
                         {isNurse && isPRN && !readOnly && (
                            <button onClick={() => administerMed(med.id, 'given')} className="btn btn-info !bg-info !text-white !py-1.5 !px-3 text-xs flex items-center gap-1 shadow-sm hover:shadow-md">
                               <Plus className="w-3 h-3"/> Log PRN Dose
@@ -501,6 +523,16 @@ export default function MedsTab({ patientId, readOnly }) {
           )}
         </div>
       )}
+      {verifyingMedId && (
+        <ScanVerificationModal 
+          med={medications.find(m => m.id === verifyingMedId)}
+          onVerified={() => {
+            setVerifiedMeds(prev => ({ ...prev, [verifyingMedId]: true }));
+            setVerifyingMedId(null);
+          }}
+          onCancel={() => setVerifyingMedId(null)}
+        />
+      )}
     </div>
   );
 }
@@ -539,3 +571,59 @@ function MedCard({ med, isDoctor, onStop, readOnly }) {
     </div>
   );
 }
+
+function ScanVerificationModal({ med, onVerified, onCancel }) {
+  const [scanResult, setScanResult] = useState(null);
+
+  const handleResolved = (res) => {
+    if (res.record.name.toLowerCase() === med.name.toLowerCase()) {
+      toast.success("Drug Verified!");
+      onVerified();
+    } else {
+      setScanResult({ error: `Drug Mismatch! Scanned: ${res.record.name}, Expected: ${med.name}` });
+      toast.error("Verification Failed: Drug Mismatch");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+      <div className="bg-bg-primary w-full max-w-lg rounded-2xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold">Medication Verification</h3>
+            <button onClick={onCancel} className="p-2 hover:bg-bg-tertiary rounded-full transition-colors"><X /></button>
+          </div>
+          
+          <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl mb-6">
+            <p className="text-[10px] font-black uppercase text-primary mb-1">Prescribed Drug</p>
+            <p className="font-bold text-lg">{med.name}</p>
+            <p className="text-sm text-text-secondary">{med.dosage} &bull; {med.frequency}</p>
+          </div>
+
+          <BarcodeScanner 
+            onResolved={handleResolved}
+            onUnregistered={() => toast.error("Barcode not recognized in pharmacy system")}
+            placeholder="Scan the drug package..."
+          />
+
+          {scanResult?.error && (
+            <div className="mt-4 p-3 bg-danger/10 border border-danger/20 rounded-lg flex items-center gap-2 text-danger text-xs font-bold">
+              <AlertCircle className="h-4 w-4" />
+              {scanResult.error}
+            </div>
+          )}
+
+          <div className="mt-8 flex gap-3">
+             <button onClick={onCancel} className="btn btn-secondary flex-1">Cancel</button>
+             <button onClick={() => {
+               if (window.confirm("Bypass verification and mark as verified? (This will be logged)")) {
+                 onVerified();
+               }
+             }} className="btn btn-ghost text-[10px] font-bold text-text-muted hover:text-danger">Bypass Scan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

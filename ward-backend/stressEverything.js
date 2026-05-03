@@ -245,7 +245,9 @@ async function authedFetch(token, method, endpointPath, body) {
 }
 
 async function stress() {
+  const barcodePrefix = 'STRESS-BC-' + Date.now();
   let tokenA;
+
   let tokenB;
   let patientsA;
   let patientsB;
@@ -265,8 +267,8 @@ async function stress() {
       patientsA = fixture.patients.A;
       patientsB = fixture.patients.B;
     } else {
-      patientsA = { id: 'p1' };
-      patientsB = { id: 'p2' };
+      patientsA = { id: 'stress-pA' };
+      patientsB = { id: 'stress-pB' };
 
       const doctorA = { id: 'sdA', name: 'StressDocA', role: 'doctor', tenantId: 'tenant-default' };
       const doctorB = { id: 'sdB', name: 'StressDocB', role: 'doctor', tenantId: 'tenant-b' };
@@ -291,6 +293,18 @@ async function stress() {
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/financial`) },
       { weight: 4, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/analytics/replenishment`) },
       { weight: 2, fn: () => authedFetch(tokenA, 'GET', '/pharmacy/orders') },
+      
+      // Barcode / QR Ops
+      { weight: 6, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/scan/${barcodePrefix}${Math.floor(Math.random() * 5)}`) },
+      { 
+        weight: 1, 
+        fn: () => authedFetch(tokenA, 'POST', '/pharmacy/barcode/register', {
+          barcode: `STRESS-REG-${crypto.randomUUID().slice(0,8)}`,
+          targetType: 'STOCK',
+          targetId: 'stress-pharm-A'
+        })
+      },
+
 
       // Writes + Pharmacy Interop
       {
@@ -311,6 +325,14 @@ async function stress() {
             tags: 'stress'
           })
       },
+
+      // Reports (Phase 11)
+      { weight: 1, fn: () => authedFetch(tokenA, 'POST', `/reports/patient/${patientsA.id}/generate`) },
+      { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/reports/patient/${patientsA.id}/history`) },
+      { weight: 3, fn: () => {
+        const payload = encodeURIComponent(JSON.stringify({ rid: 1, pid: 'MRN-REP', t: 'tenant-default', h: '0123456789abcdef', v: 1 }));
+        return authedFetch(null, 'GET', `/reports/verify?payload=${payload}`);
+      }},
 
       // Tenant negative
       { weight: 2, fn: () => authedFetch(tokenA, 'GET', `/patients/${patientsB.id}/stats?type=vital`) }

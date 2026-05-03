@@ -4,9 +4,12 @@ import { api } from '../utils/api';
 import { 
   Package, AlertCircle, Plus, Trash2, Edit3, Check, X, 
   History, TrendingDown, ArrowRightLeft, Info, Search,
-  Filter, MoreHorizontal, ChevronDown, ChevronRight, ShieldAlert, Layers, ShoppingCart, Truck, AlertTriangle, AlertOctagon, CheckSquare, ClipboardX
+  Filter, MoreHorizontal, ChevronDown, ChevronRight, ShieldAlert, Layers, ShoppingCart, Truck, AlertTriangle, AlertOctagon, CheckSquare, ClipboardX,
+  CheckCircle2
 } from 'lucide-react';
+import BarcodeScanner from '../components/BarcodeScanner';
 import toast from 'react-hot-toast';
+
 
 const NOW = new Date();
 const THIRTY_DAYS_LATER = new Date(Date.now() + 30 * 86400000);
@@ -44,6 +47,13 @@ export default function Pharmacy() {
   // Waste Tab State
   const [wasteForm, setWasteForm] = useState({ stockId: '', batchId: '', quantityWasted: '', unit: '', reasonCode: 'EXPIRED', reasonNotes: '' });
   const [selectedStockForWaste, setSelectedStockForWaste] = useState(null);
+  const [isScanningWaste, setIsScanningWaste] = useState(false);
+
+  // Barcode State
+  const [scanResult, setScanResult] = useState(null);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [registrationData, setRegistrationData] = useState({ barcode: '', targetType: 'STOCK', targetId: '', notes: '' });
+
 
   const { data: inventory = [], isLoading } = useQuery({
     queryKey: ['pharmacy', 'inventory'],
@@ -192,13 +202,25 @@ export default function Pharmacy() {
     },
     onError: (err) => toast.error('Cancellation failed: ' + (err.message || 'Error'))
   });
-
   const handleStockSelectForWaste = (e) => {
     const id = e.target.value;
     const item = (Array.isArray(inventory) ? inventory : []).find(i => i.id === id);
     setSelectedStockForWaste(item);
     setWasteForm({ ...wasteForm, stockId: id, batchId: '', unit: item ? item.itemUnit : '' });
   };
+
+  const registerBarcodeMutation = useMutation({
+    mutationFn: (data) => api.post('/pharmacy/barcode/register', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pharmacy', 'inventory'] });
+      setShowRegisterModal(false);
+      setScanResult(null);
+      toast.success('Barcode registered successfully');
+    },
+    onError: (err) => toast.error('Registration failed: ' + (err.message || 'Error'))
+  });
+
+
 
   // ─────────────────────────────────────────────────────────────────
 
@@ -335,6 +357,69 @@ export default function Pharmacy() {
           )}
         </div>
       )}
+
+      {/* Scan & Lookup Panel */}
+      <div className="animate-in slide-in-from-top-2 duration-500">
+        <BarcodeScanner 
+          onResolved={(res) => setScanResult(res)}
+          onUnregistered={(parsed) => {
+            setScanResult({ status: 'UNREGISTERED', parsedFields: parsed });
+            setRegistrationData(prev => ({ ...prev, barcode: parsed.raw }));
+          }}
+        />
+        
+        {scanResult && (
+          <div className="mt-4 animate-in slide-in-from-top-2">
+            {scanResult.status === 'RESOLVED' ? (
+              <div className="card bg-success/5 border-success/20 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-success/10 text-success rounded-full">
+                    <CheckCircle2 className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg">{scanResult.record.name}</h4>
+                    <p className="text-sm text-text-secondary">
+                      {scanResult.matchType === 'BATCH' ? `Batch ${scanResult.record.batchNumber} • Expiry ${new Date(scanResult.record.expiryDate).toLocaleDateString()}` : 'Master Stock Record'}
+                    </p>
+                    <p className="text-xs font-bold text-primary mt-1">
+                      Current Stock: {scanResult.matchType === 'BATCH' ? scanResult.record.quantity : scanResult.record.totalQuantity} {scanResult.record.itemUnit}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setScanResult(null)} className="text-text-muted hover:text-text-primary">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            ) : (
+              <div className="card bg-warning/5 border-warning/20 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-warning/10 text-warning rounded-full">
+                    <AlertCircle className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold">Unregistered Barcode</h4>
+                    <p className="text-xs text-text-secondary font-mono">{scanResult.parsedFields.raw}</p>
+                    {scanResult.parsedFields.gtin && (
+                      <p className="text-[10px] text-text-muted mt-1">GTIN: {scanResult.parsedFields.gtin}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setShowRegisterModal(true)}
+                    className="btn btn-primary !py-1.5 !px-3 text-xs"
+                  >
+                    Register to Drug
+                  </button>
+                  <button onClick={() => setScanResult(null)} className="text-text-muted hover:text-text-primary">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Lot Number Search */}
       <div className="flex gap-2 items-center bg-bg-tertiary p-3 rounded-xl border border-border/50">
@@ -652,6 +737,26 @@ export default function Pharmacy() {
             <h2 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
               <ClipboardX className="w-5 h-5 text-danger" /> Report Waste
             </h2>
+            <div className="card p-6 border-2 border-primary/20 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg flex items-center gap-2"><Plus className="text-primary"/> Initiate Waste Report</h3>
+                <button onClick={() => setIsScanningWaste(true)} className="btn btn-secondary !py-1.5 !px-3 text-xs flex items-center gap-1"><Layers className="h-3 w-3" /> Scan Drug</button>
+              </div>
+              {isScanningWaste && (
+                <div className="mb-4 animate-in fade-in zoom-in-95">
+                  <BarcodeScanner 
+                    onResolved={(res) => {
+                      setIsScanningWaste(false);
+                      const item = res.matchType === 'BATCH' ? (Array.isArray(inventory) ? inventory : []).find(i => i.id === res.record.stockId) : res.record;
+                      setSelectedStockForWaste(item);
+                      setWasteForm({...wasteForm, stockId: item.id, batchId: res.matchType === 'BATCH' ? res.record.id : '', unit: item.itemUnit});
+                    }}
+                    onUnregistered={() => alert('Barcode not found.')}
+                  />
+                  <button onClick={() => setIsScanningWaste(false)} className="mt-2 text-xs text-text-muted hover:underline">Cancel Scan</button>
+                </div>
+              )}
+            </div>
             <form 
               className="card p-5 space-y-4 bg-danger/5 border-danger/20"
               onSubmit={(e) => {
@@ -876,6 +981,47 @@ export default function Pharmacy() {
           </div>
         </div>
       ) : null}
+
+      {/* Registration Modal */}
+      {showRegisterModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-bg-primary w-full max-w-md rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <h3 className="text-xl font-bold mb-1">Register Barcode</h3>
+              <p className="text-sm text-text-secondary mb-6">Link this code to a medication in your inventory.</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold mb-1 uppercase text-text-muted">Barcode String</label>
+                  <input type="text" readOnly className="input-field bg-bg-tertiary font-mono" value={registrationData.barcode} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold mb-1 uppercase text-text-muted">Target Medication</label>
+                  <select 
+                    className="input-field"
+                    value={registrationData.targetId}
+                    onChange={(e) => setRegistrationData({...registrationData, targetId: e.target.value})}
+                  >
+                    <option value="">Select Drug...</option>
+                    {inventory.map(i => (
+                      <option key={i.id} value={i.id}>{i.name} ({i.composition})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold mb-1 uppercase text-text-muted">Notes (Optional)</label>
+                  <input type="text" className="input-field" placeholder="e.g. Manufacturer package code" value={registrationData.notes} onChange={(e) => setRegistrationData({...registrationData, notes: e.target.value})} />
+                </div>
+              </div>
+              <div className="flex gap-3 mt-8">
+                <button onClick={() => setShowRegisterModal(false)} className="btn btn-secondary flex-1">Cancel</button>
+                <button onClick={() => registerBarcodeMutation.mutate(registrationData)} disabled={!registrationData.targetId || registerBarcodeMutation.isPending} className="btn btn-primary flex-1">
+                  {registerBarcodeMutation.isPending ? 'Registering...' : 'Register Code'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

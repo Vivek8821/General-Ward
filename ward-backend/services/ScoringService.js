@@ -19,6 +19,12 @@ class ScoringService {
    * @returns {Object} { score: number, riskLevel: string, status: string }
    */
   calculateNEWS2(vitals) {
+    // Normalize temperature: If > 45, assume Fahrenheit and convert to Celsius for NEWS2 calculation.
+    let temp = vitals.temperature;
+    if (temp !== undefined && temp > 45) {
+      temp = (temp - 32) * 5 / 9;
+    }
+
     let score = 0;
     const warnings = [];
 
@@ -88,8 +94,7 @@ class ScoringService {
     }
 
     // 7. Temperature
-    if (vitals.temperature !== undefined) {
-      const temp = vitals.temperature;
+    if (temp !== undefined) {
       if (temp <= 35.0) score += 3;
       else if (temp >= 35.1 && temp <= 36.0) score += 1;
       else if (temp >= 36.1 && temp <= 38.0) score += 0;

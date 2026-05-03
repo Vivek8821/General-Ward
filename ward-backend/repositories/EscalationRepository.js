@@ -58,6 +58,14 @@ class EscalationRepository {
             return { message: 'Escalation marked as reviewed (Patient not found to update)' };
         });
     }
+
+    async findAllByPatientId(patientId, tenantId) {
+        const tenant = tenantId || 'tenant-default';
+        return dbAdapter.all(
+            `SELECT * FROM Escalations WHERE patientId = ? AND tenantId = ? ORDER BY timestamp DESC`,
+            [patientId, tenant]
+        );
+    }
 }
 
 module.exports = new EscalationRepository();

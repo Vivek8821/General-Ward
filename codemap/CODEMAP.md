@@ -66,6 +66,19 @@ flowchart LR
   - `ward-backend/services/PatientService.js`
   - `ward-backend/repositories/PatientRepository.js`
 
+### 📑 Patient Treatment Report & Verification (Phase 11)
+
+- **UI**: `ward-frontend/src/components/stats/DischargeSummaryTab.jsx`.
+- **Public Verification UI**: `ward-frontend/src/views/VerifyReport.jsx`.
+- **API**: `/api/reports`.
+
+- **Key implementation files**:
+  - `ward-backend/controllers/ReportController.js`
+  - `ward-backend/services/ReportDataService.js` (Aggregation & Hashing)
+  - `ward-backend/services/PDFReportService.js` (PDF Generation)
+  - `ward-backend/services/ReportVerificationService.js` (QR Logic)
+  - `ward-backend/repositories/ReportRepository.js`
+
 ### Patient chart tabs (vitals, diet, sleep, scoring)
 
 - UI: `ward-frontend/src/views/PatientDetail.jsx`, `ward-frontend/src/components/stats/VitalsTab.jsx`, `ward-frontend/src/components/stats/DietTab.jsx`, `ward-frontend/src/components/stats/SleepTab.jsx`.
@@ -84,6 +97,23 @@ flowchart LR
 - Key implementation files:
   - `ward-backend/routes/medications.js`
 
+### Escalations
+
+- UI: `ward-frontend/src/views/PatientDetail.jsx`.
+- API: `/api/patients/:patientId/escalations`.
+
+- Key implementation files:
+  - `ward-backend/routes/escalations.js`
+
+### Pharmacy Barcode & QR
+- UI: `ward-frontend/src/components/BarcodeScanner.jsx`, `ward-frontend/src/views/Pharmacy.jsx` (scan & lookup), `ward-frontend/src/components/stats/MedsTab.jsx` (verification).
+- API: `/api/pharmacy/scan/:code`, `/api/pharmacy/barcode/register`, `/api/pharmacy/stock/:stockId/qr`.
+- Key implementation files:
+  - `ward-backend/controllers/BarcodeController.js`
+  - `ward-backend/services/BarcodeService.js`
+  - `ward-backend/repositories/BarcodeRepository.js`
+  - `ward-backend/utils/gs1Parser.js`
+
 ### History timeline
 
 - UI: `ward-frontend/src/components/stats/HistoryTab.jsx`.
@@ -91,16 +121,6 @@ flowchart LR
 
 - Key implementation files:
   - `ward-backend/routes/history.js`
-
-### Escalations
-
-- UI: `ward-frontend/src/views/PatientDetail.jsx`.
-- API: `/api/patients/:patientId/escalations`.
-
-- Key implementation files:
-  - `ward-backend/controllers/EscalationController.js`
-  - `ward-backend/services/EscalationService.js`
-  - `ward-backend/repositories/EscalationRepository.js`
 
 ### Tasks (ward board)
 
