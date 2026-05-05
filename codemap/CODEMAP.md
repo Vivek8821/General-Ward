@@ -180,7 +180,7 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ## First-party file inventory
 
-**211** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**213** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
 
 <a id="fp-cursorrules"></a>
 ### `.cursorrules`
@@ -922,6 +922,16 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
+<a id="fp-ward-backend-ward-db-shm"></a>
+### `ward-backend/ward.db-shm`
+
+SQLite database artifact (runtime/generated data).
+
+<a id="fp-ward-backend-ward-db-wal"></a>
+### `ward-backend/ward.db-wal`
+
+SQLite database artifact (runtime/generated data).
+
 <a id="fp-ward-frontend-env-example"></a>
 ### `ward-frontend/.env.example`
 
@@ -1239,6 +1249,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 211**, **thirdParty 38175**, **data 2**, total 38388.
+- Inventory counts: **firstParty 213**, **thirdParty 38175**, **data 2**, total 38390.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.
