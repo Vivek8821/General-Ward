@@ -1,0 +1,258 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
+import { queryKeys } from '../../utils/queryKeys';
+import { Activity, Archive, Plus, Search, Users } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+import DashboardStats from './components/DashboardStats';
+import { WelcomeBanner, EscalationAlert } from './components/DashboardAlerts';
+import PatientGrid from './components/PatientGrid';
+import AddPatientModal from './components/AddPatientModal';
+
+const WELCOME_DISMISSED_KEY = 'ward_welcome_dismissed';
+
+export default function DashboardView() {
+  const [showWelcome, setShowWelcome] = useState(() => {
+    try { return !localStorage.getItem(WELCOME_DISMISSED_KEY); } catch { return true; }
+  });
+  const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
+  const [escalated, setEscalated] = useState([]);
+  const [search, setSearch] = useState('');
+  const [isReviewingCases, setIsReviewingCases] = useState(false);
+  const [isAddingPatient, setIsAddingPatient] = useState(false);
+  const [addingPatient, setAddingPatient] = useState(false);
+  const [newPatient, setNewPatient] = useState({
+    name: '',
+    mrn: '',
+    bedNumber: '',
+    dob: '',
+    diagnosis: '',
+    allergies: '',
+    careIntensity: 1
+  });
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const endpoint = viewMode === 'active' ? '/patients' : '/patients/archives';
+
+  const {
+    data: patients = [],
+    isLoading: isPatientsLoading,
+    isError: isPatientsError,
+    refetch: refetchPatients,
+  } = useQuery({
+    queryKey: queryKeys.patients(viewMode),
+    queryFn: async () => api.get(endpoint),
+    enabled: !!user,
+    staleTime: 30 * 1000,
+    refetchInterval: viewMode === 'active' ? 15 * 1000 : false,
+    refetchOnMount: false,
+  });
+
+  useEffect(() => {
+    let intervalId;
+    if (user?.role === 'doctor' && viewMode === 'active') {
+      intervalId = setInterval(async () => {
+        try {
+          const eData = await api.get('/escalations/all');
+          setEscalated(prev => {
+            if (eData.length > prev.length) {
+              const newEscalations = eData.filter(e => !prev.some(p => p.id === e.id));
+              newEscalations.forEach(e => {
+                toast.error(`Case Escalate: ${e.reason}`, {
+                  icon: '🚨',
+                  duration: 6000,
+                });
+              });
+            }
+            return eData;
+          });
+
+        } catch (err) {
+          console.error('Polling error', err);
+        }
+      }, 15000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [user?.role, viewMode]);
+
+  useEffect(() => {
+    if (viewMode === 'archived') setIsReviewingCases(false);
+  }, [viewMode]);
+
+  useEffect(() => {
+    if (user?.role === 'doctor' && viewMode === 'active') {
+      api.get('/escalations/all')
+        .then((eData) => setEscalated(eData))
+        .catch((err) => console.error(err));
+    } else {
+      setEscalated([]);
+    }
+  }, [user?.role, viewMode]);
+
+  const handleSavePatient = async (e) => {
+    e.preventDefault();
+    try {
+      setAddingPatient(true);
+      await api.post('/patients', newPatient);
+      toast.success('Patient added successfully to the ward');
+      setIsAddingPatient(false);
+      setNewPatient({
+        name: '',
+        mrn: '',
+        bedNumber: '',
+        dob: '',
+        diagnosis: '',
+        allergies: '',
+        careIntensity: 1
+      });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.patients(viewMode) });
+    } catch (err) {
+      toast.error(err.message || 'Failed to add patient');
+    } finally {
+      setAddingPatient(false);
+    }
+  };
+
+  const activePatients = patients.filter(p => ['active', 'escalated'].includes(p.status));
+  const escalatedPatients = activePatients.filter(p => p.status === 'escalated');
+  let filteredPatients = patients.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase()) || 
+    p.mrn.toLowerCase().includes(search.toLowerCase()) ||
+    p.bedNumber.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  if (isReviewingCases) {
+      filteredPatients = filteredPatients.filter(p => p.status === 'escalated');
+  }
+
+  const dismissWelcome = () => {
+    setShowWelcome(false);
+    try { localStorage.setItem(WELCOME_DISMISSED_KEY, '1'); } catch { /* ignore */ }
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+
+      <WelcomeBanner showWelcome={showWelcome} dismissWelcome={dismissWelcome} />
+
+      {/* View Toggle */}
+      <div className="flex gap-4 border-b border-border pb-4 w-fit">
+        <button 
+          onClick={() => setViewMode('active')} 
+          className={`flex items-center gap-2 font-semibold px-4 py-2 rounded-lg border transition-colors ${viewMode === 'active' ? 'border-zinc-400 bg-zinc-200 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100' : 'border-transparent text-text-muted hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200'}`}
+        >
+          <Activity size={18} /> Active Ward
+        </button>
+        <button 
+          onClick={() => setViewMode('archived')} 
+          className={`flex items-center gap-2 font-semibold px-4 py-2 rounded-lg border transition-colors ${viewMode === 'archived' ? 'border-zinc-400 bg-zinc-200 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100' : 'border-transparent text-text-muted hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200'}`}
+        >
+          <Archive size={18} /> Hospital Archives
+        </button>
+      </div>
+
+      <EscalationAlert 
+        user={user} 
+        viewMode={viewMode} 
+        escalated={escalated} 
+        isReviewingCases={isReviewingCases} 
+        setIsReviewingCases={setIsReviewingCases} 
+      />
+
+      {viewMode === 'active' && (
+        <DashboardStats 
+          patients={patients} 
+          activePatients={activePatients} 
+          escalatedPatients={escalatedPatients} 
+        />
+      )}
+
+      {/* Patient List Container */}
+      <div className="card overflow-hidden">
+        <div className="bg-bg-tertiary p-6 border-b border-border flex flex-wrap justify-between items-center gap-4">
+          <h2 className="text-xl font-bold">{viewMode === 'active' ? 'Active Patient Roster' : 'Archived Discharge Records'}</h2>
+          
+          <div className="flex items-center gap-4 flex-wrap w-full md:w-auto">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-5 h-5" aria-hidden />
+              <input 
+                type="text" 
+                placeholder="Search MRN, Name, Bed..." 
+                aria-label="Search patients by MRN, name, or bed number"
+                className="input-field !pl-10"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            
+            <button 
+              onClick={() => setIsAddingPatient(true)}
+              className="btn btn-primary whitespace-nowrap"
+            >
+              <Plus className="w-5 h-5" /> Add Patient
+            </button>
+
+            {(user.role === 'doctor' || user.role === 'nurse') && viewMode === 'active' && (
+              <button
+                onClick={() => window.location.href = '/tasks'}
+                className="btn btn-secondary whitespace-nowrap"
+              >
+                My Tasks
+              </button>
+            )}
+
+            {viewMode === 'active' && user.role === 'nurse' && escalatedPatients.length > 0 && (
+              <button
+                onClick={() => setIsReviewingCases(!isReviewingCases)}
+                className={`text-sm px-4 py-2.5 rounded-xl font-semibold transition-colors whitespace-nowrap ${isReviewingCases ? 'btn bg-bg-tertiary text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/40' : 'bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-900 border border-red-800 dark:border-red-900'}`}
+              >
+                {isReviewingCases ? 'View All Patients' : 'Review Escalated Patients'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {isPatientsLoading ? (
+          <div className="p-10 text-center text-text-muted">Loading patients...</div>
+        ) : isPatientsError ? (
+          <div className="p-10 text-center space-y-3">
+            <p className="text-danger font-semibold">Failed to load patients.</p>
+            <button
+              type="button"
+              onClick={() => refetchPatients()}
+              className="btn btn-secondary text-sm"
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredPatients.length === 0 ? (
+          <div className="p-10 text-center text-text-muted flex flex-col items-center justify-center gap-3">
+            <Users size={48} className="opacity-20" />
+            <p className="font-semibold">
+              {isReviewingCases 
+                ? "No pending cases require immediate attention." 
+                : "No patients found matching your search."}
+            </p>
+          </div>
+        ) : (
+          <PatientGrid filteredPatients={filteredPatients} viewMode={viewMode} />
+        )}
+      </div>
+
+      <AddPatientModal 
+        isAddingPatient={isAddingPatient} 
+        setIsAddingPatient={setIsAddingPatient} 
+        handleSavePatient={handleSavePatient} 
+        newPatient={newPatient} 
+        setNewPatient={setNewPatient} 
+        addingPatient={addingPatient} 
+      />
+    </div>
+  );
+}

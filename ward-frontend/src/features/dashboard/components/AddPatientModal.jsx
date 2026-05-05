@@ -1,0 +1,124 @@
+import React from 'react';
+import { Plus } from 'lucide-react';
+
+export default function AddPatientModal({ 
+  isAddingPatient, 
+  setIsAddingPatient, 
+  handleSavePatient, 
+  newPatient, 
+  setNewPatient, 
+  addingPatient 
+}) {
+  if (!isAddingPatient) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-labelledby="add-patient-title">
+      <div className="bg-bg-primary w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-border">
+        <div className="p-6 border-b border-border bg-bg-tertiary">
+          <h2 id="add-patient-title" className="text-2xl font-bold flex items-center gap-2 text-primary">
+            <Plus className="w-6 h-6" aria-hidden /> Add New Patient
+          </h2>
+          <p className="text-text-muted text-sm mt-1">Register a new patient to the active ward roster.</p>
+        </div>
+        <form onSubmit={handleSavePatient} className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Full Name *</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="e.g. John Doe"
+                value={newPatient.name} 
+                onChange={e => setNewPatient({...newPatient, name: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Bed Number *</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="e.g. A-12"
+                value={newPatient.bedNumber} 
+                onChange={e => setNewPatient({...newPatient, bedNumber: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">MRN (Medical Record Number) *</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="e.g. MRN12345"
+                value={newPatient.mrn} 
+                onChange={e => setNewPatient({...newPatient, mrn: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Date of Birth *</label>
+              <input 
+                type="date" 
+                className="input-field" 
+                value={newPatient.dob} 
+                onChange={e => setNewPatient({...newPatient, dob: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Primary Diagnosis *</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="e.g. Hypertension, Diabetes Type 2"
+                value={newPatient.diagnosis} 
+                onChange={e => setNewPatient({...newPatient, diagnosis: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Allergies (if any)</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="e.g. Penicillin, Peanuts"
+                value={newPatient.allergies} 
+                onChange={e => setNewPatient({...newPatient, allergies: e.target.value})} 
+              />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Initial Care Intensity</label>
+              <select 
+                className="input-field" 
+                value={newPatient.careIntensity} 
+                onChange={e => setNewPatient({...newPatient, careIntensity: parseInt(e.target.value)})}
+              >
+                <option value={1}>Level 1 (Basic Care)</option>
+                <option value={2}>Level 2 (Moderate Observation)</option>
+                <option value={3}>Level 3 (High Dependency)</option>
+                <option value={4}>Level 4 (Critical/ICU Step-down)</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-border">
+            <button 
+              type="button" 
+              onClick={() => setIsAddingPatient(false)} 
+              className="btn bg-bg-tertiary border-border border-2 hover:border-primary !py-2"
+              disabled={addingPatient}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className="btn btn-primary !py-2 min-w-[120px]"
+              disabled={addingPatient}
+            >
+              {addingPatient ? 'Saving...' : 'Add Patient'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

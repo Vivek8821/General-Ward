@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const pharmacyRepository = require('../repositories/PharmacyRepository');
+const stockRepo = require('../repositories/pharmacy/StockRepository');
 const purchaseOrderRepository = require('../repositories/PurchaseOrderRepository');
 const pharmacyAnalyticsService = require('./PharmacyAnalyticsService');
 
@@ -10,7 +10,7 @@ class PharmacyReorderService {
    */
   async triggerReorderCheck(tenantId, stockId) {
     try {
-      const item = await pharmacyRepository.findById(stockId, tenantId);
+      const item = await stockRepo.findById(stockId, tenantId);
       if (!item) return;
 
       // Check if stock is below threshold
@@ -65,7 +65,7 @@ class PharmacyReorderService {
    * Scans all inventory for the tenant and generates POs for everything below threshold.
    */
   async checkAllInventory(tenantId) {
-    const items = await pharmacyRepository.listStock(tenantId);
+    const items = await stockRepo.listStock(tenantId);
     const results = [];
     for (const item of items) {
       const orderId = await this.triggerReorderCheck(tenantId, item.id);

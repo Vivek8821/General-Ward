@@ -143,10 +143,35 @@ workflowSection({
 });
 
 workflowSection({
+  title: '📑 Patient Treatment Report & Verification (Phase 11)',
+  ui: ['ward-frontend/src/components/stats/DischargeSummaryTab.jsx'],
+  api: ['/api/reports'],
+  backendKeys: [
+    'ward-backend/controllers/ReportController.js',
+    'ward-backend/services/ReportDataService.js',
+    'ward-backend/services/PDFReportService.js',
+    'ward-backend/services/ReportVerificationService.js',
+    'ward-backend/repositories/ReportRepository.js'
+  ],
+});
+
+workflowSection({
   title: 'Patient chart tabs (vitals, diet, sleep, scoring)',
   ui: ['ward-frontend/src/views/PatientDetail.jsx', 'ward-frontend/src/components/stats/VitalsTab.jsx', 'ward-frontend/src/components/stats/DietTab.jsx', 'ward-frontend/src/components/stats/SleepTab.jsx'],
   api: ['/api/patients/:patientId/stats', '/api/observations/*'],
   backendKeys: ['ward-backend/routes/stats.js', 'ward-backend/routes/observations.js', 'ward-backend/services/ScoringService.js'],
+});
+
+workflowSection({
+  title: 'Pharmacy Barcode & QR',
+  ui: ['ward-frontend/src/components/BarcodeScanner.jsx', 'ward-frontend/src/views/Pharmacy.jsx', 'ward-frontend/src/components/stats/MedsTab.jsx'],
+  api: ['/api/pharmacy/scan/:code', '/api/pharmacy/barcode/register', '/api/pharmacy/stock/:stockId/qr'],
+  backendKeys: [
+    'ward-backend/controllers/BarcodeController.js',
+    'ward-backend/services/BarcodeService.js',
+    'ward-backend/repositories/BarcodeRepository.js',
+    'ward-backend/utils/gs1Parser.js'
+  ],
 });
 
 workflowSection({

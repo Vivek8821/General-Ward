@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const pharmacyService = require('../services/PharmacyService');
+const stockService = require('../services/pharmacy/StockService');
+const batchService = require('../services/pharmacy/BatchService');
+const txService = require('../services/pharmacy/TransactionService');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 
@@ -32,7 +34,7 @@ function validateBatchPayload(body) {
 router.get('/inventory', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const inventory = await pharmacyService.getInventory(tenantId);
+    const inventory = await stockService.getInventory(tenantId);
     res.json(inventory);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -43,7 +45,7 @@ router.get('/inventory', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIE
 router.get('/history', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const history = await pharmacyService.getTransactionHistory(tenantId, req.query.medicationId);
+    const history = await txService.getTransactionHistory(tenantId, req.query.medicationId);
     res.json(history);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -54,7 +56,7 @@ router.get('/history', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT
 router.post('/inventory', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await pharmacyService.addMedication(tenantId, req.body);
+    const result = await stockService.addMedication(tenantId, req.body);
     res.status(201).json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -68,13 +70,12 @@ router.patch('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_AU
     const tenantId = req.user.tenantId || 'tenant-default';
     const { totalUnits, notes } = req.body;
     
-    // We use adjustStock to record this manual adjustment
-    const item = await pharmacyService.getInventory(tenantId).then(inv => inv.find(i => i.id === req.params.id));
+    const item = await stockService.getInventory(tenantId).then(inv => inv.find(i => i.id === req.params.id));
     if (!item) return res.status(404).json({ error: 'Medication not found' });
 
     const diff = (parseInt(totalUnits) * item.quantityPerUnit) - item.totalQuantity;
     
-    const result = await pharmacyService.adjustStock(
+    const result = await txService.adjustStock(
       req.params.id, 
       tenantId, 
       diff, 
@@ -93,7 +94,7 @@ router.patch('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_AU
 router.delete('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await pharmacyService.removeMedication(req.params.id, tenantId);
+    const result = await stockService.removeMedication(req.params.id, tenantId);
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -106,7 +107,7 @@ router.delete('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_A
 router.get('/inventory/:stockId/batches', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const batches = await pharmacyService.getBatches(req.params.stockId, tenantId);
+    const batches = await batchService.getBatches(req.params.stockId, tenantId);
     res.json(batches);
   } catch (err) {
     if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
@@ -123,7 +124,7 @@ router.post('/inventory/:stockId/batches', authenticateToken, authorize(PERMISSI
 
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await pharmacyService.addBatch(req.params.stockId, tenantId, req.body, req.user);
+    const result = await batchService.addBatch(req.params.stockId, tenantId, req.body, req.user);
     res.status(201).json(result);
   } catch (err) {
     if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
@@ -141,7 +142,7 @@ router.post('/batches/:batchId/recall', authenticateToken, authorize(PERMISSIONS
 
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await pharmacyService.recallBatch(req.params.batchId, tenantId, req.user, reason.trim());
+    const result = await batchService.recallBatch(req.params.batchId, tenantId, req.user, reason.trim());
     res.json(result);
   } catch (err) {
     if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
@@ -153,7 +154,7 @@ router.post('/batches/:batchId/recall', authenticateToken, authorize(PERMISSIONS
 router.get('/recall-trace/:batchId', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const trace = await pharmacyService.getRecallTrace(req.params.batchId, tenantId);
+    const trace = await batchService.getRecallTrace(req.params.batchId, tenantId);
     res.json(trace);
   } catch (err) {
     if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
@@ -170,7 +171,7 @@ router.get('/batches/search', authenticateToken, authorizeAny([PERMISSIONS.READ_
 
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const results = await pharmacyService.searchByLotNumber(lotNumber.trim(), tenantId);
+    const results = await batchService.searchByLotNumber(lotNumber.trim(), tenantId);
     res.json(results);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -182,7 +183,7 @@ router.get('/batches/search', authenticateToken, authorizeAny([PERMISSIONS.READ_
 router.post('/inventory/:stockId/sync', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await pharmacyService.syncStockTotals(req.params.stockId, tenantId);
+    const result = await batchService.syncStockTotals(req.params.stockId, tenantId);
     res.json(result);
   } catch (err) {
     if (err.message.includes('not found')) return res.status(404).json({ error: err.message });

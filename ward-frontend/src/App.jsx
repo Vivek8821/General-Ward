@@ -5,12 +5,12 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedLayout } from './components/Layout';
 import Login from './views/Login';
 import Signup from './views/Signup';
-import Dashboard from './views/Dashboard';
+import DashboardView from './features/dashboard/DashboardView';
 import PatientDetail from './views/PatientDetail';
 import HospitalArchiveDetail from './views/HospitalArchiveDetail';
 import Tasks from './views/Tasks';
 import AdminAudit from './views/AdminAudit';
-import Pharmacy from './views/Pharmacy';
+import PharmacyView from './features/pharmacy/PharmacyView';
 import VerifyReport from './views/VerifyReport';
 import NotFound from './views/NotFound';
 import './App.css';
@@ -36,11 +36,11 @@ function App() {
             <Route path="/verify" element={<VerifyReport />} />
             
             <Route element={<ProtectedLayout />}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<DashboardView />} />
               <Route path="/patient/:id" element={<PatientDetail />} />
               <Route path="/archive/:archiveId" element={<HospitalArchiveDetail />} />
               <Route path="/tasks" element={<Tasks />} />
-              <Route path="/pharmacy" element={<Pharmacy />} />
+              <Route path="/pharmacy" element={<PharmacyView />} />
             </Route>
 
             <Route element={<ProtectedLayout allowedRoles={['admin']} />}>

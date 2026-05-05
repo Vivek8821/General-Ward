@@ -1,7 +1,9 @@
 const crypto = require('crypto');
 const dbAdapter = require('../dbAdapter');
 const wasteRepository = require('../repositories/WasteRepository');
-const pharmacyRepository = require('../repositories/PharmacyRepository');
+const stockRepo = require('../repositories/pharmacy/StockRepository');
+const batchRepo = require('../repositories/pharmacy/BatchRepository');
+const txRepo = require('../repositories/pharmacy/TransactionRepository');
 
 const VALID_REASON_CODES = ['EXPIRED', 'DAMAGED', 'CONTAMINATED', 'SPILL', 'OTHER'];
 
@@ -38,7 +40,7 @@ class WasteService {
     }
 
     // ── Verify stock exists and belongs to tenant ───────────────────
-    const stockItem = await pharmacyRepository.findById(stockId, tenantId);
+    const stockItem = await stockRepo.findById(stockId, tenantId);
     if (!stockItem) throw serviceError('Stock item not found', 404);
 
     // ── Verify available stock is sufficient ────────────────────────
@@ -51,7 +53,7 @@ class WasteService {
 
     // ── If batchId provided, verify it belongs to the stockId ───────
     if (batchId) {
-      const batch = await pharmacyRepository.findBatchById(batchId, tenantId);
+      const batch = await batchRepo.findBatchById(batchId, tenantId);
       if (!batch) throw serviceError('Batch not found', 404);
       if (batch.stockId !== stockId) {
         throw serviceError('Batch does not belong to the specified stock item', 400);
@@ -108,7 +110,7 @@ class WasteService {
       let resolvedBatchId = record.batchId;
       if (!resolvedBatchId) {
         // FEFO: earliest-expiry active batch with sufficient stock
-        const fefoCandidate = await pharmacyRepository.getFefoCandidate(record.stockId, tenantId);
+        const fefoCandidate = await batchRepo.getFefoCandidate(record.stockId, tenantId);
         if (!fefoCandidate) {
           throw serviceError('No active batch with available stock found', 400);
         }
@@ -116,7 +118,7 @@ class WasteService {
       }
 
       // Verify batch has sufficient quantity
-      const batch = await pharmacyRepository.findBatchById(resolvedBatchId, tenantId);
+      const batch = await batchRepo.findBatchById(resolvedBatchId, tenantId);
       if (!batch || batch.quantity < record.quantityWasted) {
         throw serviceError(
           `Batch has insufficient quantity (available: ${batch ? batch.quantity : 0}, needed: ${record.quantityWasted})`,
@@ -126,16 +128,16 @@ class WasteService {
 
       // 3. Deduct from batch
       const newBatchQty = batch.quantity - record.quantityWasted;
-      await pharmacyRepository.updateBatchQuantity(resolvedBatchId, tenantId, newBatchQty, tx);
+      await batchRepo.updateBatchQuantity(resolvedBatchId, tenantId, newBatchQty, tx);
 
       // Mark batch as depleted if quantity reaches 0
       if (newBatchQty === 0) {
-        await pharmacyRepository.updateBatchStatus(resolvedBatchId, tenantId, 'depleted', tx);
+        await batchRepo.updateBatchStatus(resolvedBatchId, tenantId, 'depleted', tx);
       }
 
       // 4. Deduct from aggregate PharmacyStock
       // Pattern matches recallBatch in PharmacyService.js (lines 297-304)
-      const item = await pharmacyRepository.findById(record.stockId, tenantId);
+      const item = await stockRepo.findById(record.stockId, tenantId);
       const newTotalQuantity = item.totalQuantity - record.quantityWasted;
       const newTotalUnits = Math.floor(Math.max(0, newTotalQuantity) / (item.quantityPerUnit || 1));
       await tx.run(`
@@ -146,7 +148,7 @@ class WasteService {
 
       // 5. Create PharmacyTransactions row
       const txnId = crypto.randomUUID();
-      await pharmacyRepository.recordTransaction({
+      await txRepo.recordTransaction({
         id: txnId,
         tenantId,
         medicationId: record.stockId,

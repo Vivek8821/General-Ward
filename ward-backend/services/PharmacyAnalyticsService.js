@@ -1,4 +1,5 @@
-const pharmacyRepository = require('../repositories/PharmacyRepository');
+const stockRepo = require('../repositories/pharmacy/StockRepository');
+const txRepo = require('../repositories/pharmacy/TransactionRepository');
 
 class PharmacyAnalyticsService {
   /**
@@ -7,8 +8,8 @@ class PharmacyAnalyticsService {
    * @param {number} daysLookback Default is 7 days
    */
   async getConsumptionStats(tenantId, daysLookback = 7) {
-    const inventory = await pharmacyRepository.listStock(tenantId);
-    const history = await pharmacyRepository.getDispenseHistory(tenantId, daysLookback);
+    const inventory = await stockRepo.listStock(tenantId);
+    const history = await txRepo.getDispenseHistory(tenantId, daysLookback);
 
     // Map history for quick lookup
     const historyMap = history.reduce((acc, curr) => {
@@ -60,7 +61,7 @@ class PharmacyAnalyticsService {
    * Calculates financial impact and valuation of inventory.
    */
   async getFinancialAnalytics(tenantId) {
-    const inventory = await pharmacyRepository.listStock(tenantId);
+    const inventory = await stockRepo.listStock(tenantId);
     const stats = await this.getConsumptionStats(tenantId);
     
     const statsMap = stats.reduce((acc, curr) => {

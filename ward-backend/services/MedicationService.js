@@ -1,7 +1,7 @@
 const medicationRepository = require('../repositories/MedicationRepository');
 const patientRepository = require('../repositories/PatientRepository');
-const pharmacyRepository = require('../repositories/PharmacyRepository');
-const pharmacyService = require('../services/PharmacyService');
+const stockRepo = require('../repositories/pharmacy/StockRepository');
+const txService = require('../services/pharmacy/TransactionService');
 const clinicalAuditService = require('../services/ClinicalAuditService');
 const crypto = require('crypto');
 
@@ -88,9 +88,9 @@ class MedicationService {
     if (status === 'given') {
       try {
         // Find by name in EDL
-        const inventoryItem = await pharmacyRepository.findByName(med.name, tenantId);
+        const inventoryItem = await stockRepo.findByName(med.name, tenantId);
         if (inventoryItem) {
-          const stockResult = await pharmacyService.adjustStock(
+          const stockResult = await txService.adjustStock(
             inventoryItem.id, 
             tenantId, 
             -1, // Deduct 1 itemUnit (e.g. 1 tablet)
