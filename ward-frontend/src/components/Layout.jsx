@@ -1,6 +1,6 @@
 import { Outlet, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck } from 'lucide-react';
+import { LogOut, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck, Archive } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
 export const ProtectedLayout = ({ allowedRoles }) => {
@@ -51,6 +51,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
 
         <nav className="flex flex-col gap-2 flex-1">
           <NavItem to="/" icon={Users} label="Patients" />
+          <NavItem to="/archives" icon={Archive} label="Archives" />
           <NavItem to="/pharmacy" icon={Package} label="Pharmacy" />
           <NavItem to="/tasks" icon={ClipboardList} label="Tasks" />
           

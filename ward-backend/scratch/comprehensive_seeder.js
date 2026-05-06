@@ -53,10 +53,24 @@ async function seed() {
                 [crypto.randomUUID(), p.tenantId, p.id, 'symptom', JSON.stringify(symptoms[0]), recordedBy, new Date(Date.now() - 40000000).toISOString()]);
 
             // 3. Diet
-            const dietLogs = [
-                { meal: 'Breakfast', items: 'Oatmeal, Fruit, Coffee', calories: 350, carbCount: 45, notes: 'Good appetite' },
-                { meal: 'Lunch', items: 'Grilled Chicken Salad', calories: 500, carbCount: 20, notes: 'Finished all' }
-            ];
+            let dietLogs = [];
+            if (p.diagnosis.includes('CHF')) {
+                dietLogs = [
+                    { mealType: 'Breakfast', consumedPercentage: '70', fluidIntakeMl: '120', notes: 'Adhering to fluid restriction' },
+                    { mealType: 'Lunch', consumedPercentage: '100', fluidIntakeMl: '150', notes: 'Fluid intake monitored closely' }
+                ];
+            } else if (p.diagnosis.includes('Gastroenteritis')) {
+                dietLogs = [
+                    { mealType: 'Breakfast', consumedPercentage: '30', fluidIntakeMl: '400', notes: 'Poor appetite, focusing on rehydration' },
+                    { mealType: 'Lunch', consumedPercentage: '50', fluidIntakeMl: '500', notes: 'Tolerating clear liquids better' }
+                ];
+            } else {
+                dietLogs = [
+                    { mealType: 'Breakfast', consumedPercentage: '85', fluidIntakeMl: '250', notes: 'Good appetite' },
+                    { mealType: 'Lunch', consumedPercentage: '100', fluidIntakeMl: '500', notes: 'Finished all' }
+                ];
+            }
+            
             for (const d of dietLogs) {
                 await run("INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     [crypto.randomUUID(), p.tenantId, p.id, 'diet', JSON.stringify(d), recordedBy, new Date(Date.now() - Math.random() * 86400000).toISOString()]);
@@ -64,8 +78,8 @@ async function seed() {
 
             // 4. Sleep
             const sleepLogs = [
-                { duration: '7h 30m', quality: 'Good', interruptions: 1, notes: 'Rested' },
-                { duration: '6h 15m', quality: 'Fair', interruptions: 2, notes: 'Slightly restless' }
+                { hoursSlept: '7.5', quality: 'Good', interrupted: false, nap: false, notes: 'Rested' },
+                { hoursSlept: '6.25', quality: 'Fair', interrupted: true, nap: false, notes: 'Slightly restless' }
             ];
             await run("INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 [crypto.randomUUID(), p.tenantId, p.id, 'sleep', JSON.stringify(sleepLogs[0]), recordedBy, new Date(Date.now() - 86400000).toISOString()]);

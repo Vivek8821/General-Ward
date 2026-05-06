@@ -37,6 +37,7 @@ function App() {
             
             <Route element={<ProtectedLayout />}>
               <Route path="/" element={<DashboardView />} />
+              <Route path="/archives" element={<DashboardView />} />
               <Route path="/patient/:id" element={<PatientDetail />} />
               <Route path="/archive/:archiveId" element={<HospitalArchiveDetail />} />
               <Route path="/tasks" element={<Tasks />} />

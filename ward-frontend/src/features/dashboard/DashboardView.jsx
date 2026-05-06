@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { queryKeys } from '../../utils/queryKeys';
@@ -17,9 +18,11 @@ export default function DashboardView() {
   const [showWelcome, setShowWelcome] = useState(() => {
     try { return !localStorage.getItem(WELCOME_DISMISSED_KEY); } catch { return true; }
   });
-  const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
-  const [escalated, setEscalated] = useState([]);
   const [search, setSearch] = useState('');
+  const [escalated, setEscalated] = useState([]);
+  const location = useLocation();
+  const viewMode = location.pathname === '/archives' ? 'archived' : 'active';
+  
   const [isReviewingCases, setIsReviewingCases] = useState(false);
   const [isAddingPatient, setIsAddingPatient] = useState(false);
   const [addingPatient, setAddingPatient] = useState(false);
@@ -141,21 +144,6 @@ export default function DashboardView() {
 
       <WelcomeBanner showWelcome={showWelcome} dismissWelcome={dismissWelcome} />
 
-      {/* View Toggle */}
-      <div className="flex gap-4 border-b border-border pb-4 w-fit">
-        <button 
-          onClick={() => setViewMode('active')} 
-          className={`flex items-center gap-2 font-semibold px-4 py-2 rounded-lg border transition-colors ${viewMode === 'active' ? 'border-zinc-400 bg-zinc-200 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100' : 'border-transparent text-text-muted hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200'}`}
-        >
-          <Activity size={18} /> Active Ward
-        </button>
-        <button 
-          onClick={() => setViewMode('archived')} 
-          className={`flex items-center gap-2 font-semibold px-4 py-2 rounded-lg border transition-colors ${viewMode === 'archived' ? 'border-zinc-400 bg-zinc-200 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100' : 'border-transparent text-text-muted hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200'}`}
-        >
-          <Archive size={18} /> Hospital Archives
-        </button>
-      </div>
 
       <EscalationAlert 
         user={user} 
@@ -197,15 +185,6 @@ export default function DashboardView() {
             >
               <Plus className="w-5 h-5" /> Add Patient
             </button>
-
-            {(user.role === 'doctor' || user.role === 'nurse') && viewMode === 'active' && (
-              <button
-                onClick={() => window.location.href = '/tasks'}
-                className="btn btn-secondary whitespace-nowrap"
-              >
-                My Tasks
-              </button>
-            )}
 
             {viewMode === 'active' && user.role === 'nurse' && escalatedPatients.length > 0 && (
               <button
