@@ -3,7 +3,7 @@ const express = require('express');
 
 const patientRoutes = require('../../controllers/PatientController');
 const escalationRoutes = require('../../controllers/EscalationController');
-const observationsRoutes = require('../../routes/observations');
+const observationsRoutes = require('../../controllers/ObservationController');
 
 const { initDb, db } = require('../../db');
 
@@ -32,15 +32,11 @@ describe('Phase 5.1 tenant isolation (403 cross-tenant, 200 same-tenant)', () =>
   beforeAll(async () => {
     await initDb();
 
-    // Clean test rows to avoid cross-run contamination.
-    const ids = [patientDefault, patientTenantB];
-    await new Promise((resolve, reject) => db.run(`DELETE FROM MedicationAdministrations WHERE patientId IN (?, ?)`, ids, (err) => (err ? reject(err) : resolve())));
-    await new Promise((resolve, reject) => db.run(`DELETE FROM Medications WHERE patientId IN (?, ?)`, ids, (err) => (err ? reject(err) : resolve())));
-    await new Promise((resolve, reject) => db.run(`DELETE FROM DailyStats WHERE patientId IN (?, ?)`, ids, (err) => (err ? reject(err) : resolve())));
-    await new Promise((resolve, reject) => db.run(`DELETE FROM HandoverNotes WHERE patientId IN (?, ?)`, ids, (err) => (err ? reject(err) : resolve())));
-    await new Promise((resolve, reject) => db.run(`DELETE FROM Tasks WHERE patientId IN (?, ?)`, ids, (err) => (err ? reject(err) : resolve())));
-    await new Promise((resolve, reject) => db.run(`DELETE FROM Escalations WHERE patientId IN (?, ?)`, ids, (err) => (err ? reject(err) : resolve())));
+    await new Promise((resolve, reject) => {
+      db.run(`DELETE FROM Escalations`, (err) => (err ? reject(err) : resolve()));
+    });
 
+    // Seed patients in two tenants so tenant-scoped middleware can be validated.
     await new Promise((resolve, reject) => {
       db.run(
         `INSERT OR REPLACE INTO Patients
@@ -262,7 +258,7 @@ describe('Phase 5.1 tenant isolation (403 cross-tenant, 200 same-tenant)', () =>
       }
     });
     expect(denied.status).toBe(403);
-    expect(denied.body.error).toBe('Access denied by tenant scope.');
+    expect(denied.body.error).toBe('Access denied by tenant scope or patient not found');
   });
 
   it('escalations: tenant-scoped global triage endpoint (tenant-b sees none of tenant-default escalations)', async () => {

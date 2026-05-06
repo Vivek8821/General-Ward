@@ -15,25 +15,46 @@ const ingestLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// POST /api/patients/:patientId/stats
-router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_VITALS]), requireTenantPatient('patientId'), async (req, res) => {
-    const { type, data } = req.body;
-    if (!type || !['vital', 'symptom', 'diet', 'sleep'].includes(type) || !validateStats(type, data)) {
+// POST /api/patients/:patientId/stats OR /api/patients/:patientId/history
+router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_VITALS, PERMISSIONS.WRITE_PATIENT]), requireTenantPatient('patientId'), async (req, res) => {
+    let { type, data } = req.body;
+
+    // Support legacy /history mount where data is the root body
+    const isHistoryMount = req.baseUrl.endsWith('/history');
+    if (isHistoryMount && !type) {
+        type = 'history';
+        data = req.body;
+    }
+
+    if (!type || !['vital', 'symptom', 'diet', 'sleep', 'history'].includes(type) || !validateStats(type, data)) {
         return res.status(400).json({ error: 'Invalid stat type or malformed data', code: 'VALIDATION_ERROR' });
     }
+
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
-        const result = await observationService.recordObservation(req.params.patientId, tenantId, req.user, req.body);
+        const result = await observationService.recordObservation(req.params.patientId, tenantId, req.user, {
+            type,
+            data,
+            timestamp: req.body.timestamp
+        });
         res.status(201).json(result);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// GET /api/patients/:patientId/stats
+// GET /api/patients/:patientId/stats OR /api/patients/:patientId/history
 router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
+        const isHistoryMount = req.baseUrl.endsWith('/history');
+        
+        if (isHistoryMount) {
+            const result = await observationService.getObservations(req.params.patientId, tenantId, { type: 'history', limit: 1 });
+            if (result.length === 0) return res.json({ data: null });
+            return res.json(result[0]);
+        }
+
         const result = await observationService.getObservations(req.params.patientId, tenantId, req.query);
         res.json(result);
     } catch (err) {
@@ -59,32 +80,6 @@ router.get('/trends', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), re
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await observationService.getTrends(req.params.patientId, tenantId);
         res.json(result);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// POST /api/patients/:patientId/history
-router.post('/history', authenticateToken, authorize(PERMISSIONS.WRITE_PATIENT), requireTenantPatient('patientId'), async (req, res) => {
-    try {
-        const tenantId = req.user.tenantId || 'tenant-default';
-        const result = await observationService.recordObservation(req.params.patientId, tenantId, req.user, {
-            type: 'symptom',
-            data: req.body
-        });
-        res.status(201).json({ id: result.id, message: 'History updated' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// GET /api/patients/:patientId/history
-router.get('/history', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res) => {
-    try {
-        const tenantId = req.user.tenantId || 'tenant-default';
-        const result = await observationService.getObservations(req.params.patientId, tenantId, { type: 'symptom', limit: 1 });
-        if (result.length === 0) return res.json({ data: null });
-        res.json(result[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -21,14 +21,37 @@ describe('Patient Treatment Reports Integration', () => {
     app.use('/api/patients', patientRoutes);
 
     // Setup basic fixture
-    await new Promise((resolve) => {
+    await new Promise((resolve, reject) => {
       db.serialize(() => {
-        db.run(`INSERT INTO Users (id, name, role, tenantId, passwordHash) VALUES (?, ?, ?, ?, ?)`,
-          [userId, 'Reporter', 'doctor', tenantId, 'hash'], () => {
-          db.run(`INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [patientId, tenantId, 'Report Patient', 'MRN-REP-' + Date.now(), 'B-1', '1990-01-01', 'Test Dx'], () => {
-            db.run(`INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy) VALUES (?, ?, ?, ?, ?, ?)`,
-              ['stat-1', tenantId, patientId, 'vital', JSON.stringify({ pulse: 70, temp: 37 }), 'Dr. Test'], resolve);
+        db.run('PRAGMA foreign_keys = OFF', (err) => {
+          if (err) return reject(err);
+          db.run(`DELETE FROM PatientReports`, (err) => {
+            if (err) return reject(err);
+            db.run(`DELETE FROM DailyStats`, (err) => {
+              if (err) return reject(err);
+              db.run(`DELETE FROM Users`, (err) => {
+                if (err) return reject(err);
+                db.run(`DELETE FROM Patients`, (err) => {
+                  if (err) return reject(err);
+                  db.run(`INSERT INTO Users (id, name, role, tenantId, passwordHash) VALUES (?, ?, ?, ?, ?)`,
+                    [userId, 'Reporter', 'doctor', tenantId, 'hash'], (err) => {
+                      if (err) return reject(err);
+                      db.run(`INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [patientId, tenantId, 'Report Patient', 'MRN-REP-' + Date.now(), 'B-1', '1990-01-01', 'Test Dx'], (err) => {
+                          if (err) return reject(err);
+                          db.run(`INSERT INTO DailyStats (id, tenantId, patientId, type, data, recordedBy, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                            ['stat-1', tenantId, patientId, 'vital', JSON.stringify({ pulse: 70, temp: 37, bpSystolic: 120, bpDiastolic: 80, respRate: 16, spo2: 98 }), 'Dr. Test', new Date().toISOString()], (err) => {
+                              if (err) return reject(err);
+                              db.run('PRAGMA foreign_keys = ON', (err) => {
+                                if (err) return reject(err);
+                                resolve();
+                              });
+                            });
+                        });
+                    });
+                });
+              });
+            });
           });
         });
       });

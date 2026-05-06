@@ -9,7 +9,7 @@ jest.mock('../../middleware/auth', () => ({
   requireRole: () => (req, res, next) => next()
 }));
 
-const medicationsRouter = require('../../routes/medications');
+const medicationsRouter = require('../../controllers/MedicationController');
 const { initDb, db } = require('../../db');
 
 describe('Medications routes validation', () => {

@@ -10,7 +10,7 @@ jest.mock('../../middleware/auth', () => ({
   requireRole: () => (req, res, next) => next()
 }));
 
-const statsRouter = require('../../routes/stats');
+const statsRouter = require('../../controllers/ObservationController');
 const { initDb, db } = require('../../db');
 
 describe('Stats routes validation and staleness', () => {

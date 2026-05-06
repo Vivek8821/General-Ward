@@ -8,7 +8,8 @@ const STALE_THRESHOLDS_MINUTES = {
   vital: 240,   // 4 hours
   diet: 480,    // 8 hours
   sleep: 1440,  // 24 hours
-  symptom: 720  // 12 hours
+  symptom: 720,  // 12 hours
+  history: 43200 // 30 days
 };
 
 class ObservationService {

@@ -15,15 +15,15 @@ jest.mock('../../middleware/auth', () => {
 });
 
 const { initDb, db } = require('../../db');
-const observationsRoutes = require('../../routes/observations');
+const observationsRoutes = require('../../controllers/ObservationController');
 
 describe('Observation ingestion endpoint (Phase 5.3 backend)', () => {
   beforeAll(async () => {
     await initDb();
     await new Promise((resolve, reject) => {
       db.run(
-        `INSERT OR IGNORE INTO Patients (id, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+        `INSERT OR IGNORE INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
+         VALUES (?, 'tenant-default', ?, ?, ?, ?, ?, ?, ?, 'active')`,
         ['p1', 'Test Patient', 'MRN-TEST-1', '1A', '1990-01-01', 'Test dx', 'None', 1],
         (err) => (err ? reject(err) : resolve())
       );

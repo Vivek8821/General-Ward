@@ -81,6 +81,12 @@ const validateStats = (type, data) => {
             if (!Number.isFinite(sev) || sev < 0 || sev > 10) return false;
             return true;
         }
+        case 'history': {
+            const { description, notes, conditions } = data;
+            // Medical history should at least have a description or notes
+            if (!description && !notes && (!conditions || conditions.length === 0)) return false;
+            return true;
+        }
         default:
             return false;
     }

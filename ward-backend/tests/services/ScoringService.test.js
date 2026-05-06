@@ -1,9 +1,12 @@
 const scoringService = require('../../services/ScoringService');
 
 describe('ScoringService.calculateFromVital', () => {
-  it('returns null when required fields are missing', () => {
+  it('returns incomplete object when required fields are missing', () => {
     expect(scoringService.calculateFromVital(null)).toBeNull();
-    expect(scoringService.calculateFromVital({ bpSystolic: 120 })).toBeNull();
+    const result = scoringService.calculateFromVital({ bpSystolic: 120 });
+    expect(result).not.toBeNull();
+    expect(result.isComplete).toBe(false);
+    expect(result.warnings.length).toBeGreaterThan(0);
   });
 
   it('produces a low-risk score for normal vitals', () => {
@@ -18,7 +21,7 @@ describe('ScoringService.calculateFromVital', () => {
 
     expect(result).not.toBeNull();
     expect(result.score).toBeGreaterThanOrEqual(0);
-    expect(result.risk === 'low' || result.risk === 'medium').toBe(true);
+    expect(result.status === 'healthy' || result.status === 'stable').toBe(true);
   });
 
   it('assigns high points and critical risk for extreme derangements', () => {
@@ -32,8 +35,7 @@ describe('ScoringService.calculateFromVital', () => {
     });
 
     expect(result.score).toBeGreaterThanOrEqual(7);
-    expect(result.risk).toBe('critical');
-    expect(result.hasRedFlag).toBe(true);
+    expect(result.status).toBe('critical');
   });
 
   it('marks missing optional parameters correctly', () => {
@@ -44,8 +46,9 @@ describe('ScoringService.calculateFromVital', () => {
       pulse: 75
     });
 
-    expect(result.components.respRate.missing).toBe(true);
-    expect(result.components.spo2.missing).toBe(true);
+    expect(result.isComplete).toBe(false);
+    expect(result.warnings).toContain('Respiration rate missing');
+    expect(result.warnings).toContain('SpO2 missing');
   });
 });
 

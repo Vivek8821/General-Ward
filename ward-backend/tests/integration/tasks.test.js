@@ -16,7 +16,7 @@ jest.mock('../../middleware/auth', () => {
 
 const { initDb, db } = require('../../db');
 const patientRoutes = require('../../controllers/PatientController');
-const tasksRoutes = require('../../routes/tasks');
+const tasksRoutes = require('../../controllers/TaskController');
 
 describe('Tasks workflow endpoints (Phase 4.2 backend)', () => {
   beforeAll(async () => {
@@ -25,8 +25,8 @@ describe('Tasks workflow endpoints (Phase 4.2 backend)', () => {
     // Seed a patient so FK constraints pass.
     await new Promise((resolve, reject) => {
       db.run(
-        `INSERT OR IGNORE INTO Patients (id, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+        `INSERT OR IGNORE INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
+         VALUES (?, 'tenant-default', ?, ?, ?, ?, ?, ?, ?, 'active')`,
         ['p1', 'Test Patient', 'MRN-TEST-1', '1A', '1990-01-01', 'Test dx', 'None', 1],
         (err) => (err ? reject(err) : resolve())
       );

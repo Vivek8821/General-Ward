@@ -15,7 +15,7 @@ jest.mock('../../middleware/auth', () => {
 });
 
 const { initDb, db } = require('../../db');
-const statsRouter = require('../../routes/stats');
+const statsRouter = require('../../controllers/ObservationController');
 
 describe('Trend analytics endpoint (Phase 5.1)', () => {
   beforeAll(async () => {
