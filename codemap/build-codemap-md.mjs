@@ -88,7 +88,7 @@ lines.push('');
 
 lines.push('## Architecture overview');
 lines.push('');
-lines.push('Monorepo with a **React (Vite) SPA** in `ward-frontend/` and an **Express + SQLite** API in `ward-backend/`. The root `package.json` orchestrates install/run.');
+lines.push('Monorepo with a **React (Vite) SPA** in `ward-frontend/` and an **Express + PostgreSQL/SQLite** API in `ward-backend/`. The root `package.json` orchestrates install/run.');
 lines.push('');
 lines.push('### Component diagram');
 lines.push('');
@@ -102,13 +102,15 @@ lines.push('    EX[Express server.js]');
 lines.push('    MW[auth / audit / tenant middleware]');
 lines.push('    SVC[services]');
 lines.push('    REPO[repositories]');
-lines.push('    DB[(SQLite ward.db)]');
+lines.push('    DBA[db-adapter.js]');
+lines.push('    DB[(PostgreSQL / SQLite)]');
 lines.push('  end');
 lines.push('  FE -->|HTTPS JSON| EX');
 lines.push('  EX --> MW');
 lines.push('  MW --> SVC');
 lines.push('  SVC --> REPO');
-lines.push('  REPO --> DB');
+lines.push('  REPO --> DBA');
+lines.push('  DBA --> DB');
 lines.push('```');
 lines.push('');
 
@@ -223,13 +225,15 @@ lines.push('| --- | --- | --- |');
 lines.push('| Root | `npm run install-all` | Install backend + frontend deps. |');
 lines.push('| Root | `npm start` | Run API and Vite dev server together (concurrently). |');
 lines.push('| ward-backend | `npm test` | Jest + Supertest tests. |');
+lines.push('| ward-backend | `npm run migrate:postgres` | Migrate data from SQLite to PostgreSQL. |');
+lines.push('| ward-backend | `npm run stress:postgres` | Stress test the PostgreSQL backend. |');
 lines.push('| codemap | `node codemap/generate-codemap-index.mjs` | Regenerate `codemap/file-inventory.json`. |');
 lines.push('| codemap | `node codemap/build-codemap-md.mjs` | Regenerate this codemap markdown. |');
 lines.push('');
 
-lines.push('## Data model (SQLite)');
+lines.push('## Data model (PostgreSQL / SQLite)');
 lines.push('');
-lines.push('Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` with a JSON/text `data` payload for multiple types.');
+lines.push('The system supports both PostgreSQL and SQLite backends via `db-adapter.js`. Schema migrations for PostgreSQL are managed in `ward-backend/postgres-migrations/`.');
 lines.push('');
 
 lines.push('### Data files on disk');

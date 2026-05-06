@@ -20,7 +20,7 @@ Generated from `codemap/file-inventory.json` (run `node codemap/generate-codemap
 
 ## Architecture overview
 
-Monorepo with a **React (Vite) SPA** in `ward-frontend/` and an **Express + SQLite** API in `ward-backend/`. The root `package.json` orchestrates install/run.
+Monorepo with a **React (Vite) SPA** in `ward-frontend/` and an **Express + PostgreSQL/SQLite** API in `ward-backend/`. The root `package.json` orchestrates install/run.
 
 ### Component diagram
 
@@ -34,13 +34,15 @@ flowchart LR
     MW[auth / audit / tenant middleware]
     SVC[services]
     REPO[repositories]
-    DB[(SQLite ward.db)]
+    DBA[db-adapter.js]
+    DB[(PostgreSQL / SQLite)]
   end
   FE -->|HTTPS JSON| EX
   EX --> MW
   MW --> SVC
   SVC --> REPO
-  REPO --> DB
+  REPO --> DBA
+  DBA --> DB
 ```
 
 ## Feature workflows
@@ -162,12 +164,14 @@ flowchart LR
 | Root | `npm run install-all` | Install backend + frontend deps. |
 | Root | `npm start` | Run API and Vite dev server together (concurrently). |
 | ward-backend | `npm test` | Jest + Supertest tests. |
+| ward-backend | `npm run migrate:postgres` | Migrate data from SQLite to PostgreSQL. |
+| ward-backend | `npm run stress:postgres` | Stress test the PostgreSQL backend. |
 | codemap | `node codemap/generate-codemap-index.mjs` | Regenerate `codemap/file-inventory.json`. |
 | codemap | `node codemap/build-codemap-md.mjs` | Regenerate this codemap markdown. |
 
-## Data model (SQLite)
+## Data model (PostgreSQL / SQLite)
 
-Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` with a JSON/text `data` payload for multiple types.
+The system supports both PostgreSQL and SQLite backends via `db-adapter.js`. Schema migrations for PostgreSQL are managed in `ward-backend/postgres-migrations/`.
 
 ### Data files on disk
 
@@ -180,7 +184,7 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ## First-party file inventory
 
-**221** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**216** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
 
 <a id="fp-cursorrules"></a>
 ### `.cursorrules`
@@ -422,26 +426,6 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
-<a id="fp-ward-backend-dbadapter-index-js"></a>
-### `ward-backend/dbAdapter/index.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-dbadapter-postgresadapter-js"></a>
-### `ward-backend/dbAdapter/postgresAdapter.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-dbadapter-sqliteadapter-js"></a>
-### `ward-backend/dbAdapter/sqliteAdapter.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-dbadapter-sqlplaceholders-js"></a>
-### `ward-backend/dbAdapter/sqlPlaceholders.js`
-
-First-party source code in the backend/frontend layer.
-
 <a id="fp-ward-backend-implementation-state-json"></a>
 ### `ward-backend/IMPLEMENTATION_STATE.json`
 
@@ -549,11 +533,6 @@ First-party file (open to inspect exact behavior).
 
 <a id="fp-ward-backend-postgres-migrations-planmigrations-js"></a>
 ### `ward-backend/postgres-migrations/planMigrations.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-postgres-js"></a>
-### `ward-backend/postgres.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -1289,6 +1268,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 221**, **thirdParty 38176**, **data 2**, total 38399.
+- Inventory counts: **firstParty 216**, **thirdParty 38176**, **data 2**, total 38394.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.
