@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Hospital } from 'lucide-react';
+import { Hospital, Eye, EyeOff } from 'lucide-react';
 
 /** Default sign-in for dev — matches ward-backend/seed.js (Dr. Smith / 1234). */
 const DEFAULT_LOGIN = import.meta.env.DEV
@@ -13,7 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState(DEFAULT_LOGIN.password);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -79,17 +79,36 @@ export default function Login() {
             <label className="block text-sm font-semibold mb-2 text-text-primary" htmlFor="login-password">
               Password / PIN
             </label>
-            <input
-              id="login-password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              className="input-field"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••"
-            />
+            <div className="relative group">
+              <input
+                id="login-password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                className="input-field pr-12"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••"
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-primary transition-colors cursor-pointer select-none"
+                onMouseDown={() => setShowPassword(true)}
+                onMouseUp={() => setShowPassword(false)}
+                onMouseLeave={() => setShowPassword(false)}
+                onTouchStart={() => setShowPassword(true)}
+                onTouchEnd={() => setShowPassword(false)}
+                aria-label="Hold to show password"
+                title="Hold to peek"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" strokeWidth={1.5} />
+                ) : (
+                  <Eye className="h-5 w-5" strokeWidth={1.5} />
+                )}
+              </button>
+            </div>
           </div>
 
           <button
