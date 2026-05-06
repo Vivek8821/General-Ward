@@ -1,4 +1,4 @@
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 
 const DEFAULT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const DEFAULT_MAX_ATTEMPTS = 5;

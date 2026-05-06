@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 const logger = require('../utils/logger');
 
 class MigratorService {

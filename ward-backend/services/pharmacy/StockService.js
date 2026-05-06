@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const stockRepo = require('../../repositories/pharmacy/StockRepository');
 const batchRepo = require('../../repositories/pharmacy/BatchRepository');
-const dbAdapter = require('../../dbAdapter');
+const dbAdapter = require('../../db-adapter');
 
 class StockService {
   async getInventory(tenantId) {

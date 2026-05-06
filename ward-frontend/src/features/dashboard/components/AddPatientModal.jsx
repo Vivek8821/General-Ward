@@ -99,6 +99,16 @@ export default function AddPatientModal({
                 <option value={4}>Level 4 (Critical/ICU Step-down)</option>
               </select>
             </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Admission Timestamp</label>
+              <input 
+                type="datetime-local" 
+                className="input-field" 
+                value={newPatient.admittedAt || ''} 
+                onChange={e => setNewPatient({...newPatient, admittedAt: e.target.value})} 
+              />
+              <p className="text-[10px] text-text-muted mt-1 italic">Defaults to current time if left blank.</p>
+            </div>
           </div>
           <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-border">
             <button 

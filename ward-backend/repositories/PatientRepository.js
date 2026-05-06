@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 
 async function collectFullPatientSnapshot(db, patientId, tenantId, dischargeSummaryId, dischargedBy) {
   const patient = await db.get(`SELECT * FROM Patients WHERE id = ? AND tenantId = ?`, [patientId, tenantId]);
@@ -52,8 +52,8 @@ class PatientRepository {
   async create(patientData) {
     const tenantId = patientData.tenantId || 'tenant-default';
     await dbAdapter.run(
-      `INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+      `INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status, admittedAt)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
       [
         patientData.id,
         tenantId,
@@ -64,6 +64,7 @@ class PatientRepository {
         patientData.diagnosis,
         patientData.allergies,
         patientData.careIntensity || 1,
+        patientData.admittedAt || new Date().toISOString(),
       ]
     );
     return { ...patientData, status: 'active' };
@@ -182,7 +183,7 @@ class PatientRepository {
     const tenant = tenantId || 'tenant-default';
     const result = await dbAdapter.run(
       `UPDATE Patients
-           SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ?
+           SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ?, admittedAt = ?
            WHERE id = ? AND tenantId = ?`,
       [
         patientData.name,
@@ -191,6 +192,7 @@ class PatientRepository {
         patientData.diagnosis,
         patientData.allergies,
         patientData.careIntensity,
+        patientData.admittedAt,
         id,
         tenant,
       ]

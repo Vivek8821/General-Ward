@@ -47,8 +47,15 @@ export default function PatientCard({ patient, viewMode }) {
           )}
         </div>
 
-        <div className="text-slate-500 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest font-mono mb-3">
-          MRN {patient.mrn}
+        <div className="flex flex-col gap-1 mb-3">
+          <div className="text-slate-500 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest font-mono">
+            MRN {patient.mrn}
+          </div>
+          {patient.admittedAt && (
+            <div className="text-[10px] font-bold text-primary/70 uppercase tracking-tight">
+              Admitted: {new Date(patient.admittedAt).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
         </div>
         
         <div className="bg-bg-tertiary rounded-lg p-3 border border-border/60 mb-3">

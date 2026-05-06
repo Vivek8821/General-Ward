@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const barcodeService = require('../services/BarcodeService');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const rateLimit = require('express-rate-limit');
 
 const scanLimiter = rateLimit({
@@ -10,7 +11,7 @@ const scanLimiter = rateLimit({
   message: { error: 'Too many scans, please slow down' }
 });
 
-router.get('/scan/:barcode', authenticateToken, scanLimiter, async (req, res, next) => {
+router.get('/scan/:barcode', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), scanLimiter, async (req, res, next) => {
   try {
     const { barcode } = req.params;
     const result = await barcodeService.resolveScan(req.user.tenantId, decodeURIComponent(barcode));
@@ -20,7 +21,7 @@ router.get('/scan/:barcode', authenticateToken, scanLimiter, async (req, res, ne
   }
 });
 
-router.post('/barcode/register', authenticateToken, async (req, res, next) => {
+router.post('/register', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), async (req, res, next) => {
   try {
     const result = await barcodeService.registerBarcode(req.user.tenantId, req.body, req.user);
     res.status(201).json(result);
@@ -32,7 +33,7 @@ router.post('/barcode/register', authenticateToken, async (req, res, next) => {
   }
 });
 
-router.get('/stock/:id/qr', authenticateToken, async (req, res, next) => {
+router.get('/qr/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const drugName = req.query.name || 'Drug';
@@ -43,7 +44,7 @@ router.get('/stock/:id/qr', authenticateToken, async (req, res, next) => {
   }
 });
 
-router.get('/barcode/:barcode/history', authenticateToken, requireRole(['admin']), async (req, res, next) => {
+router.get('/history/:barcode', authenticateToken, requireRole(['admin']), async (req, res, next) => {
   try {
     const { barcode } = req.params;
     const history = await barcodeService.getHistory(req.user.tenantId, decodeURIComponent(barcode));

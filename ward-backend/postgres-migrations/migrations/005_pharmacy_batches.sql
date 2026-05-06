@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS PharmacyBatches (
   batchNumber TEXT NOT NULL,
   expiryDate DATE NOT NULL,
   quantity INTEGER NOT NULL DEFAULT 0,
-  costPerUnit REAL DEFAULT 0,
+  costPerUnit NUMERIC(12,4) DEFAULT 0,
   manufacturer TEXT,
   receivedDate DATE,
   status TEXT DEFAULT 'active' CHECK(status IN ('active', 'expired', 'recalled', 'depleted')),

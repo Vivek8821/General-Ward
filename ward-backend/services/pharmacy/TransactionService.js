@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const stockRepo = require('../../repositories/pharmacy/StockRepository');
 const batchRepo = require('../../repositories/pharmacy/BatchRepository');
 const txRepo = require('../../repositories/pharmacy/TransactionRepository');
-const dbAdapter = require('../../dbAdapter');
+const dbAdapter = require('../../db-adapter');
 
 class TransactionService {
   async adjustStock(id, tenantId, amount, type, user, options = {}) {

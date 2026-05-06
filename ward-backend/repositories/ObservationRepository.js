@@ -1,4 +1,4 @@
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 const crypto = require('crypto');
 
 class ObservationRepository {

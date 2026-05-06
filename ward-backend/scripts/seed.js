@@ -25,22 +25,22 @@ async function seed() {
   // Patients - Expanded for Widescreen Demo (12 Total)
   await run('DELETE FROM Patients');
   const patientData = [
-    ['p1', 'tenant-default', 'John Doe', 'MRN001', 'Ward A-1', '1985-05-15', 'Type 2 Diabetes', 'Penicillin', 2, 'active'],
-    ['p2', 'tenant-default', 'Jane Roe', 'MRN002', 'Ward B-3', '1992-11-20', 'Hypertension', 'None', 1, 'active'],
-    ['p3', 'tenant-default', 'Robert Smith', 'MRN003', 'Ward A-2', '1955-03-10', 'Post-Op Hip Replacement', 'Latex', 3, 'active'],
-    ['p4', 'tenant-default', 'Alice Williams', 'MRN004', 'Ward C-1', '1978-08-22', 'Acute Bronchitis', 'None', 2, 'active'],
-    ['p5', 'tenant-default', 'Michael Brown', 'MRN005', 'Ward A-3', '1942-12-05', 'Congestive Heart Failure', 'Sulfa', 4, 'escalated'],
-    ['p6', 'tenant-default', 'Emily Davis', 'MRN006', 'Ward B-1', '2001-01-30', 'Appendicitis', 'Aspirin', 2, 'active'],
-    ['p7', 'tenant-default', 'William Wilson', 'MRN007', 'Ward C-2', '1963-07-12', 'Pneumonia', 'None', 3, 'active'],
-    ['p8', 'tenant-default', 'Sarah Miller', 'MRN008', 'Ward A-4', '1989-04-25', 'Gastroenteritis', 'Dairy', 1, 'active'],
-    ['p9', 'tenant-default', 'James Taylor', 'MRN009', 'Ward B-2', '1950-09-18', 'COPD Exacerbation', 'None', 3, 'active'],
-    ['p10', 'tenant-default', 'Linda Anderson', 'MRN010', 'Ward C-3', '1972-02-14', 'Urinary Tract Infection', 'None', 1, 'active'],
-    ['p11', 'tenant-default', 'David Thomas', 'MRN011', 'Ward A-5', '1982-06-28', 'Dengue Fever', 'None', 2, 'active'],
-    ['p12', 'tenant-default', 'Susan Moore', 'MRN012', 'Ward B-4', '1995-12-03', 'Migraine', 'None', 1, 'active']
+    ['p1', 'tenant-default', 'John Doe', 'MRN001', 'Ward A-1', '1985-05-15', 'Type 2 Diabetes', 'Penicillin', 2, 'active', '2026-05-01T08:30:00Z'],
+    ['p2', 'tenant-default', 'Jane Roe', 'MRN002', 'Ward B-3', '1992-11-20', 'Hypertension', 'None', 1, 'active', '2026-05-02T10:15:00Z'],
+    ['p3', 'tenant-default', 'Robert Smith', 'MRN003', 'Ward A-2', '1955-03-10', 'Post-Op Hip Replacement', 'Latex', 3, 'active', '2026-05-03T14:45:00Z'],
+    ['p4', 'tenant-default', 'Alice Williams', 'MRN004', 'Ward C-1', '1978-08-22', 'Acute Bronchitis', 'None', 2, 'active', '2026-05-04T09:00:00Z'],
+    ['p5', 'tenant-default', 'Michael Brown', 'MRN005', 'Ward A-3', '1942-12-05', 'Congestive Heart Failure', 'Sulfa', 4, 'escalated', '2026-05-04T16:20:00Z'],
+    ['p6', 'tenant-default', 'Emily Davis', 'MRN006', 'Ward B-1', '2001-01-30', 'Appendicitis', 'Aspirin', 2, 'active', '2026-05-05T11:10:00Z'],
+    ['p7', 'tenant-default', 'William Wilson', 'MRN007', 'Ward C-2', '1963-07-12', 'Pneumonia', 'None', 3, 'active', '2026-05-05T13:40:00Z'],
+    ['p8', 'tenant-default', 'Sarah Miller', 'MRN008', 'Ward A-4', '1989-04-25', 'Gastroenteritis', 'Dairy', 1, 'active', '2026-05-05T15:25:00Z'],
+    ['p9', 'tenant-default', 'James Taylor', 'MRN009', 'Ward B-2', '1950-09-18', 'COPD Exacerbation', 'None', 3, 'active', '2026-05-06T08:50:00Z'],
+    ['p10', 'tenant-default', 'Linda Anderson', 'MRN010', 'Ward C-3', '1972-02-14', 'Urinary Tract Infection', 'None', 1, 'active', '2026-05-06T10:30:00Z'],
+    ['p11', 'tenant-default', 'David Thomas', 'MRN011', 'Ward A-5', '1982-06-28', 'Dengue Fever', 'None', 2, 'active', '2026-05-06T12:00:00Z'],
+    ['p12', 'tenant-default', 'Susan Moore', 'MRN012', 'Ward B-4', '1995-12-03', 'Migraine', 'None', 1, 'active', '2026-05-06T14:15:00Z']
   ];
 
   for (const p of patientData) {
-    await run('INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', p);
+    await run('INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status, admittedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', p);
   }
 
   // Seed Initial Vitals for EWS Calculation

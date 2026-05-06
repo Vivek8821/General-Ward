@@ -57,7 +57,7 @@ export default function BarcodeScanner({
     if (!code) return;
     setIsScanning(true);
     try {
-      const response = await api.get(`/pharmacy/scan/${encodeURIComponent(code)}`);
+      const response = await api.get(`/pharmacy/barcodes/scan/${encodeURIComponent(code)}`);
       if (response.status === 'RESOLVED') {
         onResolved?.(response);
       } else {

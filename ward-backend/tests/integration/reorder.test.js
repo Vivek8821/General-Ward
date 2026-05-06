@@ -1,13 +1,13 @@
 const request = require('supertest');
 const { app } = require('../../server');
-const dbAdapter = require('../../dbAdapter');
+const dbAdapter = require('../../db-adapter');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../../middleware/auth');
 
 describe('Pharmacy Automated Reorder Integration', () => {
   const tenantId = 'tenant-reorder-test';
-  const doctor = { id: 'admin1', name: 'Admin Reorder', role: 'admin', tenantId };
+  const doctor = { id: 'admin1', name: 'Admin Reorder', role: 'doctor', tenantId };
   const token = jwt.sign(doctor, JWT_SECRET);
   let stockId;
 

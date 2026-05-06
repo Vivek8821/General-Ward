@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 const wasteRepository = require('../repositories/WasteRepository');
 const stockRepo = require('../repositories/pharmacy/StockRepository');
 const batchRepo = require('../repositories/pharmacy/BatchRepository');

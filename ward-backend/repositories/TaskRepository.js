@@ -1,4 +1,4 @@
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 
 class TaskRepository {
   async create({ id, tenantId, patientId, type, dueAt, status, assignee, notes, createdBy }) {

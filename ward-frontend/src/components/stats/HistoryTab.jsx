@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { FileText, Save, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function HistoryTab({ patientId, readOnly }) {
+export default function HistoryTab({ patientId, readOnly, admittedAt }) {
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -127,6 +127,20 @@ export default function HistoryTab({ patientId, readOnly }) {
       ) : (
         <div className="card p-6 border-l-4 border-l-secondary">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="md:col-span-2 bg-primary/5 p-4 rounded-lg border border-primary/20 flex items-center justify-between">
+                <div>
+                   <h4 className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">Admission Timestamp</h4>
+                   <p className="text-sm font-bold text-text-primary">
+                      {new Date(admittedAt).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at {new Date(admittedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                   </p>
+                </div>
+                <div className="text-right">
+                   <h4 className="text-[10px] uppercase tracking-widest font-black text-text-muted mb-1">Current Stay</h4>
+                   <p className="text-sm font-bold text-text-secondary">
+                      Day {Math.ceil((new Date() - new Date(admittedAt)) / 86400000)}
+                   </p>
+                </div>
+             </div>
              <div>
                 <h4 className="text-sm uppercase tracking-wider font-bold text-text-muted mb-2">Pre-existing Conditions</h4>
                 <p className="whitespace-pre-wrap">{history.conditions || 'None declared.'}</p>

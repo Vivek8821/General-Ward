@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS Patients (
   diagnosis TEXT NOT NULL,
   allergies TEXT,
   careIntensity INTEGER CHECK(careIntensity IN (1, 2, 3, 4)) DEFAULT 1,
-  status TEXT DEFAULT 'active'
+  status TEXT DEFAULT 'active',
+  admittedAt DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Daily Stats Table
@@ -366,3 +367,6 @@ CREATE INDEX IF NOT EXISTS idx_patientreports_patient
 
 CREATE INDEX IF NOT EXISTS idx_patientreports_hash
     ON PatientReports(reportHash);
+
+-- Migration for admittedAt
+ALTER TABLE Patients ADD COLUMN admittedAt DATETIME;

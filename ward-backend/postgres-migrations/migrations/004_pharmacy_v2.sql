@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS PharmacyStock (
   totalQuantity INTEGER DEFAULT 0,
   unit TEXT,
   itemUnit TEXT,
-  costPerUnit REAL DEFAULT 0,
+  costPerUnit NUMERIC(12,4) DEFAULT 0,
   expiryDate DATE,
   manufacturer TEXT,
   minThreshold INTEGER DEFAULT 10,

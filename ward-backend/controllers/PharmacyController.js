@@ -6,6 +6,11 @@ const txService = require('../services/pharmacy/TransactionService');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 
+const {
+    requireTenantPharmacyStock,
+    requireTenantPharmacyBatch,
+} = require('../middleware/tenant');
+
 // ── Input Validators ────────────────────────────────────────────────
 
 function validateBatchPayload(body) {
@@ -53,7 +58,7 @@ router.get('/history', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT
 });
 
 // POST /api/pharmacy/inventory
-router.post('/inventory', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.post('/inventory', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const result = await stockService.addMedication(tenantId, req.body);
@@ -65,7 +70,7 @@ router.post('/inventory', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT),
 
 // PATCH /api/pharmacy/inventory/:id
 // Update stock level (Manual Adjustment)
-router.patch('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.patch('/inventory/:id', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), requireTenantPharmacyStock('id'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const { totalUnits, notes } = req.body;
@@ -91,7 +96,7 @@ router.patch('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_AU
 });
 
 // DELETE /api/pharmacy/inventory/:id
-router.delete('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.delete('/inventory/:id', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), requireTenantPharmacyStock('id'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const result = await stockService.removeMedication(req.params.id, tenantId);
@@ -104,7 +109,7 @@ router.delete('/inventory/:id', authenticateToken, authorize(PERMISSIONS.PURGE_A
 // ── Batch / Lot Tracking Endpoints ──────────────────────────────────
 
 // GET /api/pharmacy/inventory/:stockId/batches
-router.get('/inventory/:stockId/batches', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), async (req, res) => {
+router.get('/inventory/:stockId/batches', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), requireTenantPharmacyStock('stockId'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const batches = await batchService.getBatches(req.params.stockId, tenantId);
@@ -116,7 +121,7 @@ router.get('/inventory/:stockId/batches', authenticateToken, authorizeAny([PERMI
 });
 
 // POST /api/pharmacy/inventory/:stockId/batches
-router.post('/inventory/:stockId/batches', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.post('/inventory/:stockId/batches', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), requireTenantPharmacyStock('stockId'), async (req, res) => {
   const errors = validateBatchPayload(req.body);
   if (errors.length > 0) {
     return res.status(400).json({ error: 'Validation failed', details: errors, code: 'VALIDATION_ERROR' });
@@ -134,7 +139,7 @@ router.post('/inventory/:stockId/batches', authenticateToken, authorize(PERMISSI
 });
 
 // POST /api/pharmacy/batches/:batchId/recall
-router.post('/batches/:batchId/recall', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.post('/batches/:batchId/recall', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), requireTenantPharmacyBatch('batchId'), async (req, res) => {
   const { reason } = req.body;
   if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
     return res.status(400).json({ error: 'Recall reason is required', code: 'VALIDATION_ERROR' });
@@ -151,7 +156,7 @@ router.post('/batches/:batchId/recall', authenticateToken, authorize(PERMISSIONS
 });
 
 // GET /api/pharmacy/recall-trace/:batchId
-router.get('/recall-trace/:batchId', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.get('/recall-trace/:batchId', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), requireTenantPharmacyBatch('batchId'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const trace = await batchService.getRecallTrace(req.params.batchId, tenantId);
@@ -180,7 +185,7 @@ router.get('/batches/search', authenticateToken, authorizeAny([PERMISSIONS.READ_
 
 // POST /api/pharmacy/inventory/:stockId/sync
 // Safety endpoint to recalculate aggregate stock from batch totals
-router.post('/inventory/:stockId/sync', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.post('/inventory/:stockId/sync', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), requireTenantPharmacyStock('stockId'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const result = await batchService.syncStockTotals(req.params.stockId, tenantId);
@@ -255,7 +260,7 @@ router.patch('/orders/:id/status', authenticateToken, async (req, res) => {
 });
 
 // POST /api/pharmacy/orders/check-all - Manual reorder trigger
-router.post('/orders/check-all', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.post('/orders/check-all', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const results = await reorderService.checkAllInventory(tenantId);

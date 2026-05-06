@@ -4,7 +4,7 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('./middleware/auth');
+const { JWT_SECRET } = require('../middleware/auth');
 
 const API_BASE = process.env.WARD_API_BASE || 'http://localhost:3001/api';
 const DB_PATH = process.env.WARD_DB_PATH || path.resolve(__dirname, 'ward.db');
@@ -267,8 +267,8 @@ async function stress() {
       patientsA = fixture.patients.A;
       patientsB = fixture.patients.B;
     } else {
-      patientsA = { id: 'stress-pA' };
-      patientsB = { id: 'stress-pB' };
+      patientsA = { id: 'p1' };
+      patientsB = { id: 'p2' };
 
       const doctorA = { id: 'sdA', name: 'StressDocA', role: 'doctor', tenantId: 'tenant-default' };
       const doctorB = { id: 'sdB', name: 'StressDocB', role: 'doctor', tenantId: 'tenant-b' };
@@ -295,10 +295,10 @@ async function stress() {
       { weight: 2, fn: () => authedFetch(tokenA, 'GET', '/pharmacy/orders') },
       
       // Barcode / QR Ops
-      { weight: 6, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/scan/${barcodePrefix}${Math.floor(Math.random() * 5)}`) },
+      { weight: 6, fn: () => authedFetch(tokenA, 'GET', `/pharmacy/barcodes/scan/${barcodePrefix}${Math.floor(Math.random() * 5)}`) },
       { 
         weight: 1, 
-        fn: () => authedFetch(tokenA, 'POST', '/pharmacy/barcode/register', {
+        fn: () => authedFetch(tokenA, 'POST', '/pharmacy/barcodes/register', {
           barcode: `STRESS-REG-${crypto.randomUUID().slice(0,8)}`,
           targetType: 'STOCK',
           targetId: 'stress-pharm-A'

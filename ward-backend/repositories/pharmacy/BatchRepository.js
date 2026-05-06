@@ -1,4 +1,4 @@
-const dbAdapter = require('../../dbAdapter');
+const dbAdapter = require('../../db-adapter');
 
 class BatchRepository {
   async listBatches(stockId, tenantId) {

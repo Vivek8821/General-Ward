@@ -1,4 +1,4 @@
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 
 class HandoverNotesRepository {
   async create({ id, tenantId, patientId, shift, note, tags, createdBy }) {

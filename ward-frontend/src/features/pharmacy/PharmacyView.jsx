@@ -194,7 +194,7 @@ export default function PharmacyView() {
   });
 
   const registerBarcodeMutation = useMutation({
-    mutationFn: (data) => api.post('/pharmacy/barcode/register', data),
+    mutationFn: (data) => api.post('/pharmacy/barcodes/register', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pharmacy', 'inventory'] });
       setShowRegisterModal(false);

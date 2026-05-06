@@ -256,6 +256,14 @@ export default function PatientDetail() {
                   |
                 </span>
                 <span className="text-slate-500 dark:text-slate-500">Level</span> {patient.careIntensity}
+                {patient.admittedAt && (
+                  <>
+                    <span className="mx-2 text-slate-300 dark:text-slate-600" aria-hidden>
+                      |
+                    </span>
+                    <span className="text-slate-500 dark:text-slate-500">Admitted:</span> {new Date(patient.admittedAt).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </>
+                )}
               </span>
             </div>
             <div className="mt-2 text-sm">
@@ -400,7 +408,7 @@ export default function PatientDetail() {
             {patient.status === 'discharged' && <DischargeSummaryTab patientId={id} />}
           </TabsContent>
           <TabsContent value="history">
-            <HistoryTab patientId={id} readOnly={patient.status === 'discharged'} />
+            <HistoryTab patientId={id} readOnly={patient.status === 'discharged'} admittedAt={patient.admittedAt} />
             <HandoverNotesPanel patientId={id} readOnly={patient.status === 'discharged'} />
           </TabsContent>
           <TabsContent value="vitals">

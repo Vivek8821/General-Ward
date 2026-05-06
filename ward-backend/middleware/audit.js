@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 
 function auditLog(req, res, next) {
   res.on('finish', () => {

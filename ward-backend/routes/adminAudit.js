@@ -1,7 +1,7 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 
 const router = express.Router();
 const MAX_LIMIT = 100;

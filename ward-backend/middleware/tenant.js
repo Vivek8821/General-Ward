@@ -1,4 +1,4 @@
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 
 const DEFAULT_TENANT_ID = 'tenant-default';
 
@@ -110,10 +110,48 @@ function requireTenantEscalation(escalationIdParam = 'escalationId') {
   };
 }
 
+function requireTenantPharmacyStock(stockIdParam = 'id') {
+  return async (req, res, next) => {
+    try {
+      const stockId = req.params[stockIdParam];
+      const tenantId = getTenantId(req);
+
+      if (!stockId) return res.status(400).json({ error: `${stockIdParam} is required` });
+
+      const row = await dbAdapter.get(`SELECT tenantId FROM PharmacyStock WHERE id = ?`, [stockId]);
+      if (!row) return res.status(404).json({ error: 'Medication stock record not found' });
+      if (row.tenantId !== tenantId) return res.status(403).json({ error: 'Access denied by tenant scope.' });
+      next();
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+}
+
+function requireTenantPharmacyBatch(batchIdParam = 'batchId') {
+  return async (req, res, next) => {
+    try {
+      const batchId = req.params[batchIdParam];
+      const tenantId = getTenantId(req);
+
+      if (!batchId) return res.status(400).json({ error: `${batchIdParam} is required` });
+
+      const row = await dbAdapter.get(`SELECT tenantId FROM PharmacyBatches WHERE id = ?`, [batchId]);
+      if (!row) return res.status(404).json({ error: 'Medication batch not found' });
+      if (row.tenantId !== tenantId) return res.status(403).json({ error: 'Access denied by tenant scope.' });
+      next();
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+}
+
 module.exports = {
   requireTenantPatient,
   requireTenantTask,
   requireTenantMedication,
   requireTenantMedicationAdministration,
   requireTenantEscalation,
+  requireTenantPharmacyStock,
+  requireTenantPharmacyBatch,
 };

@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const dbAdapter = require('../dbAdapter');
+const dbAdapter = require('../db-adapter');
 
 /**
  * @param {object} row

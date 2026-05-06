@@ -47,6 +47,15 @@ export default function EditPatientModal({ isOpen, onClose, onSubmit, form, setF
                 required 
               />
             </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Admission Timestamp</label>
+              <input 
+                type="datetime-local" 
+                className="input-field" 
+                value={form.admittedAt ? new Date(form.admittedAt).toISOString().slice(0, 16) : ''} 
+                onChange={e => setForm({...form, admittedAt: e.target.value})} 
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-border">
             <button type="button" onClick={onClose} className="btn btn-secondary !py-2">Cancel</button>

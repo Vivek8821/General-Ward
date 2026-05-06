@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS Patients (
   diagnosis TEXT NOT NULL,
   allergies TEXT,
   careIntensity INTEGER DEFAULT 1 CHECK (careIntensity IN (1, 2, 3, 4)),
-  status TEXT DEFAULT 'active'
+  status TEXT DEFAULT 'active',
+  admittedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS DailyStats (
@@ -36,7 +37,7 @@ CREATE TABLE IF NOT EXISTS DailyStats (
   patientId TEXT NOT NULL REFERENCES Patients(id),
   tenantId TEXT,
   type TEXT NOT NULL CHECK (type IN ('vital', 'symptom', 'diet', 'sleep', 'history')),
-  data TEXT NOT NULL,
+  data JSONB NOT NULL,
   recordedBy TEXT NOT NULL,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -87,7 +88,7 @@ CREATE TABLE IF NOT EXISTS DischargeSummaries (
   reasonForAdmission TEXT NOT NULL,
   duration TEXT NOT NULL,
   medicationsDuringAdmission TEXT,
-  dischargeVitals TEXT NOT NULL,
+  dischargeVitals JSONB NOT NULL,
   dischargeRecommendations TEXT,
   dischargedBy TEXT NOT NULL,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -152,7 +153,7 @@ CREATE TABLE IF NOT EXISTS IdempotencyKeys (
   endpoint TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'processing' CHECK (status IN ('processing', 'completed')),
   responseStatus INTEGER,
-  responseJson TEXT,
+  responseJson JSONB,
   createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (idempotencyKey, tenantId, userId, patientId, endpoint)

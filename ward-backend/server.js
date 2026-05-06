@@ -4,7 +4,6 @@ const helmet = require('helmet');
 const config = require('./config');
 const { auditLog } = require('./middleware/audit');
 const { requestLogger } = require('./middleware/requestLogger');
-const { checkPostgresConnectivity } = require('./postgres');
 const { attachUserIfPresent, authenticateToken } = require('./middleware/auth');
 const { verifyCsrfForMutations } = require('./middleware/csrf');
 
@@ -100,7 +99,7 @@ app.use('/api/escalations', escalationRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/observations', observationsRoutes);
 app.use('/api/pharmacy', pharmacyRoutes);
-app.use('/api/pharmacy', barcodeRoutes);
+app.use('/api/pharmacy/barcodes', barcodeRoutes);
 app.use('/api/admin', adminAuditRoutes);
 app.use('/api/reports', require('./routes/reports'));
 
@@ -119,15 +118,16 @@ app.get('/api/version', (req, res) => {
 
 app.get('/api/health/detail', authenticateToken, async (req, res) => {
     try {
-        const postgres = await checkPostgresConnectivity();
+        const { pool } = require('./db-postgres');
+        await pool.query('SELECT 1');
         res.json({
             status: 'ok',
-            postgres,
+            postgres: { enabled: true, ok: true },
         });
     } catch (err) {
         res.json({
             status: 'ok',
-            postgres: { enabled: false, ok: false },
+            postgres: { enabled: true, ok: false, error: err.message },
         });
     }
 });
@@ -142,16 +142,25 @@ app.use(errorHandler);
 
 async function startServer() {
   const startupMode = process.env.STARTUP_MODE || 'full';
+  const dialect = process.env.DB_DIALECT || 'sqlite';
   
   try {
+    console.log(`🚀 [Protocol] Starting General Ward API [Database: ${dialect}]`);
+    
     if (startupMode === 'perf') {
       console.log('🚀 [Protocol] Starting in PERFORMANCE mode (skipping migrations)');
     } else {
       console.log('📦 [Protocol] Starting in FULL mode (running migrations)');
-      // Run the legacy initialization (backfills, triggers, etc.)
-      await initDb();
-      // Run schema migrations from SQL file
-      await migratorService.runMigrations();
+      
+      if (dialect === 'postgres') {
+        const { initPostgresDb } = require('./db-postgres');
+        await initPostgresDb();
+      } else {
+        // Run the legacy initialization (backfills, triggers, etc.)
+        await initDb();
+        // Run schema migrations from SQL file
+        await migratorService.runMigrations();
+      }
     }
 
     app.listen(PORT, () => {

@@ -171,7 +171,7 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ### Data files on disk
 
-- `ward-backend/scratch/ward.db` — runtime/DB artifact, not app source.
+- `ward-backend/scripts/ward.db` — runtime/DB artifact, not app source.
 - `ward-backend/ward.db` — runtime/DB artifact, not app source.
 
 ## Third-party inventory strategy
@@ -180,7 +180,7 @@ Schema is defined/bootstrapped in `ward-backend/db.js` and uses `DailyStats` wit
 
 ## First-party file inventory
 
-**213** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
+**221** first-party paths. Each entry provides a high-level reason; open the file for authoritative behavior.
 
 <a id="fp-cursorrules"></a>
 ### `.cursorrules`
@@ -282,6 +282,11 @@ Documentation file that explains how to work with this repo/subsystem.
 
 Documentation file that explains how to work with this repo/subsystem.
 
+<a id="fp-docs-postgres-install-md"></a>
+### `docs/POSTGRES_INSTALL.md`
+
+Documentation file that explains how to work with this repo/subsystem.
+
 <a id="fp-docs-runbooks-core-workflow-manual-test-md"></a>
 ### `docs/runbooks/core-workflow-manual-test.md`
 
@@ -332,20 +337,10 @@ Documentation file that explains how to work with this repo/subsystem.
 
 First-party file (open to inspect exact behavior).
 
-<a id="fp-ward-backend-check-lockouts-js"></a>
-### `ward-backend/check_lockouts.js`
+<a id="fp-ward-backend-env-postgres-example"></a>
+### `ward-backend/.env.postgres.example`
 
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-check-schema-js"></a>
-### `ward-backend/check_schema.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-check-users-js"></a>
-### `ward-backend/check_users.js`
-
-First-party source code in the backend/frontend layer.
+First-party file (open to inspect exact behavior).
 
 <a id="fp-ward-backend-codenav-md"></a>
 ### `ward-backend/CODENAV.md`
@@ -404,6 +399,16 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-controllers-taskcontroller-js"></a>
 ### `ward-backend/controllers/TaskController.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-db-adapter-js"></a>
+### `ward-backend/db-adapter.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-db-postgres-js"></a>
+### `ward-backend/db-postgres.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -489,11 +494,6 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-middleware-tenant-js"></a>
 ### `ward-backend/middleware/tenant.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-migratepostgres-js"></a>
-### `ward-backend/migratePostgres.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -657,13 +657,23 @@ First-party source code in the backend/frontend layer.
 
 First-party file (open to inspect exact behavior).
 
-<a id="fp-ward-backend-scratch-seed-pharmacy-js"></a>
-### `ward-backend/scratch/seed_pharmacy.js`
+<a id="fp-ward-backend-scripts-adapter-test-js"></a>
+### `ward-backend/scripts/adapter-test.js`
 
 First-party source code in the backend/frontend layer.
 
-<a id="fp-ward-backend-scratch-stress-test-js"></a>
-### `ward-backend/scratch/stress_test.js`
+<a id="fp-ward-backend-scripts-check-lockouts-js"></a>
+### `ward-backend/scripts/check_lockouts.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-check-schema-js"></a>
+### `ward-backend/scripts/check_schema.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-check-users-js"></a>
+### `ward-backend/scripts/check_users.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -672,8 +682,53 @@ First-party source code in the backend/frontend layer.
 
 First-party source code in the backend/frontend layer.
 
-<a id="fp-ward-backend-seed-js"></a>
-### `ward-backend/seed.js`
+<a id="fp-ward-backend-scripts-comprehensive-seeder-js"></a>
+### `ward-backend/scripts/comprehensive_seeder.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-migrate-sqlite-to-postgres-js"></a>
+### `ward-backend/scripts/migrate-sqlite-to-postgres.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-migratepostgres-js"></a>
+### `ward-backend/scripts/migratePostgres.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-seed-history-js"></a>
+### `ward-backend/scripts/seed_history.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-seed-pharmacy-js"></a>
+### `ward-backend/scripts/seed_pharmacy.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-seed-js"></a>
+### `ward-backend/scripts/seed.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-stress-test-js"></a>
+### `ward-backend/scripts/stress_test.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-stresseverything-js"></a>
+### `ward-backend/scripts/stressEverything.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-test-gs1-js"></a>
+### `ward-backend/scripts/test_gs1.js`
+
+First-party source code in the backend/frontend layer.
+
+<a id="fp-ward-backend-scripts-verify-pw-js"></a>
+### `ward-backend/scripts/verify_pw.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -779,16 +834,6 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-services-wasteservice-js"></a>
 ### `ward-backend/services/WasteService.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-stresseverything-js"></a>
-### `ward-backend/stressEverything.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-test-gs1-js"></a>
-### `ward-backend/test_gs1.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -914,11 +959,6 @@ First-party source code in the backend/frontend layer.
 
 <a id="fp-ward-backend-utils-validation-js"></a>
 ### `ward-backend/utils/validation.js`
-
-First-party source code in the backend/frontend layer.
-
-<a id="fp-ward-backend-verify-pw-js"></a>
-### `ward-backend/verify_pw.js`
 
 First-party source code in the backend/frontend layer.
 
@@ -1249,6 +1289,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 213**, **thirdParty 38176**, **data 2**, total 38391.
+- Inventory counts: **firstParty 221**, **thirdParty 38176**, **data 2**, total 38399.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.
