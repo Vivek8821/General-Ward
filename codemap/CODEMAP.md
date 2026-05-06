@@ -1249,6 +1249,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 213**, **thirdParty 38175**, **data 2**, total 38390.
+- Inventory counts: **firstParty 213**, **thirdParty 38176**, **data 2**, total 38391.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.
