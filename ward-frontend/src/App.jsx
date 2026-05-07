@@ -35,12 +35,15 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/verify" element={<VerifyReport />} />
             
-            <Route element={<ProtectedLayout />}>
+            <Route element={<ProtectedLayout allowedRoles={['doctor', 'nurse', 'admin']} />}>
               <Route path="/" element={<DashboardView />} />
               <Route path="/archives" element={<DashboardView />} />
               <Route path="/patient/:id" element={<PatientDetail />} />
               <Route path="/archive/:archiveId" element={<HospitalArchiveDetail />} />
               <Route path="/tasks" element={<Tasks />} />
+            </Route>
+
+            <Route element={<ProtectedLayout allowedRoles={['pharmacist', 'admin']} />}>
               <Route path="/pharmacy" element={<PharmacyView />} />
             </Route>
 

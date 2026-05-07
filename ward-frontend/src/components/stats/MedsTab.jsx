@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../utils/api';
 import { queryKeys } from '../../utils/queryKeys';
 import { useAuth } from '../../context/AuthContext';
-import { ClipboardList, Plus, Save, Syringe, Trash2, CheckCircle, Clock, History, Ban, Edit2, X, AlertCircle } from 'lucide-react';
+import { ClipboardList, Plus, Save, Syringe, Trash2, CheckCircle, Clock, History, Ban, Edit2, X, AlertCircle, Layers } from 'lucide-react';
 import BarcodeScanner from '../BarcodeScanner';
 import toast from 'react-hot-toast';
 

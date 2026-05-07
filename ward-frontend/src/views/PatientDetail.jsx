@@ -288,7 +288,7 @@ export default function PatientDetail() {
                <>
                  <button onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 w-full md:w-auto">Edit Info</button>
                  {user.role === 'nurse' && patient.status !== 'escalated' && (
-                   <button onClick={openEscalateModal} className="btn btn-danger !py-2 w-full md:w-auto flex justify-center">
+                   <button onClick={() => setEscalateModalOpen(true)} className="btn btn-danger !py-2 w-full md:w-auto flex justify-center">
                      <AlertTriangle className="w-4 h-4" /> Escalate Case
                    </button>
                  )}

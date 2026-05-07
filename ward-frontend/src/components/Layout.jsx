@@ -50,11 +50,16 @@ export const ProtectedLayout = ({ allowedRoles }) => {
         </div>
 
         <nav className="flex flex-col gap-2 flex-1">
-          <NavItem to="/" icon={Users} label="Patients" />
-          <NavItem to="/archives" icon={Archive} label="Archives" />
-          <NavItem to="/pharmacy" icon={Package} label="Pharmacy" />
-          <NavItem to="/tasks" icon={ClipboardList} label="Tasks" />
-          
+          {user.role !== 'pharmacist' && (
+            <>
+              <NavItem to="/" icon={Users} label="Patients" />
+              <NavItem to="/archives" icon={Archive} label="Archives" />
+              <NavItem to="/tasks" icon={ClipboardList} label="Tasks" />
+            </>
+          )}
+          {(user.role === 'pharmacist' || user.role === 'admin') && (
+            <NavItem to="/pharmacy" icon={Package} label="Pharmacy" />
+          )}
           {user.role === 'admin' && (
             <NavItem to="/admin/audit" icon={ShieldCheck} label="Audit Log" />
           )}

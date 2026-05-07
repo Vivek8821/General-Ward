@@ -83,9 +83,9 @@ export const api = {
       },
     });
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       const errBody = (await response.json().catch(() => ({}))) as ApiErrorResponse;
-      const msg = errBody?.error || errBody?.message || 'Access denied';
+      const msg = errBody?.error || errBody?.message || 'Session expired';
 
       if (window.location.pathname !== '/login') {
         toast.error(msg);
@@ -100,6 +100,14 @@ export const api = {
       // (We do not toast here; Login.jsx shows the message from the caught error.)
       const err = new Error(msg) as Error & { status?: number };
       err.status = response.status;
+      throw err;
+    }
+
+    if (response.status === 403) {
+      const errBody = (await response.json().catch(() => ({}))) as ApiErrorResponse;
+      const msg = errBody?.error || errBody?.message || 'Access denied';
+      const err = new Error(msg) as Error & { status?: number };
+      err.status = 403;
       throw err;
     }
 

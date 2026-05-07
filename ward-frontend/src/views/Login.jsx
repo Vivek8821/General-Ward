@@ -23,8 +23,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(username, password);
-      navigate('/');
+      const data = await login(username, password);
+      navigate(data?.user?.role === 'pharmacist' ? '/pharmacy' : '/');
     } catch (err) {
       setError(err.message || 'Invalid credentials');
     } finally {
