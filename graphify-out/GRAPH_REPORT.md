@@ -1,11 +1,11 @@
-# Graph Report - /home/vn/Documents/General-Ward  (2026-05-07)
+# Graph Report - ward-backend  (2026-05-07)
 
 ## Corpus Check
-- 201 files · ~0 words
+- 118 files · ~42,439 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 809 nodes · 899 edges · 148 communities (92 shown, 56 thin omitted)
+- 827 nodes · 917 edges · 151 communities (93 shown, 58 thin omitted)
 - Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 88 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
@@ -18,7 +18,7 @@
 - [[_COMMUNITY_PDF Report Generation|PDF Report Generation]]
 - [[_COMMUNITY_Batch Management Repository|Batch Management Repository]]
 - [[_COMMUNITY_Patient Repository & Snapshot|Patient Repository & Snapshot]]
-- [[_COMMUNITY_DB Migration Pipeline|DB Migration Pipeline]]
+- [[_COMMUNITY_Medication Repository|Medication Repository]]
 - [[_COMMUNITY_Observation Repository|Observation Repository]]
 - [[_COMMUNITY_Patient Service|Patient Service]]
 - [[_COMMUNITY_Test Helpers & Fixtures|Test Helpers & Fixtures]]
@@ -48,7 +48,7 @@
 - [[_COMMUNITY_Report Controller|Report Controller]]
 - [[_COMMUNITY_Report Repository|Report Repository]]
 - [[_COMMUNITY_Transaction Repository|Transaction Repository]]
-- [[_COMMUNITY_Escalation Service|Escalation Service]]
+- [[_COMMUNITY_Report Data & Hash|Report Data & Hash]]
 - [[_COMMUNITY_Auth Middleware|Auth Middleware]]
 - [[_COMMUNITY_Codemap Build Script|Codemap Build Script]]
 - [[_COMMUNITY_GS1 Barcode Parser|GS1 Barcode Parser]]
@@ -57,13 +57,14 @@
 - [[_COMMUNITY_NEWS2 Scoring Service|NEWS2 Scoring Service]]
 - [[_COMMUNITY_Handover Notes Service|Handover Notes Service]]
 - [[_COMMUNITY_Transaction Service|Transaction Service]]
-- [[_COMMUNITY_Logger|Logger]]
-- [[_COMMUNITY_Medication Controller|Medication Controller]]
+- [[_COMMUNITY_SQLite-Postgres Verification|SQLite-Postgres Verification]]
+- [[_COMMUNITY_DB Adapter Module|DB Adapter Module]]
 - [[_COMMUNITY_Auth Repository|Auth Repository]]
 - [[_COMMUNITY_Migration Service|Migration Service]]
 - [[_COMMUNITY_Auth Service|Auth Service]]
 - [[_COMMUNITY_Report Verification Service|Report Verification Service]]
 - [[_COMMUNITY_Admin Audit Tests|Admin Audit Tests]]
+- [[_COMMUNITY_RBAC Middleware|RBAC Middleware]]
 - [[_COMMUNITY_Pharmacy Seed Data|Pharmacy Seed Data]]
 - [[_COMMUNITY_Escalation Feature|Escalation Feature]]
 - [[_COMMUNITY_DB Adapter Internals|DB Adapter Internals]]
@@ -73,18 +74,20 @@
 - [[_COMMUNITY_Migration Service|Migration Service]]
 - [[_COMMUNITY_Auth Service|Auth Service]]
 - [[_COMMUNITY_Report Verification Service|Report Verification Service]]
+- [[_COMMUNITY_Admin Audit Tests|Admin Audit Tests]]
 - [[_COMMUNITY_Escalation Feature|Escalation Feature]]
-- [[_COMMUNITY_Validation Utilities|Validation Utilities]]
 - [[_COMMUNITY_Pharmacy Controller|Pharmacy Controller]]
 - [[_COMMUNITY_Frontend SPA Entry|Frontend SPA Entry]]
-- [[_COMMUNITY_Clinical Audit Tests|Clinical Audit Tests]]
+- [[_COMMUNITY_Auth Cookie Tests|Auth Cookie Tests]]
 - [[_COMMUNITY_Schema Init|Schema Init]]
+- [[_COMMUNITY_Request Logger|Request Logger]]
+- [[_COMMUNITY_Error Handler|Error Handler]]
+- [[_COMMUNITY_TypeScript Env Types|TypeScript Env Types]]
 - [[_COMMUNITY_Test Setup|Test Setup]]
 - [[_COMMUNITY_Reports Route|Reports Route]]
 - [[_COMMUNITY_Escalations Route|Escalations Route]]
 - [[_COMMUNITY_Handover Controller|Handover Controller]]
 - [[_COMMUNITY_Task Controller|Task Controller]]
-- [[_COMMUNITY_Barcode Controller|Barcode Controller]]
 - [[_COMMUNITY_Community 138 – ward-backendservicesTaskServ|Community 138 – ward-backend/services/TaskServ]]
 - [[_COMMUNITY_Community 139 – ward-backendrepositoriesTask|Community 139 – ward-backend/repositories/Task]]
 - [[_COMMUNITY_Community 140 – ward-backendmiddlewaretenant|Community 140 – ward-backend/middleware/tenant]]
@@ -120,13 +123,7 @@
 - `SESSION_INIT.md (Session Initiation Sequence)` --references--> `ward-backend/middleware/auth.js`  [EXTRACTED]
   cursorrules/SESSION_INIT.md → ward-backend/middleware/auth.js
 
-## Hyperedges (group relationships)
-- **Postgres CI Smoke Pipeline: Service → Migration → Smoke Test** — service_postgres, step_apply_postgres_migrations, step_postgres_smoke_test [EXTRACTED 1.00]
-- **Postgres Connection Config Keys (PG_*)** — env_pg_host, env_pg_port, env_pg_database, env_pg_user, env_pg_password, env_pg_pool_max, env_pg_pool_idle_timeout, env_pg_pool_connection_timeout [EXTRACTED 1.00]
-- **Full CI Pipeline: Security Audit + Backend Tests + Frontend QA** — job_security_audit, job_backend_tests, job_frontend_qa [EXTRACTED 1.00]
-- **Backend Auth and Server Config (JWT_SECRET, NODE_ENV, PORT, CORS_ORIGIN)** — env_jwt_secret, env_node_env, env_port, env_cors_origin [INFERRED 0.85]
-
-## Communities (148 total, 56 thin omitted)
+## Communities (151 total, 58 thin omitted)
 
 ### Community 0 - "Pharmacy & Inventory UI"
 Cohesion: 0.05
@@ -141,32 +138,32 @@ Cohesion: 0.09
 Nodes (30): ClinicalChangeLog (DB table + audit), Cookie Sessions & CSRF (Phase C), DB Adapter Pattern (SQLite/Postgres), Enterprise Hardening Detailed Plan, Enterprise Hardening Progress, ward-frontend/src/utils/queryKeys.ts, TanStack Query Integration (Phase E), GDPR Data Deletion Endpoint (future) (+22 more)
 
 ### Community 3 - "Launch Monitoring & Feature Flags"
+Cohesion: 0.11
+Nodes (28): PG Function: set_default_tenant(), Migration 002: Application Schema, Migration 003: Hospital Archives, Migration 004: Pharmacy V2 Schema, Migration 005: Pharmacy Batches, Migration 006: Purchase Orders, Migration 007: Waste Records, Migration 008: User Uniqueness Constraint (+20 more)
+
+### Community 4 - "Dashboard & Patient UI Components"
 Cohesion: 0.1
 Nodes (24): AlertEngine.js, Alerts (DB table), Launch Monitoring & Contingency Detailed Plan, Launch Monitoring & Contingency Progress, FeatureFlagRepository.js, Feature Flags / Kill Switches (Phase C1), FeatureFlags (DB table), metricsCollector.js (in-memory metrics) (+16 more)
 
-### Community 4 - "Dashboard & Patient UI Components"
-Cohesion: 0.12
-Nodes (19): Database Adapter, db.js (Database Initialization), Docker Compose Postgres Configuration, PostgreSQL Installation and Configuration Guide, Config Key: DB_DIALECT, Config Key: PG_DATABASE, Config Key: PG_HOST, Config Key: PG_PASSWORD (+11 more)
-
 ### Community 5 - "PDF Report Generation"
-Cohesion: 0.18
-Nodes (19): PG Function: set_default_tenant(), Migration 002: Application Schema, Migration 003: Hospital Archives, Migration 008: User Uniqueness Constraint, DB Table: AuditLogs, DB Table: AuthLoginAttempts, DB Table: ClinicalChangeLog, DB Table: DailyStats (+11 more)
+Cohesion: 0.17
+Nodes (5): allergiesHasRisk(), formatAllergiesMutedLabel(), HospitalArchiveDetail(), parseJsonField(), PatientDetail()
 
 ### Community 6 - "Batch Management Repository"
 Cohesion: 0.22
 Nodes (9): AuthProvider(), useAuth(), DietTab(), HandoverNotesPanel(), HistoryTab(), SleepTab(), Login(), NotFound() (+1 more)
 
 ### Community 7 - "Patient Repository & Snapshot"
-Cohesion: 0.17
-Nodes (5): allergiesHasRisk(), formatAllergiesMutedLabel(), HospitalArchiveDetail(), parseJsonField(), PatientDetail()
-
-### Community 8 - "DB Migration Pipeline"
 Cohesion: 0.14
-Nodes (18): CI Workflow (ci.yml), Config Key: DATABASE_URL, Job: Backend Tests (SQLite), Job: Frontend Lint and Test, Job: Postgres Smoke Test, Job: Security Audit (npm audit), migratePostgres.js, Postgres CI Workflow (postgres-ci.yml) (+10 more)
+Nodes (18): Database Adapter, Config Key: DATABASE_URL, Config Key: DB_DIALECT, Config Key: PG_DATABASE, Config Key: PG_HOST, Config Key: PG_PASSWORD, Config Key: PG_POOL_CONNECTION_TIMEOUT, Config Key: PG_POOL_IDLE_TIMEOUT (+10 more)
 
-### Community 12 - "Test Helpers & Fixtures"
-Cohesion: 0.21
-Nodes (13): FEFO (First-Expiry First-Out) Pharmacy Dispensing, MAR to Pharmacy Auto-Dispensing Integration, MigratorService (Schema Auto-Migrations), NEWS2 (National Early Warning Score 2) Clinical Risk Stratification, PharmacyAnalyticsService (Replenishment Forecasting), PharmacyBatches Table (Lot/Batch Tracking), PharmacyReorderService (Automated PO Generation), PharmacyStock Table (Enterprise Inventory) (+5 more)
+### Community 9 - "Medication Repository"
+Cohesion: 0.19
+Nodes (15): FEFO (First-Expiry First-Out) Pharmacy Dispensing, MAR to Pharmacy Auto-Dispensing Integration, MigratorService (Schema Auto-Migrations), NEWS2 (National Early Warning Score 2) Clinical Risk Stratification, PharmacyAnalyticsService (Replenishment Forecasting), PharmacyBatches Table (Lot/Batch Tracking), PharmacyReorderService (Automated PO Generation), PharmacyStock Table (Enterprise Inventory) (+7 more)
+
+### Community 13 - "Medication Service"
+Cohesion: 0.18
+Nodes (4): VitalsTab(), getCsrfHeaders(), setCsrfToken(), AdminAudit()
 
 ### Community 14 - "Tenant Middleware"
 Cohesion: 0.21
@@ -178,69 +175,73 @@ Nodes (11): Clinical Grade Stability Principle, Concurrency Hardening via SQLite
 
 ### Community 19 - "Waste Service"
 Cohesion: 0.24
-Nodes (11): Repository Codemap, Express.js Backend (ward-backend), General Ward Project, React + Vite SPA (ward-frontend), Tailwind CSS 4 Design System, TanStack Query State Management, Vite Configuration, Ward Backend Legacy README (+3 more)
-
-### Community 20 - "Batch Service & Recall"
-Cohesion: 0.24
 Nodes (3): EscalationAlert(), WelcomeBanner(), DashboardView()
 
-### Community 22 - "Purchase Order Repository"
+### Community 21 - "Barcode Repository"
 Cohesion: 0.33
 Nodes (7): authedFetch(), dbRun(), ensureFixture(), isBackendUp(), makeToken(), sleep(), stress()
 
+### Community 22 - "Purchase Order Repository"
+Cohesion: 0.2
+Nodes (10): CI Workflow (ci.yml), Job: Backend Tests (SQLite), Job: Frontend Lint and Test, Job: Security Audit (npm audit), Step: npm test (backend SQLite), Step: npm run build (frontend), Step: npm run lint (frontend), Step: npm test (frontend) (+2 more)
+
 ### Community 25 - "Config & Environment"
-Cohesion: 0.31
-Nodes (9): Audit Logging Pattern (AuditLogs + ClinicalChangeLog), AuditLogs Table, Audit Middleware (audit.js), ClinicalAuditService (Regulatory Compliance Logging), ClinicalChangeLog Table, Compliance and Audit Posture, Security Logging Guidance (PHI/PII Safe), PHI/PII Safe Logging Rules (+1 more)
+Cohesion: 0.22
+Nodes (9): db.js (Database Initialization), Docker Compose Postgres Configuration, PostgreSQL Installation and Configuration Guide, Polymorphic DB Adapter (SQLite/Postgres), PostgreSQL Database, PostgreSQL Migration Files, Postgres Cutover Runbook (Phase D.4), schema.sql (DB Source of Truth) (+1 more)
 
 ### Community 26 - "DB Adapter (SQLite & Postgres)"
 Cohesion: 0.31
-Nodes (9): Migration 004: Pharmacy V2 Schema, Migration 005: Pharmacy Batches, Migration 006: Purchase Orders, Migration 007: Waste Records, DB Table: PharmacyBatches, DB Table: PharmacyStock, DB Table: PharmacyTransactions, DB Table: PurchaseOrders (+1 more)
+Nodes (9): Audit Logging Pattern (AuditLogs + ClinicalChangeLog), AuditLogs Table, Audit Middleware (audit.js), ClinicalAuditService (Regulatory Compliance Logging), ClinicalChangeLog Table, Compliance and Audit Posture, Security Logging Guidance (PHI/PII Safe), PHI/PII Safe Logging Rules (+1 more)
 
 ### Community 27 - "Auth Lockout Repository"
-Cohesion: 0.29
-Nodes (3): getCsrfHeaders(), setCsrfToken(), AdminAudit()
+Cohesion: 0.28
+Nodes (9): Repository Codemap, Express.js Backend (ward-backend), General Ward Project, React + Vite SPA (ward-frontend), Tailwind CSS 4 Design System, Vite Configuration, Ward Backend Legacy README, Ward Frontend Entry HTML (+1 more)
 
-### Community 37 - "Report Controller"
+### Community 38 - "Report Repository"
 Cohesion: 0.29
 Nodes (7): Core Workflow Manual Acceptance Test, ward-frontend/src/index.css (design tokens), PatientDetail.jsx, ward-frontend/src/utils/patientDisplay.ts, @radix-ui/react-tabs, Patient Detail UI Refresh Detailed Plan, Patient Detail UI Refresh Progress
 
-### Community 38 - "Report Repository"
+### Community 39 - "Transaction Repository"
 Cohesion: 0.4
 Nodes (3): initPostgresDb(), withTransaction(), startServer()
 
-### Community 39 - "Transaction Repository"
+### Community 40 - "Report Data & Hash"
 Cohesion: 0.47
 Nodes (3): getCorsOrigins(), getJwtSecret(), isProdLike()
 
-### Community 49 - "Transaction Service"
+### Community 51 - "DB Adapter Module"
 Cohesion: 0.6
 Nodes (3): classifyFile(), getNodeModulesPackageName(), walkDir()
 
-### Community 57 - "Report Verification Service"
+### Community 54 - "Auth Repository"
+Cohesion: 0.6
+Nodes (3): getClientIp(), getCookieOptions(), publicUserAndCsrf()
+
+### Community 60 - "Pharmacy Seed Data"
 Cohesion: 0.6
 Nodes (3): attachUserIfPresent(), authenticateToken(), extractToken()
 
-### Community 58 - "Admin Audit Tests"
+### Community 61 - "Escalation Feature"
 Cohesion: 0.6
 Nodes (5): Dr. Smith (Doctor Test Account), Nurse Johnson (Nurse Test Account), Session Initiation Sequence, tenant-default (Default Tenant), Ward Admin (Admin Test Account)
 
-### Community 61 - "Escalation Feature"
+### Community 63 - "DB Adapter Internals"
 Cohesion: 0.83
 Nodes (3): createEmptyResult(), parseBarcode(), parseGS1128()
 
-### Community 67 - "Migration Service"
+### Community 68 - "Auth Service"
 Cohesion: 0.83
 Nodes (3): main(), pgCount(), sqliteCount()
 
-### Community 68 - "Auth Service"
+### Community 69 - "Report Verification Service"
 Cohesion: 0.5
 Nodes (4): Allergies Display Normalization, Neutral Palette & Indigo Primary Token, Patient Detail UI Refresh Detailed Plan, Patient Detail UI Refresh Progress
 
-### Community 69 - "Report Verification Service"
+### Community 70 - "Admin Audit Tests"
 Cohesion: 0.5
 Nodes (4): Auth Middleware (middleware/auth.js), Config Key: CORS_ORIGIN, Config Key: JWT_SECRET, Config Key: NODE_ENV
 
-### Community 80 - "Schema Init"
+### Community 82 - "Error Handler"
 Cohesion: 0.67
 Nodes (3): ward-backend/controllers/EscalationController.js, ward-backend/repositories/EscalationRepository.js, ward-backend/services/EscalationService.js
 
@@ -251,18 +252,18 @@ Nodes (3): ward-backend/controllers/EscalationController.js, ward-backend/reposi
 ## Knowledge Gaps
 - **122 isolated node(s):** `doctor_cookies.txt (Dr. Smith JWT cookie)`, `admin_cookies.txt (Ward Admin JWT cookie)`, `cookies.txt (Dr. Smith JWT cookie, older)`, `ward-frontend README`, `ward-frontend/index.html (Vite SPA entry)` (+117 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **56 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **58 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `ward-management.html (Legacy SPA prototype)` and `Tenant Isolation (multi-tenant data partitioning)`?**
   _Edge tagged AMBIGUOUS (relation: semantically_similar_to) - confidence is low._
-- **Why does `Polymorphic DB Adapter (SQLite/Postgres)` connect `Dashboard & Patient UI Components` to `Pharmacy & Inventory UI`, `Clinical Audit Service`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Why does `ward-backend/db-adapter.js (Polymorphic DB adapter)` connect `Pharmacy & Inventory UI` to `Dashboard & Patient UI Components`?**
+- **Why does `Polymorphic DB Adapter (SQLite/Postgres)` connect `Config & Environment` to `Pharmacy & Inventory UI`, `Clinical Audit Service`, `Patient Repository & Snapshot`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Why does `Database Adapter` connect `Dashboard & Patient UI Components` to `DB Migration Pipeline`, `Clinical Audit Service`, `Test Helpers & Fixtures`?**
+- **Why does `ward-backend/db-adapter.js (Polymorphic DB adapter)` connect `Pharmacy & Inventory UI` to `Config & Environment`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Why does `Database Adapter` connect `Patient Repository & Snapshot` to `Config & Environment`, `Clinical Audit Service`, `Medication Repository`?**
   _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `useAuth()` (e.g. with `Signup()` and `AdminAudit()`) actually correct?**
   _`useAuth()` has 14 INFERRED edges - model-reasoned connections that need verification._

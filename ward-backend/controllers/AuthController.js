@@ -67,14 +67,35 @@ router.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
-router.post('/signup', loginLimiter, async (req, res) => {
+const signupLimiter = process.env.NODE_ENV === 'test'
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: 60 * 60 * 1000,
+      max: 5,
+      message: { error: 'Too many signup attempts from this IP, please try again later.' },
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+
+router.post('/signup', signupLimiter, async (req, res) => {
   try {
-    const { username, password, role, hospitalName } = req.body || {};
-    const result = await authService.signup({ username, password, role, hospitalName });
-    
+    const { hospitalName, hospitalCode, adminName, email, password } = req.body || {};
+    const result = await authService.registerHospital({
+      hospitalName,
+      hospitalCode,
+      adminName,
+      email,
+      password,
+    });
     res.cookie('ward_token', result.token, getCookieOptions());
     res.status(201).json({ user: result.user, csrfToken: result.csrfToken });
   } catch (error) {
+    if (error.code === 'TENANT_EXISTS') {
+      return res.status(409).json({ error: error.message, code: 'TENANT_EXISTS' });
+    }
+    if (error.code === 'USER_EXISTS') {
+      return res.status(409).json({ error: error.message, code: 'USER_EXISTS' });
+    }
     res.status(400).json({ error: error.message });
   }
 });

@@ -106,6 +106,7 @@ const initDb = (db) => {
         runIgnoreDuplicateColumn(`ALTER TABLE MedicationAdministrations ADD COLUMN reasonCode TEXT`);
 
         runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN email TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE DailyStats ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Medications ADD COLUMN tenantId TEXT`);

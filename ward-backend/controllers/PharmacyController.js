@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const stockService = require('../services/pharmacy/StockService');
+const stockRepo = require('../repositories/pharmacy/StockRepository');
 const batchService = require('../services/pharmacy/BatchService');
 const txService = require('../services/pharmacy/TransactionService');
 const { authenticateToken } = require('../middleware/auth');
@@ -75,7 +76,7 @@ router.patch('/inventory/:id', authenticateToken, authorize(PERMISSIONS.WRITE_ME
     const tenantId = req.user.tenantId || 'tenant-default';
     const { totalUnits, notes } = req.body;
     
-    const item = await stockService.getStockById(req.params.id, tenantId);
+    const item = await stockRepo.findById(req.params.id, tenantId);
     if (!item) return res.status(404).json({ error: 'Medication not found' });
 
     const diff = (parseInt(totalUnits) * item.quantityPerUnit) - item.totalQuantity;

@@ -1,75 +1,14 @@
 {
   "directed": false,
   "multigraph": false,
-  "graph": {
-    "hyperedges": [
-      {
-        "id": "postgres_smoke_pipeline",
-        "label": "Postgres CI Smoke Pipeline: Service \u2192 Migration \u2192 Smoke Test",
-        "nodes": [
-          "service_postgres",
-          "step_apply_postgres_migrations",
-          "step_postgres_smoke_test"
-        ],
-        "relation": "participate_in",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": ".github/workflows/postgres-ci.yml"
-      },
-      {
-        "id": "postgres_env_config_group",
-        "label": "Postgres Connection Config Keys (PG_*)",
-        "nodes": [
-          "env_pg_host",
-          "env_pg_port",
-          "env_pg_database",
-          "env_pg_user",
-          "env_pg_password",
-          "env_pg_pool_max",
-          "env_pg_pool_idle_timeout",
-          "env_pg_pool_connection_timeout"
-        ],
-        "relation": "implement",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "ward-backend/.env.postgres.example"
-      },
-      {
-        "id": "full_ci_pipeline",
-        "label": "Full CI Pipeline: Security Audit + Backend Tests + Frontend QA",
-        "nodes": [
-          "job_security_audit",
-          "job_backend_tests",
-          "job_frontend_qa"
-        ],
-        "relation": "participate_in",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": ".github/workflows/ci.yml"
-      },
-      {
-        "id": "backend_auth_config",
-        "label": "Backend Auth and Server Config (JWT_SECRET, NODE_ENV, PORT, CORS_ORIGIN)",
-        "nodes": [
-          "env_jwt_secret",
-          "env_node_env",
-          "env_port",
-          "env_cors_origin"
-        ],
-        "relation": "implement",
-        "confidence": "INFERRED",
-        "confidence_score": 0.85,
-        "source_file": "ward-backend/.env.example"
-      }
-    ]
-  },
+  "graph": {},
   "nodes": [
     {
       "label": "generate-codemap-index.mjs",
       "file_type": "code",
       "source_file": "codemap/generate-codemap-index.mjs",
       "source_location": "L1",
-      "community": 49,
+      "community": 51,
       "norm_label": "generate-codemap-index.mjs",
       "id": "codemap_generate_codemap_index_mjs"
     },
@@ -78,7 +17,7 @@
       "file_type": "code",
       "source_file": "codemap/generate-codemap-index.mjs",
       "source_location": "L15",
-      "community": 49,
+      "community": 51,
       "norm_label": "getarg()",
       "id": "codemap_generate_codemap_index_getarg"
     },
@@ -87,7 +26,7 @@
       "file_type": "code",
       "source_file": "codemap/generate-codemap-index.mjs",
       "source_location": "L30",
-      "community": 49,
+      "community": 51,
       "norm_label": "getnodemodulespackagename()",
       "id": "codemap_generate_codemap_index_getnodemodulespackagename"
     },
@@ -96,7 +35,7 @@
       "file_type": "code",
       "source_file": "codemap/generate-codemap-index.mjs",
       "source_location": "L42",
-      "community": 49,
+      "community": 51,
       "norm_label": "classifyfile()",
       "id": "codemap_generate_codemap_index_classifyfile"
     },
@@ -105,7 +44,7 @@
       "file_type": "code",
       "source_file": "codemap/generate-codemap-index.mjs",
       "source_location": "L72",
-      "community": 49,
+      "community": 51,
       "norm_label": "walkdir()",
       "id": "codemap_generate_codemap_index_walkdir"
     },
@@ -114,7 +53,7 @@
       "file_type": "code",
       "source_file": "codemap/build-codemap-md.mjs",
       "source_location": "L1",
-      "community": 59,
+      "community": 62,
       "norm_label": "build-codemap-md.mjs",
       "id": "codemap_build_codemap_md_mjs"
     },
@@ -123,7 +62,7 @@
       "file_type": "code",
       "source_file": "codemap/build-codemap-md.mjs",
       "source_location": "L28",
-      "community": 59,
+      "community": 62,
       "norm_label": "sluganchor()",
       "id": "codemap_build_codemap_md_sluganchor"
     },
@@ -132,7 +71,7 @@
       "file_type": "code",
       "source_file": "codemap/build-codemap-md.mjs",
       "source_location": "L39",
-      "community": 59,
+      "community": 62,
       "norm_label": "describepath()",
       "id": "codemap_build_codemap_md_describepath"
     },
@@ -141,7 +80,7 @@
       "file_type": "code",
       "source_file": "codemap/build-codemap-md.mjs",
       "source_location": "L120",
-      "community": 59,
+      "community": 62,
       "norm_label": "workflowsection()",
       "id": "codemap_build_codemap_md_workflowsection"
     },
@@ -168,7 +107,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/App.jsx",
       "source_location": "L1",
-      "community": 34,
+      "community": 35,
       "norm_label": "app.jsx",
       "id": "ward_frontend_src_app_jsx"
     },
@@ -177,7 +116,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/App.jsx",
       "source_location": "L28",
-      "community": 34,
+      "community": 35,
       "norm_label": "app()",
       "id": "src_app_app"
     },
@@ -186,7 +125,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/main.jsx",
       "source_location": "L1",
-      "community": 34,
+      "community": 35,
       "norm_label": "main.jsx",
       "id": "ward_frontend_src_main_jsx"
     },
@@ -204,7 +143,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/utils/api.ts",
       "source_location": "L1",
-      "community": 27,
+      "community": 13,
       "norm_label": "api.ts",
       "id": "ward_frontend_src_utils_api_ts"
     },
@@ -213,7 +152,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/utils/api.ts",
       "source_location": "L7",
-      "community": 27,
+      "community": 13,
       "norm_label": "normalizeapibase()",
       "id": "utils_api_normalizeapibase"
     },
@@ -222,7 +161,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/utils/api.ts",
       "source_location": "L27",
-      "community": 27,
+      "community": 13,
       "norm_label": "getcsrfheaders()",
       "id": "utils_api_getcsrfheaders"
     },
@@ -231,7 +170,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/utils/api.ts",
       "source_location": "L48",
-      "community": 27,
+      "community": 13,
       "norm_label": "setcsrftoken()",
       "id": "utils_api_setcsrftoken"
     },
@@ -240,7 +179,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/utils/patientDisplay.ts",
       "source_location": "L1",
-      "community": 7,
+      "community": 5,
       "norm_label": "patientdisplay.ts",
       "id": "ward_frontend_src_utils_patientdisplay_ts"
     },
@@ -249,7 +188,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/utils/patientDisplay.ts",
       "source_location": "L15",
-      "community": 7,
+      "community": 5,
       "norm_label": "allergieshasrisk()",
       "id": "utils_patientdisplay_allergieshasrisk"
     },
@@ -258,7 +197,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/utils/patientDisplay.ts",
       "source_location": "L24",
-      "community": 7,
+      "community": 5,
       "norm_label": "formatallergiesmutedlabel()",
       "id": "utils_patientdisplay_formatallergiesmutedlabel"
     },
@@ -294,7 +233,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/VerifyReport.jsx",
       "source_location": "L1",
-      "community": 34,
+      "community": 35,
       "norm_label": "verifyreport.jsx",
       "id": "ward_frontend_src_views_verifyreport_jsx"
     },
@@ -303,7 +242,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/VerifyReport.jsx",
       "source_location": "L5",
-      "community": 34,
+      "community": 35,
       "norm_label": "verifyreport()",
       "id": "views_verifyreport_verifyreport"
     },
@@ -312,7 +251,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/AdminAudit.jsx",
       "source_location": "L1",
-      "community": 27,
+      "community": 13,
       "norm_label": "adminaudit.jsx",
       "id": "ward_frontend_src_views_adminaudit_jsx"
     },
@@ -321,7 +260,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/AdminAudit.jsx",
       "source_location": "L7",
-      "community": 27,
+      "community": 13,
       "norm_label": "adminaudit()",
       "id": "views_adminaudit_adminaudit"
     },
@@ -330,7 +269,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/PatientDetail.jsx",
       "source_location": "L1",
-      "community": 7,
+      "community": 5,
       "norm_label": "patientdetail.jsx",
       "id": "ward_frontend_src_views_patientdetail_jsx"
     },
@@ -339,7 +278,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/PatientDetail.jsx",
       "source_location": "L24",
-      "community": 7,
+      "community": 5,
       "norm_label": "errmsg()",
       "id": "views_patientdetail_errmsg"
     },
@@ -348,7 +287,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/PatientDetail.jsx",
       "source_location": "L28",
-      "community": 7,
+      "community": 5,
       "norm_label": "patientdetail()",
       "id": "views_patientdetail_patientdetail"
     },
@@ -420,7 +359,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/HospitalArchiveDetail.jsx",
       "source_location": "L1",
-      "community": 7,
+      "community": 5,
       "norm_label": "hospitalarchivedetail.jsx",
       "id": "ward_frontend_src_views_hospitalarchivedetail_jsx"
     },
@@ -429,7 +368,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/HospitalArchiveDetail.jsx",
       "source_location": "L18",
-      "community": 7,
+      "community": 5,
       "norm_label": "parsejsonfield()",
       "id": "views_hospitalarchivedetail_parsejsonfield"
     },
@@ -438,7 +377,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/HospitalArchiveDetail.jsx",
       "source_location": "L28",
-      "community": 7,
+      "community": 5,
       "norm_label": "section()",
       "id": "views_hospitalarchivedetail_section"
     },
@@ -447,7 +386,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/views/HospitalArchiveDetail.jsx",
       "source_location": "L42",
-      "community": 7,
+      "community": 5,
       "norm_label": "hospitalarchivedetail()",
       "id": "views_hospitalarchivedetail_hospitalarchivedetail"
     },
@@ -456,7 +395,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/Layout.jsx",
       "source_location": "L1",
-      "community": 34,
+      "community": 35,
       "norm_label": "layout.jsx",
       "id": "ward_frontend_src_components_layout_jsx"
     },
@@ -465,7 +404,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/Layout.jsx",
       "source_location": "L6",
-      "community": 34,
+      "community": 35,
       "norm_label": "protectedlayout()",
       "id": "components_layout_protectedlayout"
     },
@@ -492,7 +431,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/modals/EscalateModal.jsx",
       "source_location": "L1",
-      "community": 7,
+      "community": 5,
       "norm_label": "escalatemodal.jsx",
       "id": "ward_frontend_src_components_modals_escalatemodal_jsx"
     },
@@ -501,7 +440,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/modals/EscalateModal.jsx",
       "source_location": "L3",
-      "community": 7,
+      "community": 5,
       "norm_label": "escalatemodal()",
       "id": "modals_escalatemodal_escalatemodal"
     },
@@ -510,7 +449,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/modals/DischargeModal.jsx",
       "source_location": "L1",
-      "community": 7,
+      "community": 5,
       "norm_label": "dischargemodal.jsx",
       "id": "ward_frontend_src_components_modals_dischargemodal_jsx"
     },
@@ -519,7 +458,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/modals/DischargeModal.jsx",
       "source_location": "L3",
-      "community": 7,
+      "community": 5,
       "norm_label": "dischargemodal()",
       "id": "modals_dischargemodal_dischargemodal"
     },
@@ -528,7 +467,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/modals/EditPatientModal.jsx",
       "source_location": "L1",
-      "community": 7,
+      "community": 5,
       "norm_label": "editpatientmodal.jsx",
       "id": "ward_frontend_src_components_modals_editpatientmodal_jsx"
     },
@@ -537,7 +476,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/modals/EditPatientModal.jsx",
       "source_location": "L1",
-      "community": 7,
+      "community": 5,
       "norm_label": "editpatientmodal()",
       "id": "modals_editpatientmodal_editpatientmodal"
     },
@@ -546,7 +485,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/ui/tabs.jsx",
       "source_location": "L1",
-      "community": 7,
+      "community": 5,
       "norm_label": "tabs.jsx",
       "id": "ward_frontend_src_components_ui_tabs_jsx"
     },
@@ -555,7 +494,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/ui/tabs.jsx",
       "source_location": "L4",
-      "community": 7,
+      "community": 5,
       "norm_label": "cn()",
       "id": "ui_tabs_cn"
     },
@@ -582,7 +521,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/stats/VitalsTab.jsx",
       "source_location": "L1",
-      "community": 60,
+      "community": 13,
       "norm_label": "vitalstab.jsx",
       "id": "ward_frontend_src_components_stats_vitalstab_jsx"
     },
@@ -591,7 +530,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/stats/VitalsTab.jsx",
       "source_location": "L10",
-      "community": 60,
+      "community": 13,
       "norm_label": "vitalstab()",
       "id": "stats_vitalstab_vitalstab"
     },
@@ -600,7 +539,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/stats/VitalsTab.jsx",
       "source_location": "L252",
-      "community": 60,
+      "community": 13,
       "norm_label": "trendpill()",
       "id": "stats_vitalstab_trendpill"
     },
@@ -609,7 +548,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/stats/VitalsTab.jsx",
       "source_location": "L269",
-      "community": 60,
+      "community": 13,
       "norm_label": "vitalscharttooltip()",
       "id": "stats_vitalstab_vitalscharttooltip"
     },
@@ -690,7 +629,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/stats/DischargeSummaryTab.jsx",
       "source_location": "L1",
-      "community": 27,
+      "community": 13,
       "norm_label": "dischargesummarytab.jsx",
       "id": "ward_frontend_src_components_stats_dischargesummarytab_jsx"
     },
@@ -699,7 +638,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/components/stats/DischargeSummaryTab.jsx",
       "source_location": "L6",
-      "community": 27,
+      "community": 13,
       "norm_label": "dischargesummarytab()",
       "id": "stats_dischargesummarytab_dischargesummarytab"
     },
@@ -753,7 +692,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/DashboardView.jsx",
       "source_location": "L1",
-      "community": 20,
+      "community": 19,
       "norm_label": "dashboardview.jsx",
       "id": "ward_frontend_src_features_dashboard_dashboardview_jsx"
     },
@@ -762,7 +701,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/DashboardView.jsx",
       "source_location": "L17",
-      "community": 20,
+      "community": 19,
       "norm_label": "dashboardview()",
       "id": "dashboard_dashboardview_dashboardview"
     },
@@ -771,7 +710,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/DashboardAlerts.jsx",
       "source_location": "L1",
-      "community": 20,
+      "community": 19,
       "norm_label": "dashboardalerts.jsx",
       "id": "ward_frontend_src_features_dashboard_components_dashboardalerts_jsx"
     },
@@ -780,7 +719,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/DashboardAlerts.jsx",
       "source_location": "L4",
-      "community": 20,
+      "community": 19,
       "norm_label": "welcomebanner()",
       "id": "components_dashboardalerts_welcomebanner"
     },
@@ -789,7 +728,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/DashboardAlerts.jsx",
       "source_location": "L26",
-      "community": 20,
+      "community": 19,
       "norm_label": "escalationalert()",
       "id": "components_dashboardalerts_escalationalert"
     },
@@ -798,7 +737,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/AddPatientModal.jsx",
       "source_location": "L1",
-      "community": 20,
+      "community": 19,
       "norm_label": "addpatientmodal.jsx",
       "id": "ward_frontend_src_features_dashboard_components_addpatientmodal_jsx"
     },
@@ -807,7 +746,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/AddPatientModal.jsx",
       "source_location": "L4",
-      "community": 20,
+      "community": 19,
       "norm_label": "addpatientmodal()",
       "id": "components_addpatientmodal_addpatientmodal"
     },
@@ -816,7 +755,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/PatientCard.jsx",
       "source_location": "L1",
-      "community": 50,
+      "community": 52,
       "norm_label": "patientcard.jsx",
       "id": "ward_frontend_src_features_dashboard_components_patientcard_jsx"
     },
@@ -825,7 +764,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/PatientCard.jsx",
       "source_location": "L3",
-      "community": 50,
+      "community": 52,
       "norm_label": "telemetrymini()",
       "id": "components_patientcard_telemetrymini"
     },
@@ -834,7 +773,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/PatientCard.jsx",
       "source_location": "L12",
-      "community": 50,
+      "community": 52,
       "norm_label": "patientcard()",
       "id": "components_patientcard_patientcard"
     },
@@ -843,7 +782,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/DashboardStats.jsx",
       "source_location": "L1",
-      "community": 20,
+      "community": 19,
       "norm_label": "dashboardstats.jsx",
       "id": "ward_frontend_src_features_dashboard_components_dashboardstats_jsx"
     },
@@ -852,7 +791,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/DashboardStats.jsx",
       "source_location": "L4",
-      "community": 20,
+      "community": 19,
       "norm_label": "statcard()",
       "id": "components_dashboardstats_statcard"
     },
@@ -861,7 +800,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/DashboardStats.jsx",
       "source_location": "L18",
-      "community": 20,
+      "community": 19,
       "norm_label": "dashboardstats()",
       "id": "components_dashboardstats_dashboardstats"
     },
@@ -870,7 +809,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/PatientGrid.jsx",
       "source_location": "L1",
-      "community": 50,
+      "community": 52,
       "norm_label": "patientgrid.jsx",
       "id": "ward_frontend_src_features_dashboard_components_patientgrid_jsx"
     },
@@ -879,7 +818,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/dashboard/components/PatientGrid.jsx",
       "source_location": "L4",
-      "community": 50,
+      "community": 52,
       "norm_label": "patientgrid()",
       "id": "components_patientgrid_patientgrid"
     },
@@ -888,7 +827,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/PharmacyView.jsx",
       "source_location": "L1",
-      "community": 9,
+      "community": 8,
       "norm_label": "pharmacyview.jsx",
       "id": "ward_frontend_src_features_pharmacy_pharmacyview_jsx"
     },
@@ -897,7 +836,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/PharmacyView.jsx",
       "source_location": "L17",
-      "community": 9,
+      "community": 8,
       "norm_label": "pharmacyview()",
       "id": "pharmacy_pharmacyview_pharmacyview"
     },
@@ -924,7 +863,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/AddStockModal.jsx",
       "source_location": "L1",
-      "community": 9,
+      "community": 8,
       "norm_label": "addstockmodal.jsx",
       "id": "ward_frontend_src_features_pharmacy_components_addstockmodal_jsx"
     },
@@ -933,7 +872,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/AddStockModal.jsx",
       "source_location": "L4",
-      "community": 9,
+      "community": 8,
       "norm_label": "addstockmodal()",
       "id": "components_addstockmodal_addstockmodal"
     },
@@ -942,7 +881,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/AddBatchModal.jsx",
       "source_location": "L1",
-      "community": 9,
+      "community": 8,
       "norm_label": "addbatchmodal.jsx",
       "id": "ward_frontend_src_features_pharmacy_components_addbatchmodal_jsx"
     },
@@ -951,7 +890,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/AddBatchModal.jsx",
       "source_location": "L4",
-      "community": 9,
+      "community": 8,
       "norm_label": "addbatchmodal()",
       "id": "components_addbatchmodal_addbatchmodal"
     },
@@ -960,7 +899,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/StockStats.jsx",
       "source_location": "L1",
-      "community": 9,
+      "community": 8,
       "norm_label": "stockstats.jsx",
       "id": "ward_frontend_src_features_pharmacy_components_stockstats_jsx"
     },
@@ -969,7 +908,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/StockStats.jsx",
       "source_location": "L6",
-      "community": 9,
+      "community": 8,
       "norm_label": "stockstats()",
       "id": "components_stockstats_stockstats"
     },
@@ -978,7 +917,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/RegisterBarcodeModal.jsx",
       "source_location": "L1",
-      "community": 9,
+      "community": 8,
       "norm_label": "registerbarcodemodal.jsx",
       "id": "ward_frontend_src_features_pharmacy_components_registerbarcodemodal_jsx"
     },
@@ -987,7 +926,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/RegisterBarcodeModal.jsx",
       "source_location": "L3",
-      "community": 9,
+      "community": 8,
       "norm_label": "registerbarcodemodal()",
       "id": "components_registerbarcodemodal_registerbarcodemodal"
     },
@@ -996,7 +935,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/AuditLogSlideover.jsx",
       "source_location": "L1",
-      "community": 9,
+      "community": 8,
       "norm_label": "auditlogslideover.jsx",
       "id": "ward_frontend_src_features_pharmacy_components_auditlogslideover_jsx"
     },
@@ -1005,7 +944,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/AuditLogSlideover.jsx",
       "source_location": "L4",
-      "community": 9,
+      "community": 8,
       "norm_label": "auditlogslideover()",
       "id": "components_auditlogslideover_auditlogslideover"
     },
@@ -1014,7 +953,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/ProcurementTab.jsx",
       "source_location": "L1",
-      "community": 9,
+      "community": 8,
       "norm_label": "procurementtab.jsx",
       "id": "ward_frontend_src_features_pharmacy_components_procurementtab_jsx"
     },
@@ -1023,7 +962,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/ProcurementTab.jsx",
       "source_location": "L4",
-      "community": 9,
+      "community": 8,
       "norm_label": "procurementtab()",
       "id": "components_procurementtab_procurementtab"
     },
@@ -1032,7 +971,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/InventoryTable.jsx",
       "source_location": "L1",
-      "community": 9,
+      "community": 8,
       "norm_label": "inventorytable.jsx",
       "id": "ward_frontend_src_features_pharmacy_components_inventorytable_jsx"
     },
@@ -1041,7 +980,7 @@
       "file_type": "code",
       "source_file": "ward-frontend/src/features/pharmacy/components/InventoryTable.jsx",
       "source_location": "L7",
-      "community": 9,
+      "community": 8,
       "norm_label": "inventorytable()",
       "id": "components_inventorytable_inventorytable"
     },
@@ -1059,7 +998,7 @@
       "file_type": "code",
       "source_file": "ward-backend/server.js",
       "source_location": "L1",
-      "community": 38,
+      "community": 39,
       "norm_label": "server.js",
       "id": "ward_backend_server_js"
     },
@@ -1068,7 +1007,7 @@
       "file_type": "code",
       "source_file": "ward-backend/server.js",
       "source_location": "L27",
-      "community": 38,
+      "community": 39,
       "norm_label": "getcorsmiddleware()",
       "id": "ward_backend_server_getcorsmiddleware"
     },
@@ -1077,7 +1016,7 @@
       "file_type": "code",
       "source_file": "ward-backend/server.js",
       "source_location": "L143",
-      "community": 38,
+      "community": 39,
       "norm_label": "startserver()",
       "id": "ward_backend_server_startserver"
     },
@@ -1086,7 +1025,7 @@
       "file_type": "code",
       "source_file": "ward-backend/config.js",
       "source_location": "L1",
-      "community": 39,
+      "community": 40,
       "norm_label": "config.js",
       "id": "ward_backend_config_js"
     },
@@ -1095,7 +1034,7 @@
       "file_type": "code",
       "source_file": "ward-backend/config.js",
       "source_location": "L1",
-      "community": 39,
+      "community": 40,
       "norm_label": "normalizenodeenv()",
       "id": "ward_backend_config_normalizenodeenv"
     },
@@ -1104,7 +1043,7 @@
       "file_type": "code",
       "source_file": "ward-backend/config.js",
       "source_location": "L7",
-      "community": 39,
+      "community": 40,
       "norm_label": "validatenodeenv()",
       "id": "ward_backend_config_validatenodeenv"
     },
@@ -1113,7 +1052,7 @@
       "file_type": "code",
       "source_file": "ward-backend/config.js",
       "source_location": "L16",
-      "community": 39,
+      "community": 40,
       "norm_label": "isprodlike()",
       "id": "ward_backend_config_isprodlike"
     },
@@ -1122,7 +1061,7 @@
       "file_type": "code",
       "source_file": "ward-backend/config.js",
       "source_location": "L20",
-      "community": 39,
+      "community": 40,
       "norm_label": "getjwtsecret()",
       "id": "ward_backend_config_getjwtsecret"
     },
@@ -1131,7 +1070,7 @@
       "file_type": "code",
       "source_file": "ward-backend/config.js",
       "source_location": "L36",
-      "community": 39,
+      "community": 40,
       "norm_label": "getcorsorigins()",
       "id": "ward_backend_config_getcorsorigins"
     },
@@ -1140,7 +1079,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db-postgres.js",
       "source_location": "L1",
-      "community": 38,
+      "community": 39,
       "norm_label": "db-postgres.js",
       "id": "ward_backend_db_postgres_js"
     },
@@ -1149,7 +1088,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db-postgres.js",
       "source_location": "L21",
-      "community": 38,
+      "community": 39,
       "norm_label": "withtransaction()",
       "id": "ward_backend_db_postgres_withtransaction"
     },
@@ -1158,7 +1097,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db-postgres.js",
       "source_location": "L36",
-      "community": 38,
+      "community": 39,
       "norm_label": "initpostgresdb()",
       "id": "ward_backend_db_postgres_initpostgresdb"
     },
@@ -1167,7 +1106,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db-adapter.js",
       "source_location": "L1",
-      "community": 70,
+      "community": 71,
       "norm_label": "db-adapter.js",
       "id": "ward_backend_db_adapter_js"
     },
@@ -1176,7 +1115,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db-adapter.js",
       "source_location": "L11",
-      "community": 70,
+      "community": 71,
       "norm_label": "translateplaceholders()",
       "id": "ward_backend_db_adapter_translateplaceholders"
     },
@@ -1185,7 +1124,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db-adapter.js",
       "source_location": "L22",
-      "community": 70,
+      "community": 71,
       "norm_label": "normalizerows()",
       "id": "ward_backend_db_adapter_normalizerows"
     },
@@ -1194,7 +1133,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db.js",
       "source_location": "L1",
-      "community": 40,
+      "community": 41,
       "norm_label": "db.js",
       "id": "ward_backend_db_js"
     },
@@ -1203,7 +1142,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db.js",
       "source_location": "L25",
-      "community": 40,
+      "community": 41,
       "norm_label": "runasync()",
       "id": "ward_backend_db_runasync"
     },
@@ -1212,7 +1151,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db.js",
       "source_location": "L33",
-      "community": 40,
+      "community": 41,
       "norm_label": "getasync()",
       "id": "ward_backend_db_getasync"
     },
@@ -1221,7 +1160,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db.js",
       "source_location": "L41",
-      "community": 40,
+      "community": 41,
       "norm_label": "allasync()",
       "id": "ward_backend_db_allasync"
     },
@@ -1230,7 +1169,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db.js",
       "source_location": "L49",
-      "community": 40,
+      "community": 41,
       "norm_label": "withtransaction()",
       "id": "ward_backend_db_withtransaction"
     },
@@ -1239,7 +1178,7 @@
       "file_type": "code",
       "source_file": "ward-backend/db.js",
       "source_location": "L70",
-      "community": 40,
+      "community": 41,
       "norm_label": "initdb()",
       "id": "ward_backend_db_initdb"
     },
@@ -1266,7 +1205,7 @@
       "file_type": "code",
       "source_file": "ward-backend/routes/adminAudit.js",
       "source_location": "L1",
-      "community": 51,
+      "community": 53,
       "norm_label": "adminaudit.js",
       "id": "ward_backend_routes_adminaudit_js"
     },
@@ -1275,7 +1214,7 @@
       "file_type": "code",
       "source_file": "ward-backend/routes/adminAudit.js",
       "source_location": "L10",
-      "community": 51,
+      "community": 53,
       "norm_label": "tenantidforuser()",
       "id": "routes_adminaudit_tenantidforuser"
     },
@@ -1284,7 +1223,7 @@
       "file_type": "code",
       "source_file": "ward-backend/routes/adminAudit.js",
       "source_location": "L14",
-      "community": 51,
+      "community": 53,
       "norm_label": "parselimit()",
       "id": "routes_adminaudit_parselimit"
     },
@@ -1293,7 +1232,7 @@
       "file_type": "code",
       "source_file": "ward-backend/routes/adminAudit.js",
       "source_location": "L21",
-      "community": 51,
+      "community": 53,
       "norm_label": "csvescape()",
       "id": "routes_adminaudit_csvescape"
     },
@@ -1302,7 +1241,7 @@
       "file_type": "code",
       "source_file": "ward-backend/routes/adminAudit.js",
       "source_location": "L28",
-      "community": 51,
+      "community": 53,
       "norm_label": "resolveretentiondays()",
       "id": "routes_adminaudit_resolveretentiondays"
     },
@@ -1311,7 +1250,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/gs1Parser.js",
       "source_location": "L1",
-      "community": 61,
+      "community": 63,
       "norm_label": "gs1parser.js",
       "id": "ward_backend_utils_gs1parser_js"
     },
@@ -1320,7 +1259,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/gs1Parser.js",
       "source_location": "L16",
-      "community": 61,
+      "community": 63,
       "norm_label": "parsebarcode()",
       "id": "utils_gs1parser_parsebarcode"
     },
@@ -1329,7 +1268,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/gs1Parser.js",
       "source_location": "L68",
-      "community": 61,
+      "community": 63,
       "norm_label": "parsegs1128()",
       "id": "utils_gs1parser_parsegs1128"
     },
@@ -1338,7 +1277,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/gs1Parser.js",
       "source_location": "L144",
-      "community": 61,
+      "community": 63,
       "norm_label": "createemptyresult()",
       "id": "utils_gs1parser_createemptyresult"
     },
@@ -1347,7 +1286,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/validation.js",
       "source_location": "L1",
-      "community": 81,
+      "community": 83,
       "norm_label": "validation.js",
       "id": "ward_backend_utils_validation_js"
     },
@@ -1356,7 +1295,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/validation.js",
       "source_location": "L6",
-      "community": 81,
+      "community": 83,
       "norm_label": "validatestats()",
       "id": "utils_validation_validatestats"
     },
@@ -1365,7 +1304,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/logger.js",
       "source_location": "L1",
-      "community": 71,
+      "community": 72,
       "norm_label": "logger.js",
       "id": "ward_backend_utils_logger_js"
     },
@@ -1374,7 +1313,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/logger.js",
       "source_location": "L12",
-      "community": 71,
+      "community": 72,
       "norm_label": "flush()",
       "id": "utils_logger_flush"
     },
@@ -1383,7 +1322,7 @@
       "file_type": "code",
       "source_file": "ward-backend/utils/logger.js",
       "source_location": "L30",
-      "community": 71,
+      "community": 72,
       "norm_label": "scheduleflush()",
       "id": "utils_logger_scheduleflush"
     },
@@ -1410,34 +1349,34 @@
       "file_type": "code",
       "source_file": "ward-backend/controllers/AuthController.js",
       "source_location": "L1",
-      "community": 62,
+      "community": 54,
       "norm_label": "authcontroller.js",
       "id": "ward_backend_controllers_authcontroller_js"
     },
     {
       "label": "getCookieOptions()",
       "file_type": "code",
-      "source_file": "ward-backend/controllers/AuthController.js",
+      "source_file": "controllers/AuthController.js",
       "source_location": "L19",
-      "community": 62,
+      "community": 54,
       "norm_label": "getcookieoptions()",
       "id": "controllers_authcontroller_getcookieoptions"
     },
     {
       "label": "getClientIp()",
       "file_type": "code",
-      "source_file": "ward-backend/controllers/AuthController.js",
+      "source_file": "controllers/AuthController.js",
       "source_location": "L29",
-      "community": 62,
+      "community": 54,
       "norm_label": "getclientip()",
       "id": "controllers_authcontroller_getclientip"
     },
     {
       "label": "publicUserAndCsrf()",
       "file_type": "code",
-      "source_file": "ward-backend/controllers/AuthController.js",
+      "source_file": "controllers/AuthController.js",
       "source_location": "L33",
-      "community": 62,
+      "community": 54,
       "norm_label": "publicuserandcsrf()",
       "id": "controllers_authcontroller_publicuserandcsrf"
     },
@@ -1473,16 +1412,16 @@
       "file_type": "code",
       "source_file": "ward-backend/controllers/PharmacyController.js",
       "source_location": "L1",
-      "community": 82,
+      "community": 73,
       "norm_label": "pharmacycontroller.js",
       "id": "ward_backend_controllers_pharmacycontroller_js"
     },
     {
       "label": "validateBatchPayload()",
       "file_type": "code",
-      "source_file": "ward-backend/controllers/PharmacyController.js",
-      "source_location": "L16",
-      "community": 82,
+      "source_file": "controllers/PharmacyController.js",
+      "source_location": "L17",
+      "community": 73,
       "norm_label": "validatebatchpayload()",
       "id": "controllers_pharmacycontroller_validatebatchpayload"
     },
@@ -1500,43 +1439,43 @@
       "file_type": "code",
       "source_file": "ward-backend/controllers/ReportController.js",
       "source_location": "L1",
-      "community": 52,
+      "community": 42,
       "norm_label": "reportcontroller.js",
       "id": "ward_backend_controllers_reportcontroller_js"
     },
     {
       "label": "ReportController",
       "file_type": "code",
-      "source_file": "ward-backend/controllers/ReportController.js",
+      "source_file": "controllers/ReportController.js",
       "source_location": "L8",
-      "community": 52,
+      "community": 42,
       "norm_label": "reportcontroller",
       "id": "controllers_reportcontroller_reportcontroller"
     },
     {
       "label": ".generateReport()",
       "file_type": "code",
-      "source_file": "ward-backend/controllers/ReportController.js",
+      "source_file": "controllers/ReportController.js",
       "source_location": "L9",
-      "community": 52,
+      "community": 42,
       "norm_label": ".generatereport()",
       "id": "controllers_reportcontroller_reportcontroller_generatereport"
     },
     {
       "label": ".getHistory()",
       "file_type": "code",
-      "source_file": "ward-backend/controllers/ReportController.js",
+      "source_file": "controllers/ReportController.js",
       "source_location": "L58",
-      "community": 52,
+      "community": 42,
       "norm_label": ".gethistory()",
       "id": "controllers_reportcontroller_reportcontroller_gethistory"
     },
     {
       "label": ".verifyReport()",
       "file_type": "code",
-      "source_file": "ward-backend/controllers/ReportController.js",
+      "source_file": "controllers/ReportController.js",
       "source_location": "L69",
-      "community": 52,
+      "community": 42,
       "norm_label": ".verifyreport()",
       "id": "controllers_reportcontroller_reportcontroller_verifyreport"
     },
@@ -1545,7 +1484,7 @@
       "file_type": "code",
       "source_file": "ward-backend/controllers/MedicationController.js",
       "source_location": "L1",
-      "community": 72,
+      "community": 74,
       "norm_label": "medicationcontroller.js",
       "id": "ward_backend_controllers_medicationcontroller_js"
     },
@@ -1554,7 +1493,7 @@
       "file_type": "code",
       "source_file": "ward-backend/controllers/MedicationController.js",
       "source_location": "L14",
-      "community": 72,
+      "community": 74,
       "norm_label": "validatemedicationpayload()",
       "id": "controllers_medicationcontroller_validatemedicationpayload"
     },
@@ -1563,7 +1502,7 @@
       "file_type": "code",
       "source_file": "ward-backend/controllers/MedicationController.js",
       "source_location": "L35",
-      "community": 72,
+      "community": 74,
       "norm_label": "validateadministrationpayload()",
       "id": "controllers_medicationcontroller_validateadministrationpayload"
     },
@@ -1572,7 +1511,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/BarcodeRepository.js",
       "source_location": "L1",
-      "community": 35,
+      "community": 36,
       "norm_label": "barcoderepository.js",
       "id": "ward_backend_repositories_barcoderepository_js"
     },
@@ -1581,7 +1520,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/BarcodeRepository.js",
       "source_location": "L3",
-      "community": 35,
+      "community": 36,
       "norm_label": "barcoderepository",
       "id": "repositories_barcoderepository_barcoderepository"
     },
@@ -1590,7 +1529,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/BarcodeRepository.js",
       "source_location": "L8",
-      "community": 35,
+      "community": 36,
       "norm_label": ".resolvebybarcode()",
       "id": "repositories_barcoderepository_barcoderepository_resolvebybarcode"
     },
@@ -1599,7 +1538,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/BarcodeRepository.js",
       "source_location": "L41",
-      "community": 35,
+      "community": 36,
       "norm_label": ".findconflict()",
       "id": "repositories_barcoderepository_barcoderepository_findconflict"
     },
@@ -1608,7 +1547,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/BarcodeRepository.js",
       "source_location": "L58",
-      "community": 35,
+      "community": 36,
       "norm_label": ".registerstockbarcode()",
       "id": "repositories_barcoderepository_barcoderepository_registerstockbarcode"
     },
@@ -1617,7 +1556,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/BarcodeRepository.js",
       "source_location": "L68",
-      "community": 35,
+      "community": 36,
       "norm_label": ".registerbatchbarcode()",
       "id": "repositories_barcoderepository_barcoderepository_registerbatchbarcode"
     },
@@ -1626,7 +1565,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/BarcodeRepository.js",
       "source_location": "L78",
-      "community": 35,
+      "community": 36,
       "norm_label": ".getregistrationhistory()",
       "id": "repositories_barcoderepository_barcoderepository_getregistrationhistory"
     },
@@ -1635,7 +1574,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/HandoverNotesRepository.js",
       "source_location": "L1",
-      "community": 63,
+      "community": 64,
       "norm_label": "handovernotesrepository.js",
       "id": "ward_backend_repositories_handovernotesrepository_js"
     },
@@ -1644,7 +1583,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/HandoverNotesRepository.js",
       "source_location": "L3",
-      "community": 63,
+      "community": 64,
       "norm_label": "handovernotesrepository",
       "id": "repositories_handovernotesrepository_handovernotesrepository"
     },
@@ -1653,7 +1592,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/HandoverNotesRepository.js",
       "source_location": "L4",
-      "community": 63,
+      "community": 64,
       "norm_label": ".create()",
       "id": "repositories_handovernotesrepository_handovernotesrepository_create"
     },
@@ -1662,7 +1601,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/HandoverNotesRepository.js",
       "source_location": "L22",
-      "community": 63,
+      "community": 64,
       "norm_label": ".listbypatient()",
       "id": "repositories_handovernotesrepository_handovernotesrepository_listbypatient"
     },
@@ -1743,7 +1682,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/AuthLockoutRepository.js",
       "source_location": "L1",
-      "community": 41,
+      "community": 43,
       "norm_label": "authlockoutrepository.js",
       "id": "ward_backend_repositories_authlockoutrepository_js"
     },
@@ -1752,7 +1691,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/AuthLockoutRepository.js",
       "source_location": "L7",
-      "community": 41,
+      "community": 43,
       "norm_label": "authlockoutrepository",
       "id": "repositories_authlockoutrepository_authlockoutrepository"
     },
@@ -1761,7 +1700,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/AuthLockoutRepository.js",
       "source_location": "L8",
-      "community": 41,
+      "community": 43,
       "norm_label": ".constructor()",
       "id": "repositories_authlockoutrepository_authlockoutrepository_constructor"
     },
@@ -1770,7 +1709,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/AuthLockoutRepository.js",
       "source_location": "L14",
-      "community": 41,
+      "community": 43,
       "norm_label": ".islocked()",
       "id": "repositories_authlockoutrepository_authlockoutrepository_islocked"
     },
@@ -1779,7 +1718,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/AuthLockoutRepository.js",
       "source_location": "L26",
-      "community": 41,
+      "community": 43,
       "norm_label": ".reset()",
       "id": "repositories_authlockoutrepository_authlockoutrepository_reset"
     },
@@ -1788,7 +1727,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/AuthLockoutRepository.js",
       "source_location": "L34",
-      "community": 41,
+      "community": 43,
       "norm_label": ".recordfailure()",
       "id": "repositories_authlockoutrepository_authlockoutrepository_recordfailure"
     },
@@ -1896,7 +1835,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/EscalationRepository.js",
       "source_location": "L1",
-      "community": 42,
+      "community": 44,
       "norm_label": "escalationrepository.js",
       "id": "ward_backend_repositories_escalationrepository_js"
     },
@@ -1905,7 +1844,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/EscalationRepository.js",
       "source_location": "L3",
-      "community": 42,
+      "community": 44,
       "norm_label": "escalationrepository",
       "id": "repositories_escalationrepository_escalationrepository"
     },
@@ -1914,7 +1853,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/EscalationRepository.js",
       "source_location": "L4",
-      "community": 42,
+      "community": 44,
       "norm_label": ".createescalationwithstatusupdate()",
       "id": "repositories_escalationrepository_escalationrepository_createescalationwithstatusupdate"
     },
@@ -1923,7 +1862,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/EscalationRepository.js",
       "source_location": "L25",
-      "community": 42,
+      "community": 44,
       "norm_label": ".findallpending()",
       "id": "repositories_escalationrepository_escalationrepository_findallpending"
     },
@@ -1932,7 +1871,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/EscalationRepository.js",
       "source_location": "L33",
-      "community": 42,
+      "community": 44,
       "norm_label": ".reviewescalationwithstatusupdate()",
       "id": "repositories_escalationrepository_escalationrepository_reviewescalationwithstatusupdate"
     },
@@ -1941,7 +1880,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/EscalationRepository.js",
       "source_location": "L62",
-      "community": 42,
+      "community": 44,
       "norm_label": ".findallbypatientid()",
       "id": "repositories_escalationrepository_escalationrepository_findallbypatientid"
     },
@@ -1950,106 +1889,106 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/PatientRepository.js",
       "source_location": "L1",
-      "community": 13,
+      "community": 11,
       "norm_label": "patientrepository.js",
       "id": "ward_backend_repositories_patientrepository_js"
     },
     {
       "label": "collectFullPatientSnapshot()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L4",
-      "community": 13,
+      "community": 11,
       "norm_label": "collectfullpatientsnapshot()",
       "id": "repositories_patientrepository_collectfullpatientsnapshot"
     },
     {
       "label": "PatientRepository",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L51",
-      "community": 13,
+      "community": 11,
       "norm_label": "patientrepository",
       "id": "repositories_patientrepository_patientrepository"
     },
     {
       "label": ".create()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L52",
-      "community": 13,
+      "community": 11,
       "norm_label": ".create()",
       "id": "repositories_patientrepository_patientrepository_create"
     },
     {
       "label": ".findAll()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L73",
-      "community": 13,
+      "community": 11,
       "norm_label": ".findall()",
       "id": "repositories_patientrepository_patientrepository_findall"
     },
     {
       "label": ".findArchived()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L81",
-      "community": 13,
+      "community": 11,
       "norm_label": ".findarchived()",
       "id": "repositories_patientrepository_patientrepository_findarchived"
     },
     {
       "label": ".findArchiveById()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L152",
-      "community": 13,
+      "community": 11,
       "norm_label": ".findarchivebyid()",
       "id": "repositories_patientrepository_patientrepository_findarchivebyid"
     },
     {
       "label": ".findById()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L169",
-      "community": 13,
+      "community": 11,
       "norm_label": ".findbyid()",
       "id": "repositories_patientrepository_patientrepository_findbyid"
     },
     {
       "label": ".findDischargeSummary()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L174",
-      "community": 13,
+      "community": 11,
       "norm_label": ".finddischargesummary()",
       "id": "repositories_patientrepository_patientrepository_finddischargesummary"
     },
     {
       "label": ".update()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L182",
-      "community": 13,
+      "community": 11,
       "norm_label": ".update()",
       "id": "repositories_patientrepository_patientrepository_update"
     },
     {
       "label": ".updateStatus()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
-      "source_location": "L203",
-      "community": 13,
+      "source_file": "repositories/PatientRepository.js",
+      "source_location": "L210",
+      "community": 11,
       "norm_label": ".updatestatus()",
       "id": "repositories_patientrepository_patientrepository_updatestatus"
     },
     {
       "label": ".discharge()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
-      "source_location": "L212",
-      "community": 13,
+      "source_file": "repositories/PatientRepository.js",
+      "source_location": "L219",
+      "community": 11,
       "norm_label": ".discharge()",
       "id": "repositories_patientrepository_patientrepository_discharge"
     },
@@ -2058,7 +1997,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/ReportRepository.js",
       "source_location": "L1",
-      "community": 53,
+      "community": 55,
       "norm_label": "reportrepository.js",
       "id": "ward_backend_repositories_reportrepository_js"
     },
@@ -2067,7 +2006,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/ReportRepository.js",
       "source_location": "L3",
-      "community": 53,
+      "community": 55,
       "norm_label": "reportrepository",
       "id": "repositories_reportrepository_reportrepository"
     },
@@ -2076,7 +2015,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/ReportRepository.js",
       "source_location": "L4",
-      "community": 53,
+      "community": 55,
       "norm_label": ".findbyid()",
       "id": "repositories_reportrepository_reportrepository_findbyid"
     },
@@ -2085,7 +2024,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/ReportRepository.js",
       "source_location": "L11",
-      "community": 53,
+      "community": 55,
       "norm_label": ".findallbypatientid()",
       "id": "repositories_reportrepository_reportrepository_findallbypatientid"
     },
@@ -2094,7 +2033,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/ReportRepository.js",
       "source_location": "L18",
-      "community": 53,
+      "community": 55,
       "norm_label": ".create()",
       "id": "repositories_reportrepository_reportrepository_create"
     },
@@ -2103,7 +2042,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/ClinicalChangeLogRepository.js",
       "source_location": "L1",
-      "community": 83,
+      "community": 84,
       "norm_label": "clinicalchangelogrepository.js",
       "id": "ward_backend_repositories_clinicalchangelogrepository_js"
     },
@@ -2112,7 +2051,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/ClinicalChangeLogRepository.js",
       "source_location": "L14",
-      "community": 83,
+      "community": 84,
       "norm_label": "insert()",
       "id": "repositories_clinicalchangelogrepository_insert"
     },
@@ -2220,25 +2159,25 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/AuthRepository.js",
       "source_location": "L1",
-      "community": 73,
+      "community": 45,
       "norm_label": "authrepository.js",
       "id": "ward_backend_repositories_authrepository_js"
     },
     {
       "label": "AuthRepository",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/AuthRepository.js",
+      "source_file": "repositories/AuthRepository.js",
       "source_location": "L3",
-      "community": 73,
+      "community": 45,
       "norm_label": "authrepository",
       "id": "repositories_authrepository_authrepository"
     },
     {
       "label": ".findUserByName()",
       "file_type": "code",
-      "source_file": "ward-backend/repositories/AuthRepository.js",
+      "source_file": "repositories/AuthRepository.js",
       "source_location": "L4",
-      "community": 73,
+      "community": 45,
       "norm_label": ".finduserbyname()",
       "id": "repositories_authrepository_authrepository_finduserbyname"
     },
@@ -2247,7 +2186,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/TaskRepository.js",
       "source_location": "L1",
-      "community": 43,
+      "community": 46,
       "norm_label": "taskrepository.js",
       "id": "ward_backend_repositories_taskrepository_js"
     },
@@ -2256,7 +2195,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/TaskRepository.js",
       "source_location": "L3",
-      "community": 43,
+      "community": 46,
       "norm_label": "taskrepository",
       "id": "repositories_taskrepository_taskrepository"
     },
@@ -2265,7 +2204,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/TaskRepository.js",
       "source_location": "L4",
-      "community": 43,
+      "community": 46,
       "norm_label": ".create()",
       "id": "repositories_taskrepository_taskrepository_create"
     },
@@ -2274,7 +2213,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/TaskRepository.js",
       "source_location": "L25",
-      "community": 43,
+      "community": 46,
       "norm_label": ".listbypatient()",
       "id": "repositories_taskrepository_taskrepository_listbypatient"
     },
@@ -2283,7 +2222,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/TaskRepository.js",
       "source_location": "L54",
-      "community": 43,
+      "community": 46,
       "norm_label": ".listmyopentasks()",
       "id": "repositories_taskrepository_taskrepository_listmyopentasks"
     },
@@ -2292,7 +2231,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/TaskRepository.js",
       "source_location": "L86",
-      "community": 43,
+      "community": 46,
       "norm_label": ".complete()",
       "id": "repositories_taskrepository_taskrepository_complete"
     },
@@ -2301,7 +2240,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/PurchaseOrderRepository.js",
       "source_location": "L1",
-      "community": 36,
+      "community": 37,
       "norm_label": "purchaseorderrepository.js",
       "id": "ward_backend_repositories_purchaseorderrepository_js"
     },
@@ -2310,7 +2249,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/PurchaseOrderRepository.js",
       "source_location": "L3",
-      "community": 36,
+      "community": 37,
       "norm_label": "purchaseorderrepository",
       "id": "repositories_purchaseorderrepository_purchaseorderrepository"
     },
@@ -2319,7 +2258,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/PurchaseOrderRepository.js",
       "source_location": "L4",
-      "community": 36,
+      "community": 37,
       "norm_label": ".create()",
       "id": "repositories_purchaseorderrepository_purchaseorderrepository_create"
     },
@@ -2328,7 +2267,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/PurchaseOrderRepository.js",
       "source_location": "L17",
-      "community": 36,
+      "community": 37,
       "norm_label": ".findpendingbystockid()",
       "id": "repositories_purchaseorderrepository_purchaseorderrepository_findpendingbystockid"
     },
@@ -2337,7 +2276,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/PurchaseOrderRepository.js",
       "source_location": "L26",
-      "community": 36,
+      "community": 37,
       "norm_label": ".list()",
       "id": "repositories_purchaseorderrepository_purchaseorderrepository_list"
     },
@@ -2346,7 +2285,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/PurchaseOrderRepository.js",
       "source_location": "L41",
-      "community": 36,
+      "community": 37,
       "norm_label": ".updatestatus()",
       "id": "repositories_purchaseorderrepository_purchaseorderrepository_updatestatus"
     },
@@ -2355,7 +2294,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/PurchaseOrderRepository.js",
       "source_location": "L57",
-      "community": 36,
+      "community": 37,
       "norm_label": ".findbyid()",
       "id": "repositories_purchaseorderrepository_purchaseorderrepository_findbyid"
     },
@@ -2436,7 +2375,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L1",
-      "community": 11,
+      "community": 12,
       "norm_label": "batchrepository.js",
       "id": "ward_backend_repositories_pharmacy_batchrepository_js"
     },
@@ -2445,7 +2384,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L3",
-      "community": 11,
+      "community": 12,
       "norm_label": "batchrepository",
       "id": "pharmacy_batchrepository_batchrepository"
     },
@@ -2454,7 +2393,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L4",
-      "community": 11,
+      "community": 12,
       "norm_label": ".listbatches()",
       "id": "pharmacy_batchrepository_batchrepository_listbatches"
     },
@@ -2463,7 +2402,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L9",
-      "community": 11,
+      "community": 12,
       "norm_label": ".listactivebatches()",
       "id": "pharmacy_batchrepository_batchrepository_listactivebatches"
     },
@@ -2472,7 +2411,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L14",
-      "community": 11,
+      "community": 12,
       "norm_label": ".findbatchbyid()",
       "id": "pharmacy_batchrepository_batchrepository_findbatchbyid"
     },
@@ -2481,7 +2420,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L19",
-      "community": 11,
+      "community": 12,
       "norm_label": ".findbatchbylot()",
       "id": "pharmacy_batchrepository_batchrepository_findbatchbylot"
     },
@@ -2490,7 +2429,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L29",
-      "community": 11,
+      "community": 12,
       "norm_label": ".createbatch()",
       "id": "pharmacy_batchrepository_batchrepository_createbatch"
     },
@@ -2499,7 +2438,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L54",
-      "community": 11,
+      "community": 12,
       "norm_label": ".updatebatchquantity()",
       "id": "pharmacy_batchrepository_batchrepository_updatebatchquantity"
     },
@@ -2508,7 +2447,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L63",
-      "community": 11,
+      "community": 12,
       "norm_label": ".updatebatchstatus()",
       "id": "pharmacy_batchrepository_batchrepository_updatebatchstatus"
     },
@@ -2517,7 +2456,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L72",
-      "community": 11,
+      "community": 12,
       "norm_label": ".getfefocandidate()",
       "id": "pharmacy_batchrepository_batchrepository_getfefocandidate"
     },
@@ -2526,7 +2465,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L82",
-      "community": 11,
+      "community": 12,
       "norm_label": ".listallbatchesbytenant()",
       "id": "pharmacy_batchrepository_batchrepository_listallbatchesbytenant"
     },
@@ -2535,7 +2474,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L93",
-      "community": 11,
+      "community": 12,
       "norm_label": ".sumactivebatchquantity()",
       "id": "pharmacy_batchrepository_batchrepository_sumactivebatchquantity"
     },
@@ -2544,7 +2483,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/BatchRepository.js",
       "source_location": "L103",
-      "community": 11,
+      "community": 12,
       "norm_label": ".getdispensetransactionsforbatch()",
       "id": "pharmacy_batchrepository_batchrepository_getdispensetransactionsforbatch"
     },
@@ -2553,7 +2492,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/TransactionRepository.js",
       "source_location": "L1",
-      "community": 54,
+      "community": 56,
       "norm_label": "transactionrepository.js",
       "id": "ward_backend_repositories_pharmacy_transactionrepository_js"
     },
@@ -2562,7 +2501,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/TransactionRepository.js",
       "source_location": "L3",
-      "community": 54,
+      "community": 56,
       "norm_label": "transactionrepository",
       "id": "pharmacy_transactionrepository_transactionrepository"
     },
@@ -2571,7 +2510,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/TransactionRepository.js",
       "source_location": "L4",
-      "community": 54,
+      "community": 56,
       "norm_label": ".recordtransaction()",
       "id": "pharmacy_transactionrepository_transactionrepository_recordtransaction"
     },
@@ -2580,7 +2519,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/TransactionRepository.js",
       "source_location": "L26",
-      "community": 54,
+      "community": 56,
       "norm_label": ".listtransactions()",
       "id": "pharmacy_transactionrepository_transactionrepository_listtransactions"
     },
@@ -2589,7 +2528,7 @@
       "file_type": "code",
       "source_file": "ward-backend/repositories/pharmacy/TransactionRepository.js",
       "source_location": "L39",
-      "community": 54,
+      "community": 56,
       "norm_label": ".getdispensehistory()",
       "id": "pharmacy_transactionrepository_transactionrepository_getdispensehistory"
     },
@@ -2598,7 +2537,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyReorderService.js",
       "source_location": "L1",
-      "community": 44,
+      "community": 47,
       "norm_label": "pharmacyreorderservice.js",
       "id": "ward_backend_services_pharmacyreorderservice_js"
     },
@@ -2607,7 +2546,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyReorderService.js",
       "source_location": "L6",
-      "community": 44,
+      "community": 47,
       "norm_label": "pharmacyreorderservice",
       "id": "services_pharmacyreorderservice_pharmacyreorderservice"
     },
@@ -2616,7 +2555,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyReorderService.js",
       "source_location": "L11",
-      "community": 44,
+      "community": 47,
       "norm_label": ".triggerreordercheck()",
       "id": "services_pharmacyreorderservice_pharmacyreorderservice_triggerreordercheck"
     },
@@ -2625,7 +2564,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyReorderService.js",
       "source_location": "L53",
-      "community": 44,
+      "community": 47,
       "norm_label": ".getorders()",
       "id": "services_pharmacyreorderservice_pharmacyreorderservice_getorders"
     },
@@ -2634,7 +2573,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyReorderService.js",
       "source_location": "L57",
-      "community": 44,
+      "community": 47,
       "norm_label": ".updateorderstatus()",
       "id": "services_pharmacyreorderservice_pharmacyreorderservice_updateorderstatus"
     },
@@ -2643,7 +2582,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyReorderService.js",
       "source_location": "L67",
-      "community": 44,
+      "community": 47,
       "norm_label": ".checkallinventory()",
       "id": "services_pharmacyreorderservice_pharmacyreorderservice_checkallinventory"
     },
@@ -2652,7 +2591,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ReportDataService.js",
       "source_location": "L1",
-      "community": 55,
+      "community": 57,
       "norm_label": "reportdataservice.js",
       "id": "ward_backend_services_reportdataservice_js"
     },
@@ -2661,7 +2600,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ReportDataService.js",
       "source_location": "L11",
-      "community": 55,
+      "community": 57,
       "norm_label": "reportdataservice",
       "id": "services_reportdataservice_reportdataservice"
     },
@@ -2670,7 +2609,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ReportDataService.js",
       "source_location": "L15",
-      "community": 55,
+      "community": 57,
       "norm_label": ".aggregatepatientdata()",
       "id": "services_reportdataservice_reportdataservice_aggregatepatientdata"
     },
@@ -2679,7 +2618,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ReportDataService.js",
       "source_location": "L72",
-      "community": 55,
+      "community": 57,
       "norm_label": ".computereporthash()",
       "id": "services_reportdataservice_reportdataservice_computereporthash"
     },
@@ -2688,7 +2627,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ReportDataService.js",
       "source_location": "L96",
-      "community": 55,
+      "community": 57,
       "norm_label": "._canonicalstringify()",
       "id": "services_reportdataservice_reportdataservice_canonicalstringify"
     },
@@ -2769,7 +2708,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L1",
-      "community": 21,
+      "community": 20,
       "norm_label": "patientservice.js",
       "id": "ward_backend_services_patientservice_js"
     },
@@ -2778,7 +2717,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L6",
-      "community": 21,
+      "community": 20,
       "norm_label": "patientservice",
       "id": "services_patientservice_patientservice"
     },
@@ -2787,7 +2726,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L7",
-      "community": 21,
+      "community": 20,
       "norm_label": ".createpatient()",
       "id": "services_patientservice_patientservice_createpatient"
     },
@@ -2796,7 +2735,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L35",
-      "community": 21,
+      "community": 20,
       "norm_label": ".getallpatients()",
       "id": "services_patientservice_patientservice_getallpatients"
     },
@@ -2805,7 +2744,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L53",
-      "community": 21,
+      "community": 20,
       "norm_label": ".getarchivedpatients()",
       "id": "services_patientservice_patientservice_getarchivedpatients"
     },
@@ -2814,7 +2753,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L57",
-      "community": 21,
+      "community": 20,
       "norm_label": ".getpatientbyid()",
       "id": "services_patientservice_patientservice_getpatientbyid"
     },
@@ -2823,7 +2762,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L65",
-      "community": 21,
+      "community": 20,
       "norm_label": ".getdischargesummary()",
       "id": "services_patientservice_patientservice_getdischargesummary"
     },
@@ -2832,7 +2771,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L73",
-      "community": 21,
+      "community": 20,
       "norm_label": ".updatepatient()",
       "id": "services_patientservice_patientservice_updatepatient"
     },
@@ -2841,7 +2780,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L81",
-      "community": 21,
+      "community": 20,
       "norm_label": ".dischargepatient()",
       "id": "services_patientservice_patientservice_dischargepatient"
     },
@@ -2850,7 +2789,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PatientService.js",
       "source_location": "L90",
-      "community": 21,
+      "community": 20,
       "norm_label": ".gethospitalarchive()",
       "id": "services_patientservice_patientservice_gethospitalarchive"
     },
@@ -2931,7 +2870,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyAnalyticsService.js",
       "source_location": "L1",
-      "community": 45,
+      "community": 48,
       "norm_label": "pharmacyanalyticsservice.js",
       "id": "ward_backend_services_pharmacyanalyticsservice_js"
     },
@@ -2940,7 +2879,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyAnalyticsService.js",
       "source_location": "L4",
-      "community": 45,
+      "community": 48,
       "norm_label": "pharmacyanalyticsservice",
       "id": "services_pharmacyanalyticsservice_pharmacyanalyticsservice"
     },
@@ -2949,7 +2888,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyAnalyticsService.js",
       "source_location": "L10",
-      "community": 45,
+      "community": 48,
       "norm_label": ".getconsumptionstats()",
       "id": "services_pharmacyanalyticsservice_pharmacyanalyticsservice_getconsumptionstats"
     },
@@ -2958,7 +2897,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyAnalyticsService.js",
       "source_location": "L55",
-      "community": 45,
+      "community": 48,
       "norm_label": ".getriskanalysis()",
       "id": "services_pharmacyanalyticsservice_pharmacyanalyticsservice_getriskanalysis"
     },
@@ -2967,7 +2906,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyAnalyticsService.js",
       "source_location": "L63",
-      "community": 45,
+      "community": 48,
       "norm_label": ".getfinancialanalytics()",
       "id": "services_pharmacyanalyticsservice_pharmacyanalyticsservice_getfinancialanalytics"
     },
@@ -2976,7 +2915,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/PharmacyAnalyticsService.js",
       "source_location": "L103",
-      "community": 45,
+      "community": 48,
       "norm_label": ".getreplenishmentplan()",
       "id": "services_pharmacyanalyticsservice_pharmacyanalyticsservice_getreplenishmentplan"
     },
@@ -3138,7 +3077,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ScoringService.js",
       "source_location": "L1",
-      "community": 64,
+      "community": 65,
       "norm_label": "scoringservice.js",
       "id": "ward_backend_services_scoringservice_js"
     },
@@ -3147,7 +3086,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ScoringService.js",
       "source_location": "L8",
-      "community": 64,
+      "community": 65,
       "norm_label": "scoringservice",
       "id": "services_scoringservice_scoringservice"
     },
@@ -3156,7 +3095,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ScoringService.js",
       "source_location": "L21",
-      "community": 64,
+      "community": 65,
       "norm_label": ".calculatenews2()",
       "id": "services_scoringservice_scoringservice_calculatenews2"
     },
@@ -3165,7 +3104,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/ScoringService.js",
       "source_location": "L135",
-      "community": 64,
+      "community": 65,
       "norm_label": ".calculatefromvital()",
       "id": "services_scoringservice_scoringservice_calculatefromvital"
     },
@@ -3174,7 +3113,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/MigratorService.js",
       "source_location": "L1",
-      "community": 74,
+      "community": 75,
       "norm_label": "migratorservice.js",
       "id": "ward_backend_services_migratorservice_js"
     },
@@ -3183,7 +3122,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/MigratorService.js",
       "source_location": "L6",
-      "community": 74,
+      "community": 75,
       "norm_label": "migratorservice",
       "id": "services_migratorservice_migratorservice"
     },
@@ -3192,7 +3131,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/MigratorService.js",
       "source_location": "L7",
-      "community": 74,
+      "community": 75,
       "norm_label": ".runmigrations()",
       "id": "services_migratorservice_migratorservice_runmigrations"
     },
@@ -3201,7 +3140,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/BarcodeService.js",
       "source_location": "L1",
-      "community": 46,
+      "community": 49,
       "norm_label": "barcodeservice.js",
       "id": "ward_backend_services_barcodeservice_js"
     },
@@ -3210,7 +3149,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/BarcodeService.js",
       "source_location": "L6",
-      "community": 46,
+      "community": 49,
       "norm_label": "barcodeservice",
       "id": "services_barcodeservice_barcodeservice"
     },
@@ -3219,7 +3158,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/BarcodeService.js",
       "source_location": "L7",
-      "community": 46,
+      "community": 49,
       "norm_label": ".resolvescan()",
       "id": "services_barcodeservice_barcodeservice_resolvescan"
     },
@@ -3228,7 +3167,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/BarcodeService.js",
       "source_location": "L31",
-      "community": 46,
+      "community": 49,
       "norm_label": ".registerbarcode()",
       "id": "services_barcodeservice_barcodeservice_registerbarcode"
     },
@@ -3237,7 +3176,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/BarcodeService.js",
       "source_location": "L61",
-      "community": 46,
+      "community": 49,
       "norm_label": ".generateqrcode()",
       "id": "services_barcodeservice_barcodeservice_generateqrcode"
     },
@@ -3246,7 +3185,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/BarcodeService.js",
       "source_location": "L84",
-      "community": 46,
+      "community": 49,
       "norm_label": ".gethistory()",
       "id": "services_barcodeservice_barcodeservice_gethistory"
     },
@@ -3381,25 +3320,25 @@
       "file_type": "code",
       "source_file": "ward-backend/services/AuthService.js",
       "source_location": "L1",
-      "community": 75,
+      "community": 58,
       "norm_label": "authservice.js",
       "id": "ward_backend_services_authservice_js"
     },
     {
       "label": "AuthService",
       "file_type": "code",
-      "source_file": "ward-backend/services/AuthService.js",
+      "source_file": "services/AuthService.js",
       "source_location": "L7",
-      "community": 75,
+      "community": 58,
       "norm_label": "authservice",
       "id": "services_authservice_authservice"
     },
     {
       "label": ".authenticateUser()",
       "file_type": "code",
-      "source_file": "ward-backend/services/AuthService.js",
+      "source_file": "services/AuthService.js",
       "source_location": "L8",
-      "community": 75,
+      "community": 58,
       "norm_label": ".authenticateuser()",
       "id": "services_authservice_authservice_authenticateuser"
     },
@@ -3408,7 +3347,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/EscalationService.js",
       "source_location": "L1",
-      "community": 56,
+      "community": 59,
       "norm_label": "escalationservice.js",
       "id": "ward_backend_services_escalationservice_js"
     },
@@ -3417,7 +3356,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/EscalationService.js",
       "source_location": "L4",
-      "community": 56,
+      "community": 59,
       "norm_label": "escalationservice",
       "id": "services_escalationservice_escalationservice"
     },
@@ -3426,7 +3365,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/EscalationService.js",
       "source_location": "L5",
-      "community": 56,
+      "community": 59,
       "norm_label": ".createescalation()",
       "id": "services_escalationservice_escalationservice_createescalation"
     },
@@ -3435,7 +3374,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/EscalationService.js",
       "source_location": "L22",
-      "community": 56,
+      "community": 59,
       "norm_label": ".getpendingescalations()",
       "id": "services_escalationservice_escalationservice_getpendingescalations"
     },
@@ -3444,7 +3383,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/EscalationService.js",
       "source_location": "L26",
-      "community": 56,
+      "community": 59,
       "norm_label": ".reviewescalation()",
       "id": "services_escalationservice_escalationservice_reviewescalation"
     },
@@ -3453,7 +3392,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/TaskService.js",
       "source_location": "L1",
-      "community": 47,
+      "community": 50,
       "norm_label": "taskservice.js",
       "id": "ward_backend_services_taskservice_js"
     },
@@ -3462,7 +3401,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/TaskService.js",
       "source_location": "L6",
-      "community": 47,
+      "community": 50,
       "norm_label": "taskservice",
       "id": "services_taskservice_taskservice"
     },
@@ -3471,7 +3410,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/TaskService.js",
       "source_location": "L7",
-      "community": 47,
+      "community": 50,
       "norm_label": ".createtask()",
       "id": "services_taskservice_taskservice_createtask"
     },
@@ -3480,7 +3419,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/TaskService.js",
       "source_location": "L42",
-      "community": 47,
+      "community": 50,
       "norm_label": ".listpatienttasks()",
       "id": "services_taskservice_taskservice_listpatienttasks"
     },
@@ -3489,7 +3428,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/TaskService.js",
       "source_location": "L48",
-      "community": 47,
+      "community": 50,
       "norm_label": ".listmyopentasks()",
       "id": "services_taskservice_taskservice_listmyopentasks"
     },
@@ -3498,7 +3437,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/TaskService.js",
       "source_location": "L53",
-      "community": 47,
+      "community": 50,
       "norm_label": ".completetask()",
       "id": "services_taskservice_taskservice_completetask"
     },
@@ -3507,7 +3446,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/HandoverNotesService.js",
       "source_location": "L1",
-      "community": 65,
+      "community": 66,
       "norm_label": "handovernotesservice.js",
       "id": "ward_backend_services_handovernotesservice_js"
     },
@@ -3516,7 +3455,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/HandoverNotesService.js",
       "source_location": "L6",
-      "community": 65,
+      "community": 66,
       "norm_label": "handovernotesservice",
       "id": "services_handovernotesservice_handovernotesservice"
     },
@@ -3525,7 +3464,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/HandoverNotesService.js",
       "source_location": "L7",
-      "community": 65,
+      "community": 66,
       "norm_label": ".createnote()",
       "id": "services_handovernotesservice_handovernotesservice_createnote"
     },
@@ -3534,7 +3473,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/HandoverNotesService.js",
       "source_location": "L31",
-      "community": 65,
+      "community": 66,
       "norm_label": ".listnotes()",
       "id": "services_handovernotesservice_handovernotesservice_listnotes"
     },
@@ -3570,7 +3509,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/TransactionService.js",
       "source_location": "L1",
-      "community": 66,
+      "community": 67,
       "norm_label": "transactionservice.js",
       "id": "ward_backend_services_pharmacy_transactionservice_js"
     },
@@ -3579,7 +3518,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/TransactionService.js",
       "source_location": "L7",
-      "community": 66,
+      "community": 67,
       "norm_label": "transactionservice",
       "id": "pharmacy_transactionservice_transactionservice"
     },
@@ -3588,7 +3527,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/TransactionService.js",
       "source_location": "L8",
-      "community": 66,
+      "community": 67,
       "norm_label": ".adjuststock()",
       "id": "pharmacy_transactionservice_transactionservice_adjuststock"
     },
@@ -3597,7 +3536,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/TransactionService.js",
       "source_location": "L110",
-      "community": 66,
+      "community": 67,
       "norm_label": ".gettransactionhistory()",
       "id": "pharmacy_transactionservice_transactionservice_gettransactionhistory"
     },
@@ -3606,52 +3545,52 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/StockService.js",
       "source_location": "L1",
-      "community": 48,
+      "community": 33,
       "norm_label": "stockservice.js",
       "id": "ward_backend_services_pharmacy_stockservice_js"
     },
     {
       "label": "StockService",
       "file_type": "code",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
+      "source_file": "services/pharmacy/StockService.js",
       "source_location": "L6",
-      "community": 48,
+      "community": 33,
       "norm_label": "stockservice",
       "id": "pharmacy_stockservice_stockservice"
     },
     {
       "label": ".getInventory()",
       "file_type": "code",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
+      "source_file": "services/pharmacy/StockService.js",
       "source_location": "L7",
-      "community": 48,
+      "community": 33,
       "norm_label": ".getinventory()",
       "id": "pharmacy_stockservice_stockservice_getinventory"
     },
     {
       "label": ".addMedication()",
       "file_type": "code",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
-      "source_location": "L30",
-      "community": 48,
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L34",
+      "community": 33,
       "norm_label": ".addmedication()",
       "id": "pharmacy_stockservice_stockservice_addmedication"
     },
     {
       "label": ".updateStockLevel()",
       "file_type": "code",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
-      "source_location": "L89",
-      "community": 48,
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L93",
+      "community": 33,
       "norm_label": ".updatestocklevel()",
       "id": "pharmacy_stockservice_stockservice_updatestocklevel"
     },
     {
       "label": ".removeMedication()",
       "file_type": "code",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
-      "source_location": "L95",
-      "community": 48,
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L99",
+      "community": 33,
       "norm_label": ".removemedication()",
       "id": "pharmacy_stockservice_stockservice_removemedication"
     },
@@ -3660,7 +3599,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/BatchService.js",
       "source_location": "L1",
-      "community": 33,
+      "community": 34,
       "norm_label": "batchservice.js",
       "id": "ward_backend_services_pharmacy_batchservice_js"
     },
@@ -3669,7 +3608,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/BatchService.js",
       "source_location": "L7",
-      "community": 33,
+      "community": 34,
       "norm_label": "batchservice",
       "id": "pharmacy_batchservice_batchservice"
     },
@@ -3678,7 +3617,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/BatchService.js",
       "source_location": "L8",
-      "community": 33,
+      "community": 34,
       "norm_label": ".addbatch()",
       "id": "pharmacy_batchservice_batchservice_addbatch"
     },
@@ -3687,7 +3626,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/BatchService.js",
       "source_location": "L71",
-      "community": 33,
+      "community": 34,
       "norm_label": ".getbatches()",
       "id": "pharmacy_batchservice_batchservice_getbatches"
     },
@@ -3696,7 +3635,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/BatchService.js",
       "source_location": "L77",
-      "community": 33,
+      "community": 34,
       "norm_label": ".recallbatch()",
       "id": "pharmacy_batchservice_batchservice_recallbatch"
     },
@@ -3705,7 +3644,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/BatchService.js",
       "source_location": "L124",
-      "community": 33,
+      "community": 34,
       "norm_label": ".getrecalltrace()",
       "id": "pharmacy_batchservice_batchservice_getrecalltrace"
     },
@@ -3714,7 +3653,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/BatchService.js",
       "source_location": "L136",
-      "community": 33,
+      "community": 34,
       "norm_label": ".syncstocktotals()",
       "id": "pharmacy_batchservice_batchservice_syncstocktotals"
     },
@@ -3723,7 +3662,7 @@
       "file_type": "code",
       "source_file": "ward-backend/services/pharmacy/BatchService.js",
       "source_location": "L158",
-      "community": 33,
+      "community": 34,
       "norm_label": ".searchbylotnumber()",
       "id": "pharmacy_batchservice_batchservice_searchbylotnumber"
     },
@@ -3804,7 +3743,7 @@
       "file_type": "code",
       "source_file": "ward-backend/tests/integration/tenantIsolation.test.js",
       "source_location": "L1",
-      "community": 84,
+      "community": 85,
       "norm_label": "tenantisolation.test.js",
       "id": "ward_backend_tests_integration_tenantisolation_test_js"
     },
@@ -3813,7 +3752,7 @@
       "file_type": "code",
       "source_file": "ward-backend/tests/integration/tenantIsolation.test.js",
       "source_location": "L83",
-      "community": 84,
+      "community": 85,
       "norm_label": "makeapp()",
       "id": "integration_tenantisolation_test_makeapp"
     },
@@ -3876,7 +3815,7 @@
       "file_type": "code",
       "source_file": "ward-backend/tests/integration/authCookie.test.js",
       "source_location": "L1",
-      "community": 85,
+      "community": 86,
       "norm_label": "authcookie.test.js",
       "id": "ward_backend_tests_integration_authcookie_test_js"
     },
@@ -3885,7 +3824,7 @@
       "file_type": "code",
       "source_file": "ward-backend/tests/integration/authCookie.test.js",
       "source_location": "L14",
-      "community": 85,
+      "community": 86,
       "norm_label": "makeapp()",
       "id": "integration_authcookie_test_makeapp"
     },
@@ -3894,7 +3833,7 @@
       "file_type": "code",
       "source_file": "ward-backend/tests/integration/audit.test.js",
       "source_location": "L1",
-      "community": 86,
+      "community": 87,
       "norm_label": "audit.test.js",
       "id": "ward_backend_tests_integration_audit_test_js"
     },
@@ -3903,7 +3842,7 @@
       "file_type": "code",
       "source_file": "ward-backend/tests/integration/audit.test.js",
       "source_location": "L32",
-      "community": 86,
+      "community": 87,
       "norm_label": "getlatestauditforresource()",
       "id": "integration_audit_test_getlatestauditforresource"
     },
@@ -3984,16 +3923,16 @@
       "file_type": "code",
       "source_file": "ward-backend/db/schema.js",
       "source_location": "L1",
-      "community": 87,
+      "community": 78,
       "norm_label": "schema.js",
       "id": "ward_backend_db_schema_js"
     },
     {
       "label": "initDb()",
       "file_type": "code",
-      "source_file": "ward-backend/db/schema.js",
+      "source_file": "db/schema.js",
       "source_location": "L3",
-      "community": 87,
+      "community": 78,
       "norm_label": "initdb()",
       "id": "db_schema_initdb"
     },
@@ -4002,7 +3941,7 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/auth.js",
       "source_location": "L1",
-      "community": 57,
+      "community": 60,
       "norm_label": "auth.js",
       "id": "ward_backend_middleware_auth_js"
     },
@@ -4011,7 +3950,7 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/auth.js",
       "source_location": "L5",
-      "community": 57,
+      "community": 60,
       "norm_label": "extracttoken()",
       "id": "middleware_auth_extracttoken"
     },
@@ -4020,7 +3959,7 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/auth.js",
       "source_location": "L30",
-      "community": 57,
+      "community": 60,
       "norm_label": "attachuserifpresent()",
       "id": "middleware_auth_attachuserifpresent"
     },
@@ -4029,7 +3968,7 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/auth.js",
       "source_location": "L42",
-      "community": 57,
+      "community": 60,
       "norm_label": "authenticatetoken()",
       "id": "middleware_auth_authenticatetoken"
     },
@@ -4038,7 +3977,7 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/auth.js",
       "source_location": "L55",
-      "community": 57,
+      "community": 60,
       "norm_label": "requirerole()",
       "id": "middleware_auth_requirerole"
     },
@@ -4047,7 +3986,7 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/rbac.js",
       "source_location": "L1",
-      "community": 78,
+      "community": 79,
       "norm_label": "rbac.js",
       "id": "ward_backend_middleware_rbac_js"
     },
@@ -4056,7 +3995,7 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/rbac.js",
       "source_location": "L62",
-      "community": 78,
+      "community": 79,
       "norm_label": "authorize()",
       "id": "middleware_rbac_authorize"
     },
@@ -4065,7 +4004,7 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/rbac.js",
       "source_location": "L85",
-      "community": 78,
+      "community": 79,
       "norm_label": "authorizeany()",
       "id": "middleware_rbac_authorizeany"
     },
@@ -4209,16 +4148,16 @@
       "file_type": "code",
       "source_file": "ward-backend/middleware/csrf.js",
       "source_location": "L1",
-      "community": 91,
+      "community": 80,
       "norm_label": "csrf.js",
       "id": "ward_backend_middleware_csrf_js"
     },
     {
       "label": "verifyCsrfForMutations()",
       "file_type": "code",
-      "source_file": "ward-backend/middleware/csrf.js",
+      "source_file": "middleware/csrf.js",
       "source_location": "L5",
-      "community": 91,
+      "community": 80,
       "norm_label": "verifycsrfformutations()",
       "id": "middleware_csrf_verifycsrfformutations"
     },
@@ -4263,7 +4202,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/migrate-sqlite-to-postgres.js",
       "source_location": "L1",
-      "community": 92,
+      "community": 91,
       "norm_label": "migrate-sqlite-to-postgres.js",
       "id": "ward_backend_scripts_migrate_sqlite_to_postgres_js"
     },
@@ -4272,7 +4211,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/migrate-sqlite-to-postgres.js",
       "source_location": "L5",
-      "community": 92,
+      "community": 91,
       "norm_label": "migrate()",
       "id": "scripts_migrate_sqlite_to_postgres_migrate"
     },
@@ -4281,7 +4220,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L1",
-      "community": 22,
+      "community": 21,
       "norm_label": "stresseverything.js",
       "id": "ward_backend_scripts_stresseverything_js"
     },
@@ -4290,7 +4229,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L19",
-      "community": 22,
+      "community": 21,
       "norm_label": "isbackendup()",
       "id": "scripts_stresseverything_isbackendup"
     },
@@ -4299,7 +4238,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L32",
-      "community": 22,
+      "community": 21,
       "norm_label": "sleep()",
       "id": "scripts_stresseverything_sleep"
     },
@@ -4308,7 +4247,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L36",
-      "community": 22,
+      "community": 21,
       "norm_label": "dbrun()",
       "id": "scripts_stresseverything_dbrun"
     },
@@ -4317,7 +4256,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L45",
-      "community": 22,
+      "community": 21,
       "norm_label": "dbget()",
       "id": "scripts_stresseverything_dbget"
     },
@@ -4326,7 +4265,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L54",
-      "community": 22,
+      "community": 21,
       "norm_label": "ensurefixture()",
       "id": "scripts_stresseverything_ensurefixture"
     },
@@ -4335,7 +4274,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L218",
-      "community": 22,
+      "community": 21,
       "norm_label": "maketoken()",
       "id": "scripts_stresseverything_maketoken"
     },
@@ -4344,7 +4283,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L222",
-      "community": 22,
+      "community": 21,
       "norm_label": "pickweighted()",
       "id": "scripts_stresseverything_pickweighted"
     },
@@ -4353,7 +4292,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L232",
-      "community": 22,
+      "community": 21,
       "norm_label": "authedfetch()",
       "id": "scripts_stresseverything_authedfetch"
     },
@@ -4362,7 +4301,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stressEverything.js",
       "source_location": "L247",
-      "community": 22,
+      "community": 21,
       "norm_label": "stress()",
       "id": "scripts_stresseverything_stress"
     },
@@ -4389,7 +4328,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/adapter-test.js",
       "source_location": "L1",
-      "community": 93,
+      "community": 92,
       "norm_label": "adapter-test.js",
       "id": "ward_backend_scripts_adapter_test_js"
     },
@@ -4398,7 +4337,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/adapter-test.js",
       "source_location": "L3",
-      "community": 93,
+      "community": 92,
       "norm_label": "test()",
       "id": "scripts_adapter_test_test"
     },
@@ -4407,7 +4346,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/seed_pharmacy.js",
       "source_location": "L1",
-      "community": 79,
+      "community": 81,
       "norm_label": "seed_pharmacy.js",
       "id": "ward_backend_scripts_seed_pharmacy_js"
     },
@@ -4416,7 +4355,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/seed_pharmacy.js",
       "source_location": "L3",
-      "community": 79,
+      "community": 81,
       "norm_label": "dbrun()",
       "id": "scripts_seed_pharmacy_dbrun"
     },
@@ -4425,7 +4364,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/seed_pharmacy.js",
       "source_location": "L12",
-      "community": 79,
+      "community": 81,
       "norm_label": "seed()",
       "id": "scripts_seed_pharmacy_seed"
     },
@@ -4452,7 +4391,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stress_test.js",
       "source_location": "L1",
-      "community": 94,
+      "community": 93,
       "norm_label": "stress_test.js",
       "id": "ward_backend_scripts_stress_test_js"
     },
@@ -4461,7 +4400,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/stress_test.js",
       "source_location": "L11",
-      "community": 94,
+      "community": 93,
       "norm_label": "makerequest()",
       "id": "scripts_stress_test_makerequest"
     },
@@ -4470,7 +4409,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/compareSqlitePostgresCounts.js",
       "source_location": "L1",
-      "community": 67,
+      "community": 68,
       "norm_label": "comparesqlitepostgrescounts.js",
       "id": "ward_backend_scripts_comparesqlitepostgrescounts_js"
     },
@@ -4479,7 +4418,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/compareSqlitePostgresCounts.js",
       "source_location": "L27",
-      "community": 67,
+      "community": 68,
       "norm_label": "sqlitecount()",
       "id": "scripts_comparesqlitepostgrescounts_sqlitecount"
     },
@@ -4488,7 +4427,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/compareSqlitePostgresCounts.js",
       "source_location": "L36",
-      "community": 67,
+      "community": 68,
       "norm_label": "pgcount()",
       "id": "scripts_comparesqlitepostgrescounts_pgcount"
     },
@@ -4497,7 +4436,7 @@
       "file_type": "code",
       "source_file": "ward-backend/scripts/compareSqlitePostgresCounts.js",
       "source_location": "L41",
-      "community": 67,
+      "community": 68,
       "norm_label": "main()",
       "id": "scripts_comparesqlitepostgrescounts_main"
     },
@@ -4769,7 +4708,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 95,
+      "community": 94,
       "norm_label": "ward-frontend/index.html (vite spa entry)",
       "id": "frontend_index_html"
     },
@@ -4782,7 +4721,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 95,
+      "community": 94,
       "norm_label": "ward-frontend/src/main.jsx",
       "id": "frontend_main_jsx"
     },
@@ -5081,7 +5020,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 82,
       "norm_label": "ward-backend/controllers/escalationcontroller.js",
       "id": "backend_escalationcontroller_js"
     },
@@ -5094,7 +5033,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 82,
       "norm_label": "ward-backend/services/escalationservice.js",
       "id": "backend_escalationservice_js"
     },
@@ -5107,7 +5046,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 80,
+      "community": 82,
       "norm_label": "ward-backend/repositories/escalationrepository.js",
       "id": "backend_escalationrepository_js"
     },
@@ -5211,7 +5150,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 96,
+      "community": 95,
       "norm_label": "ward-backend/services/handovernotesservice.js",
       "id": "backend_handovernotesservice_js"
     },
@@ -5224,7 +5163,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 96,
+      "community": 95,
       "norm_label": "ward-backend/repositories/handovernotesrepository.js",
       "id": "backend_handovernotesrepository_js"
     },
@@ -5558,7 +5497,7 @@
       "author": null,
       "contributor": null,
       "rationale": "db-adapter.js abstracts over SQLite and PostgreSQL so the application can run locally on SQLite and scale to Postgres in production without changing service/repository code.",
-      "community": 4,
+      "community": 25,
       "norm_label": "polymorphic db adapter (sqlite/postgres)",
       "id": "polymorphic_db_adapter"
     },
@@ -5768,7 +5707,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 37,
+      "community": 38,
       "norm_label": "core workflow manual acceptance test",
       "id": "core_workflow_manual_test_runbook"
     },
@@ -5877,7 +5816,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 37,
+      "community": 38,
       "norm_label": "patient detail ui refresh progress",
       "id": "patient_detail_ui_refresh_progress"
     },
@@ -5890,7 +5829,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 37,
+      "community": 38,
       "norm_label": "patient detail ui refresh detailed plan",
       "id": "patient_detail_ui_refresh_detailed"
     },
@@ -5903,7 +5842,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 37,
+      "community": 38,
       "norm_label": "ward-frontend/src/index.css (design tokens)",
       "id": "patient_detail_ui_index_css"
     },
@@ -5916,7 +5855,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 37,
+      "community": 38,
       "norm_label": "patientdetail.jsx",
       "id": "patient_detail_ui_patient_detail_jsx"
     },
@@ -5929,7 +5868,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 37,
+      "community": 38,
       "norm_label": "@radix-ui/react-tabs",
       "id": "patient_detail_ui_radix_tabs"
     },
@@ -5942,7 +5881,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 37,
+      "community": 38,
       "norm_label": "ward-frontend/src/utils/patientdisplay.ts",
       "id": "patient_detail_ui_patient_display_ts"
     },
@@ -5955,7 +5894,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "launch monitoring & contingency progress",
       "id": "launch_monitoring_contingency_progress"
     },
@@ -5968,7 +5907,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "launch monitoring & contingency detailed plan",
       "id": "launch_monitoring_contingency_detailed"
     },
@@ -5982,7 +5921,7 @@
       "author": null,
       "contributor": null,
       "rationale": "In-memory only metrics collector chosen to avoid external dependencies (no Redis needed). Metrics reset on restart; rolling window capped at 60 entries (1 hour) to avoid memory growth. Node.js single-threaded model makes mutex unnecessary.",
-      "community": 3,
+      "community": 4,
       "norm_label": "metricscollector.js (in-memory metrics)",
       "id": "launch_monitoring_metrics_collector"
     },
@@ -5995,7 +5934,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "alertengine.js",
       "id": "launch_monitoring_alert_engine"
     },
@@ -6009,7 +5948,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Feature flags stored in DB (persists across restarts, unlike env vars). Default values hardcoded in middleware as fallback when DB read fails (fail-open: features stay enabled if DB is down, better than disabling clinical features). Admin can toggle via API with immediate effect without restart.",
-      "community": 3,
+      "community": 4,
       "norm_label": "feature flags / kill switches (phase c1)",
       "id": "launch_monitoring_feature_flags"
     },
@@ -6022,7 +5961,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "featureflagrepository.js",
       "id": "launch_monitoring_feature_flag_repo"
     },
@@ -6035,7 +5974,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "monitoringdashboard.jsx",
       "id": "launch_monitoring_monitoring_dashboard"
     },
@@ -6048,7 +5987,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "rollback-procedures.md (runbook)",
       "id": "launch_monitoring_rollback_runbook"
     },
@@ -6061,7 +6000,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "alerts (db table)",
       "id": "launch_monitoring_alerts_table"
     },
@@ -6074,7 +6013,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "featureflags (db table)",
       "id": "launch_monitoring_feature_flags_table"
     },
@@ -6087,7 +6026,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "signup & payment integration detailed plan",
       "id": "signup_payment_detailed"
     },
@@ -6100,7 +6039,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "signup & payment integration progress",
       "id": "signup_payment_progress"
     },
@@ -6114,7 +6053,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Per-seat pricing with one consolidated bill per org per billing cycle via Razorpay subscription quantity. Individual staff never see billing; only org admin is billing contact. Seat count changes at next cycle to avoid surprise mid-cycle charges. Payment features are opt-in; if Razorpay env vars absent, signup works without payment (dev-friendly).",
-      "community": 3,
+      "community": 4,
       "norm_label": "razorpay per-seat subscription billing",
       "id": "signup_payment_razorpay"
     },
@@ -6127,7 +6066,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "signupservice.js",
       "id": "signup_payment_signup_service"
     },
@@ -6140,7 +6079,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "signuprepository.js",
       "id": "signup_payment_signup_repo"
     },
@@ -6153,7 +6092,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "subscriptionservice.js",
       "id": "signup_payment_subscription_service"
     },
@@ -6166,7 +6105,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "invitations (db table)",
       "id": "signup_payment_invitations_table"
     },
@@ -6179,7 +6118,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "subscriptionevents (db table)",
       "id": "signup_payment_subscription_events_table"
     },
@@ -6192,7 +6131,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "webhooks.js (razorpay webhook handler)",
       "id": "signup_payment_webhooks_js"
     },
@@ -6205,7 +6144,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "subscriptionguard.js (middleware)",
       "id": "signup_payment_subscription_guard"
     },
@@ -6218,7 +6157,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "signup.jsx (org admin signup page)",
       "id": "signup_payment_signup_jsx"
     },
@@ -6231,7 +6170,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "register.jsx (staff registration page)",
       "id": "signup_payment_register_jsx"
     },
@@ -6244,7 +6183,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "billing.jsx (admin billing page)",
       "id": "signup_payment_billing_jsx"
     },
@@ -6257,7 +6196,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "usermanagement.jsx (admin user management)",
       "id": "signup_payment_user_management_jsx"
     },
@@ -6402,7 +6341,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 97,
+      "community": 96,
       "norm_label": "react brand logo (svg)",
       "id": "react_svg_logo"
     },
@@ -6415,7 +6354,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 97,
+      "community": 96,
       "norm_label": "vite brand logo (svg)",
       "id": "vite_svg_logo"
     },
@@ -6428,7 +6367,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "general ward project",
       "id": "general_ward_project"
     },
@@ -6454,7 +6393,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 58,
+      "community": 61,
       "norm_label": "session initiation sequence",
       "id": "session_init_sequence"
     },
@@ -6467,7 +6406,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "repository codemap",
       "id": "codemap_md"
     },
@@ -6480,7 +6419,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "ward backend architectural navigation",
       "id": "ward_backend_codenav"
     },
@@ -6493,7 +6432,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 9,
       "norm_label": "ward frontend architectural navigation",
       "id": "ward_frontend_codenav"
     },
@@ -6506,7 +6445,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "ward frontend readme",
       "id": "ward_frontend_readme"
     },
@@ -6519,7 +6458,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "ward backend legacy readme",
       "id": "ward_backend_legacy_readme"
     },
@@ -6532,7 +6471,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "compliance and audit posture",
       "id": "docs_compliance"
     },
@@ -6545,7 +6484,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 25,
       "norm_label": "postgresql installation and configuration guide",
       "id": "docs_postgres_install"
     },
@@ -6558,7 +6497,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "security logging guidance (phi/pii safe)",
       "id": "docs_security_logging"
     },
@@ -6571,7 +6510,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 25,
       "norm_label": "postgres cutover runbook (phase d.4)",
       "id": "runbook_postgres_cutover"
     },
@@ -6584,7 +6523,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 25,
       "norm_label": "docker compose postgres configuration",
       "id": "docker_compose_postgres"
     },
@@ -6597,7 +6536,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "ward frontend entry html",
       "id": "ward_frontend_index_html"
     },
@@ -6675,7 +6614,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "audit logging pattern (auditlogs + clinicalchangelog)",
       "id": "audit_logging_pattern"
     },
@@ -6701,7 +6640,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "news2 (national early warning score 2) clinical risk stratification",
       "id": "news2_scoring"
     },
@@ -6714,7 +6653,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "fefo (first-expiry first-out) pharmacy dispensing",
       "id": "fefo_dispensing"
     },
@@ -6727,7 +6666,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "phi/pii safe logging rules",
       "id": "phi_safe_logging"
     },
@@ -6740,7 +6679,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 25,
       "norm_label": "sqlite to postgresql migration strategy",
       "id": "sqlite_to_postgres_migration"
     },
@@ -6753,7 +6692,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "express.js backend (ward-backend)",
       "id": "express_backend"
     },
@@ -6766,7 +6705,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "react + vite spa (ward-frontend)",
       "id": "react_vite_frontend"
     },
@@ -6779,7 +6718,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 7,
       "norm_label": "database adapter",
       "id": "db_adapter"
     },
@@ -6805,7 +6744,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 25,
       "norm_label": "postgresql database",
       "id": "postgres_db"
     },
@@ -6818,7 +6757,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "auditlogs table",
       "id": "audit_logs_table"
     },
@@ -6831,7 +6770,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "clinicalchangelog table",
       "id": "clinical_change_log_table"
     },
@@ -6857,7 +6796,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 25,
       "norm_label": "postgresql migration files",
       "id": "postgres_migrations"
     },
@@ -6870,7 +6809,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 9,
       "norm_label": "tanstack query state management",
       "id": "tanstack_query"
     },
@@ -6883,7 +6822,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "tailwind css 4 design system",
       "id": "tailwind_css"
     },
@@ -6935,7 +6874,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "mar to pharmacy auto-dispensing integration",
       "id": "mar_pharmacy_integration"
     },
@@ -6948,7 +6887,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "pharmacyreorderservice (automated po generation)",
       "id": "pharmacy_reorder_service"
     },
@@ -6961,7 +6900,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "scoringservice (news2)",
       "id": "scoring_service"
     },
@@ -6974,7 +6913,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "migratorservice (schema auto-migrations)",
       "id": "migrator_service"
     },
@@ -6987,7 +6926,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "clinicalauditservice (regulatory compliance logging)",
       "id": "clinical_audit_service"
     },
@@ -7000,7 +6939,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "pharmacyanalyticsservice (replenishment forecasting)",
       "id": "pharmacy_analytics_service"
     },
@@ -7013,7 +6952,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "request logger middleware",
       "id": "request_logger_middleware"
     },
@@ -7026,7 +6965,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 25,
+      "community": 26,
       "norm_label": "audit middleware (audit.js)",
       "id": "audit_middleware"
     },
@@ -7039,7 +6978,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 58,
+      "community": 61,
       "norm_label": "dr. smith (doctor test account)",
       "id": "dr_smith_user"
     },
@@ -7052,7 +6991,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 58,
+      "community": 61,
       "norm_label": "nurse johnson (nurse test account)",
       "id": "nurse_johnson_user"
     },
@@ -7065,7 +7004,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 58,
+      "community": 61,
       "norm_label": "ward admin (admin test account)",
       "id": "ward_admin_user"
     },
@@ -7078,7 +7017,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 58,
+      "community": 61,
       "norm_label": "tenant-default (default tenant)",
       "id": "tenant_default"
     },
@@ -7104,7 +7043,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 25,
       "norm_label": "schema.sql (db source of truth)",
       "id": "schema_sql"
     },
@@ -7117,7 +7056,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "server.js (backend entry point)",
       "id": "server_js"
     },
@@ -7130,7 +7069,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 25,
       "norm_label": "db.js (database initialization)",
       "id": "db_js"
     },
@@ -7143,7 +7082,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 27,
       "norm_label": "vite configuration",
       "id": "vite_config"
     },
@@ -7156,7 +7095,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "pharmacystock table (enterprise inventory)",
       "id": "pharmacy_stock_table"
     },
@@ -7169,7 +7108,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "pharmacybatches table (lot/batch tracking)",
       "id": "pharmacy_batches_table"
     },
@@ -7182,7 +7121,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "pharmacytransactions table (immutable audit trail)",
       "id": "pharmacy_transactions_table"
     },
@@ -7195,7 +7134,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 9,
       "norm_label": "purchaseorders table (procurement records)",
       "id": "purchase_orders_table"
     },
@@ -7260,7 +7199,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 68,
+      "community": 69,
       "norm_label": "patient detail ui refresh progress",
       "id": "plan_patient_detail_ui_refresh_progress"
     },
@@ -7338,7 +7277,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 68,
+      "community": 69,
       "norm_label": "patient detail ui refresh detailed plan",
       "id": "plan_patient_detail_ui_refresh_detailed"
     },
@@ -7656,7 +7595,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Dark canvas shifted to neutral zinc (#09090b, #18181b, #27272a) with indigo primary (#4f46e5) for action buttons, replacing previous lavender/blue-grey.",
-      "community": 68,
+      "community": 69,
       "norm_label": "neutral palette & indigo primary token",
       "id": "concept_patient_detail_ui_neutral_palette"
     },
@@ -7670,7 +7609,7 @@
       "author": null,
       "contributor": null,
       "rationale": "null/empty/negatives (none, n/a, nil) show as muted text; any other non-empty string shows as red/risk presentation. Documentation UX only, not clinical decision support.",
-      "community": 68,
+      "community": 69,
       "norm_label": "allergies display normalization",
       "id": "concept_allergies_display"
     },
@@ -7767,7 +7706,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 98,
+      "community": 97,
       "norm_label": "migration 001: schemamigrations table",
       "id": "migration_001_schemamigrations"
     },
@@ -7780,7 +7719,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 98,
+      "community": 97,
       "norm_label": "db table: schemamigrations",
       "id": "table_schemamigrations"
     },
@@ -7793,7 +7732,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "migration 002: application schema",
       "id": "migration_002_appschema"
     },
@@ -7806,7 +7745,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: tenants",
       "id": "table_tenants"
     },
@@ -7819,7 +7758,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: users",
       "id": "table_users"
     },
@@ -7832,7 +7771,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: patients",
       "id": "table_patients"
     },
@@ -7845,7 +7784,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: dailystats",
       "id": "table_dailystats"
     },
@@ -7858,7 +7797,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: medications",
       "id": "table_medications"
     },
@@ -7871,7 +7810,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: medicationadministrations",
       "id": "table_medicationadministrations"
     },
@@ -7884,7 +7823,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: escalations",
       "id": "table_escalations"
     },
@@ -7897,7 +7836,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: dischargesummaries",
       "id": "table_dischargesummaries"
     },
@@ -7910,7 +7849,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: tasks",
       "id": "table_tasks"
     },
@@ -7923,7 +7862,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: handovernotes",
       "id": "table_handovernotes"
     },
@@ -7936,7 +7875,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: auditlogs",
       "id": "table_auditlogs"
     },
@@ -7949,7 +7888,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: clinicalchangelog",
       "id": "table_clinicalchangelog"
     },
@@ -7962,7 +7901,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: idempotencykeys",
       "id": "table_idempotencykeys"
     },
@@ -7975,7 +7914,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: authloginattempts",
       "id": "table_authloginattempts"
     },
@@ -7988,7 +7927,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "pg function: set_default_tenant()",
       "id": "fn_set_default_tenant"
     },
@@ -8001,7 +7940,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "migration 003: hospital archives",
       "id": "migration_003_hospitalarchives"
     },
@@ -8014,7 +7953,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "db table: hospitalarchives",
       "id": "table_hospitalarchives"
     },
@@ -8027,7 +7966,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "migration 004: pharmacy v2 schema",
       "id": "migration_004_pharmacy_v2"
     },
@@ -8040,7 +7979,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "db table: pharmacystock",
       "id": "table_pharmacystock"
     },
@@ -8053,7 +7992,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "db table: pharmacytransactions",
       "id": "table_pharmacytransactions"
     },
@@ -8066,7 +8005,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "migration 005: pharmacy batches",
       "id": "migration_005_pharmacybatches"
     },
@@ -8079,7 +8018,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "db table: pharmacybatches",
       "id": "table_pharmacybatches"
     },
@@ -8092,7 +8031,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "migration 006: purchase orders",
       "id": "migration_006_purchaseorders"
     },
@@ -8105,7 +8044,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "db table: purchaseorders",
       "id": "table_purchaseorders"
     },
@@ -8118,7 +8057,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "migration 007: waste records",
       "id": "migration_007_wasterecords"
     },
@@ -8131,7 +8070,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 26,
+      "community": 3,
       "norm_label": "db table: wasterecords",
       "id": "table_wasterecords"
     },
@@ -8144,7 +8083,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "migration 008: user uniqueness constraint",
       "id": "migration_008_useruniqueness"
     },
@@ -8157,9 +8096,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "ci_workflow",
-      "community": 8,
-      "norm_label": "ci workflow (ci.yml)"
+      "community": 22,
+      "norm_label": "ci workflow (ci.yml)",
+      "id": "ci_workflow"
     },
     {
       "label": "Postgres CI Workflow (postgres-ci.yml)",
@@ -8170,9 +8109,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "postgres_ci_workflow",
-      "community": 8,
-      "norm_label": "postgres ci workflow (postgres-ci.yml)"
+      "community": 7,
+      "norm_label": "postgres ci workflow (postgres-ci.yml)",
+      "id": "postgres_ci_workflow"
     },
     {
       "label": "Job: Security Audit (npm audit)",
@@ -8183,9 +8122,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "job_security_audit",
-      "community": 8,
-      "norm_label": "job: security audit (npm audit)"
+      "community": 22,
+      "norm_label": "job: security audit (npm audit)",
+      "id": "job_security_audit"
     },
     {
       "label": "Job: Backend Tests (SQLite)",
@@ -8196,9 +8135,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "job_backend_tests",
-      "community": 8,
-      "norm_label": "job: backend tests (sqlite)"
+      "community": 22,
+      "norm_label": "job: backend tests (sqlite)",
+      "id": "job_backend_tests"
     },
     {
       "label": "Job: Frontend Lint and Test",
@@ -8209,9 +8148,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "job_frontend_qa",
-      "community": 8,
-      "norm_label": "job: frontend lint and test"
+      "community": 22,
+      "norm_label": "job: frontend lint and test",
+      "id": "job_frontend_qa"
     },
     {
       "label": "Job: Postgres Smoke Test",
@@ -8222,9 +8161,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "job_postgres_smoke",
-      "community": 8,
-      "norm_label": "job: postgres smoke test"
+      "community": 7,
+      "norm_label": "job: postgres smoke test",
+      "id": "job_postgres_smoke"
     },
     {
       "label": "Postgres Service (postgres:16)",
@@ -8235,9 +8174,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "service_postgres",
-      "community": 8,
-      "norm_label": "postgres service (postgres:16)"
+      "community": 7,
+      "norm_label": "postgres service (postgres:16)",
+      "id": "service_postgres"
     },
     {
       "label": "Step: Backend npm audit --audit-level=high",
@@ -8248,9 +8187,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "step_npm_audit_backend",
-      "community": 8,
-      "norm_label": "step: backend npm audit --audit-level=high"
+      "community": 22,
+      "norm_label": "step: backend npm audit --audit-level=high",
+      "id": "step_npm_audit_backend"
     },
     {
       "label": "Step: Frontend npm audit --audit-level=high",
@@ -8261,9 +8200,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "step_npm_audit_frontend",
-      "community": 8,
-      "norm_label": "step: frontend npm audit --audit-level=high"
+      "community": 22,
+      "norm_label": "step: frontend npm audit --audit-level=high",
+      "id": "step_npm_audit_frontend"
     },
     {
       "label": "Step: npm test (backend SQLite)",
@@ -8274,9 +8213,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "step_backend_npm_test",
-      "community": 8,
-      "norm_label": "step: npm test (backend sqlite)"
+      "community": 22,
+      "norm_label": "step: npm test (backend sqlite)",
+      "id": "step_backend_npm_test"
     },
     {
       "label": "Step: npm run lint (frontend)",
@@ -8287,9 +8226,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "step_frontend_lint",
-      "community": 8,
-      "norm_label": "step: npm run lint (frontend)"
+      "community": 22,
+      "norm_label": "step: npm run lint (frontend)",
+      "id": "step_frontend_lint"
     },
     {
       "label": "Step: npm test (frontend)",
@@ -8300,9 +8239,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "step_frontend_test",
-      "community": 8,
-      "norm_label": "step: npm test (frontend)"
+      "community": 22,
+      "norm_label": "step: npm test (frontend)",
+      "id": "step_frontend_test"
     },
     {
       "label": "Step: npm run build (frontend)",
@@ -8313,9 +8252,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "step_frontend_build",
-      "community": 8,
-      "norm_label": "step: npm run build (frontend)"
+      "community": 22,
+      "norm_label": "step: npm run build (frontend)",
+      "id": "step_frontend_build"
     },
     {
       "label": "Step: Apply Postgres Migrations (node ./migratePostgres.js)",
@@ -8326,9 +8265,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "step_apply_postgres_migrations",
-      "community": 8,
-      "norm_label": "step: apply postgres migrations (node ./migratepostgres.js)"
+      "community": 7,
+      "norm_label": "step: apply postgres migrations (node ./migratepostgres.js)",
+      "id": "step_apply_postgres_migrations"
     },
     {
       "label": "Step: npx jest postgresSmoke.test.js",
@@ -8339,9 +8278,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "step_postgres_smoke_test",
-      "community": 8,
-      "norm_label": "step: npx jest postgressmoke.test.js"
+      "community": 7,
+      "norm_label": "step: npx jest postgressmoke.test.js",
+      "id": "step_postgres_smoke_test"
     },
     {
       "label": "Config Key: JWT_SECRET",
@@ -8352,9 +8291,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_jwt_secret",
-      "community": 69,
-      "norm_label": "config key: jwt_secret"
+      "community": 70,
+      "norm_label": "config key: jwt_secret",
+      "id": "env_jwt_secret"
     },
     {
       "label": "Config Key: NODE_ENV",
@@ -8365,9 +8304,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_node_env",
-      "community": 69,
-      "norm_label": "config key: node_env"
+      "community": 70,
+      "norm_label": "config key: node_env",
+      "id": "env_node_env"
     },
     {
       "label": "Config Key: PORT",
@@ -8378,9 +8317,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_port",
       "community": 147,
-      "norm_label": "config key: port"
+      "norm_label": "config key: port",
+      "id": "env_port"
     },
     {
       "label": "Config Key: DATABASE_URL",
@@ -8391,9 +8330,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_database_url",
-      "community": 8,
-      "norm_label": "config key: database_url"
+      "community": 7,
+      "norm_label": "config key: database_url",
+      "id": "env_database_url"
     },
     {
       "label": "Config Key: CORS_ORIGIN",
@@ -8404,9 +8343,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_cors_origin",
-      "community": 69,
-      "norm_label": "config key: cors_origin"
+      "community": 70,
+      "norm_label": "config key: cors_origin",
+      "id": "env_cors_origin"
     },
     {
       "label": "Config Key: AUDIT_RETENTION_DAYS",
@@ -8417,9 +8356,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_audit_retention_days",
       "community": 99,
-      "norm_label": "config key: audit_retention_days"
+      "norm_label": "config key: audit_retention_days",
+      "id": "env_audit_retention_days"
     },
     {
       "label": "Config Key: DB_DIALECT",
@@ -8430,9 +8369,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_db_dialect",
-      "community": 4,
-      "norm_label": "config key: db_dialect"
+      "community": 7,
+      "norm_label": "config key: db_dialect",
+      "id": "env_db_dialect"
     },
     {
       "label": "Config Key: PG_HOST",
@@ -8443,9 +8382,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_pg_host",
-      "community": 4,
-      "norm_label": "config key: pg_host"
+      "community": 7,
+      "norm_label": "config key: pg_host",
+      "id": "env_pg_host"
     },
     {
       "label": "Config Key: PG_PORT",
@@ -8456,9 +8395,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_pg_port",
-      "community": 4,
-      "norm_label": "config key: pg_port"
+      "community": 7,
+      "norm_label": "config key: pg_port",
+      "id": "env_pg_port"
     },
     {
       "label": "Config Key: PG_DATABASE",
@@ -8469,9 +8408,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_pg_database",
-      "community": 4,
-      "norm_label": "config key: pg_database"
+      "community": 7,
+      "norm_label": "config key: pg_database",
+      "id": "env_pg_database"
     },
     {
       "label": "Config Key: PG_USER",
@@ -8482,9 +8421,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_pg_user",
-      "community": 4,
-      "norm_label": "config key: pg_user"
+      "community": 7,
+      "norm_label": "config key: pg_user",
+      "id": "env_pg_user"
     },
     {
       "label": "Config Key: PG_PASSWORD",
@@ -8495,9 +8434,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_pg_password",
-      "community": 4,
-      "norm_label": "config key: pg_password"
+      "community": 7,
+      "norm_label": "config key: pg_password",
+      "id": "env_pg_password"
     },
     {
       "label": "Config Key: PG_POOL_MAX",
@@ -8508,9 +8447,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_pg_pool_max",
-      "community": 4,
-      "norm_label": "config key: pg_pool_max"
+      "community": 7,
+      "norm_label": "config key: pg_pool_max",
+      "id": "env_pg_pool_max"
     },
     {
       "label": "Config Key: PG_POOL_IDLE_TIMEOUT",
@@ -8521,9 +8460,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_pg_pool_idle_timeout",
-      "community": 4,
-      "norm_label": "config key: pg_pool_idle_timeout"
+      "community": 7,
+      "norm_label": "config key: pg_pool_idle_timeout",
+      "id": "env_pg_pool_idle_timeout"
     },
     {
       "label": "Config Key: PG_POOL_CONNECTION_TIMEOUT",
@@ -8534,9 +8473,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_pg_pool_connection_timeout",
-      "community": 4,
-      "norm_label": "config key: pg_pool_connection_timeout"
+      "community": 7,
+      "norm_label": "config key: pg_pool_connection_timeout",
+      "id": "env_pg_pool_connection_timeout"
     },
     {
       "label": "Config Key: VITE_API_BASE",
@@ -8547,9 +8486,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "env_vite_api_base",
-      "community": 100,
-      "norm_label": "config key: vite_api_base"
+      "community": 98,
+      "norm_label": "config key: vite_api_base",
+      "id": "env_vite_api_base"
     },
     {
       "label": "Auth Middleware (middleware/auth.js)",
@@ -8560,9 +8499,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "auth_middleware",
-      "community": 69,
-      "norm_label": "auth middleware (middleware/auth.js)"
+      "community": 70,
+      "norm_label": "auth middleware (middleware/auth.js)",
+      "id": "auth_middleware"
     },
     {
       "label": "migratePostgres.js",
@@ -8573,9 +8512,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "migrate_postgres_script",
-      "community": 8,
-      "norm_label": "migratepostgres.js"
+      "community": 7,
+      "norm_label": "migratepostgres.js",
+      "id": "migrate_postgres_script"
     },
     {
       "label": "tests/services/postgresSmoke.test.js",
@@ -8586,9 +8525,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "postgres_smoke_test_file",
-      "community": 8,
-      "norm_label": "tests/services/postgressmoke.test.js"
+      "community": 7,
+      "norm_label": "tests/services/postgressmoke.test.js",
+      "id": "postgres_smoke_test_file"
     },
     {
       "label": "Frontend API Utility (src/utils/api.js)",
@@ -8599,9 +8538,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "frontend_api_util",
-      "community": 100,
-      "norm_label": "frontend api utility (src/utils/api.js)"
+      "community": 98,
+      "norm_label": "frontend api utility (src/utils/api.js)",
+      "id": "frontend_api_util"
     },
     {
       "label": "POST /api/admin/audit/purge Endpoint",
@@ -8612,9 +8551,171 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "audit_purge_endpoint",
       "community": 99,
-      "norm_label": "post /api/admin/audit/purge endpoint"
+      "norm_label": "post /api/admin/audit/purge endpoint",
+      "id": "audit_purge_endpoint"
+    },
+    {
+      "label": "AuthController.js",
+      "file_type": "code",
+      "source_file": "controllers/AuthController.js",
+      "source_location": "L1",
+      "id": "controllers_authcontroller_js",
+      "community": 54,
+      "norm_label": "authcontroller.js"
+    },
+    {
+      "label": "BarcodeController.js",
+      "file_type": "code",
+      "source_file": "controllers/BarcodeController.js",
+      "source_location": "L1",
+      "id": "controllers_barcodecontroller_js",
+      "community": 148,
+      "norm_label": "barcodecontroller.js"
+    },
+    {
+      "label": "PatientController.js",
+      "file_type": "code",
+      "source_file": "controllers/PatientController.js",
+      "source_location": "L1",
+      "id": "controllers_patientcontroller_js",
+      "community": 149,
+      "norm_label": "patientcontroller.js"
+    },
+    {
+      "label": "PharmacyController.js",
+      "file_type": "code",
+      "source_file": "controllers/PharmacyController.js",
+      "source_location": "L1",
+      "id": "controllers_pharmacycontroller_js",
+      "community": 73,
+      "norm_label": "pharmacycontroller.js"
+    },
+    {
+      "label": "ReportController.js",
+      "file_type": "code",
+      "source_file": "controllers/ReportController.js",
+      "source_location": "L1",
+      "id": "controllers_reportcontroller_js",
+      "community": 42,
+      "norm_label": "reportcontroller.js"
+    },
+    {
+      "label": "PatientRepository.js",
+      "file_type": "code",
+      "source_file": "repositories/PatientRepository.js",
+      "source_location": "L1",
+      "id": "repositories_patientrepository_js",
+      "community": 11,
+      "norm_label": "patientrepository.js"
+    },
+    {
+      "label": "AuthRepository.js",
+      "file_type": "code",
+      "source_file": "repositories/AuthRepository.js",
+      "source_location": "L1",
+      "id": "repositories_authrepository_js",
+      "community": 45,
+      "norm_label": "authrepository.js"
+    },
+    {
+      "label": ".findTenantById()",
+      "file_type": "code",
+      "source_file": "repositories/AuthRepository.js",
+      "source_location": "L8",
+      "id": "repositories_authrepository_authrepository_findtenantbyid",
+      "community": 45,
+      "norm_label": ".findtenantbyid()"
+    },
+    {
+      "label": ".createTenantAndAdmin()",
+      "file_type": "code",
+      "source_file": "repositories/AuthRepository.js",
+      "source_location": "L12",
+      "id": "repositories_authrepository_authrepository_createtenantandadmin",
+      "community": 45,
+      "norm_label": ".createtenantandadmin()"
+    },
+    {
+      "label": "AuthService.js",
+      "file_type": "code",
+      "source_file": "services/AuthService.js",
+      "source_location": "L1",
+      "id": "services_authservice_js",
+      "community": 58,
+      "norm_label": "authservice.js"
+    },
+    {
+      "label": ".registerHospital()",
+      "file_type": "code",
+      "source_file": "services/AuthService.js",
+      "source_location": "L38",
+      "id": "services_authservice_authservice_registerhospital",
+      "community": 58,
+      "norm_label": ".registerhospital()"
+    },
+    {
+      "label": "StockService.js",
+      "file_type": "code",
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L1",
+      "id": "services_pharmacy_stockservice_js",
+      "community": 33,
+      "norm_label": "stockservice.js"
+    },
+    {
+      "label": ".getStockById()",
+      "file_type": "code",
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L30",
+      "id": "pharmacy_stockservice_stockservice_getstockbyid",
+      "community": 33,
+      "norm_label": ".getstockbyid()"
+    },
+    {
+      "label": "signup.test.js",
+      "file_type": "code",
+      "source_file": "tests/integration/signup.test.js",
+      "source_location": "L1",
+      "id": "tests_integration_signup_test_js",
+      "community": 100,
+      "norm_label": "signup.test.js"
+    },
+    {
+      "label": "uniqueCode()",
+      "file_type": "code",
+      "source_file": "tests/integration/signup.test.js",
+      "source_location": "L6",
+      "id": "integration_signup_test_uniquecode",
+      "community": 100,
+      "norm_label": "uniquecode()"
+    },
+    {
+      "label": "patient_guard.test.js",
+      "file_type": "code",
+      "source_file": "tests/integration/patient_guard.test.js",
+      "source_location": "L1",
+      "id": "tests_integration_patient_guard_test_js",
+      "community": 150,
+      "norm_label": "patient_guard.test.js"
+    },
+    {
+      "label": "schema.js",
+      "file_type": "code",
+      "source_file": "db/schema.js",
+      "source_location": "L1",
+      "id": "db_schema_js",
+      "community": 78,
+      "norm_label": "schema.js"
+    },
+    {
+      "label": "csrf.js",
+      "file_type": "code",
+      "source_file": "middleware/csrf.js",
+      "source_location": "L1",
+      "id": "middleware_csrf_js",
+      "community": 80,
+      "norm_label": "csrf.js"
     }
   ],
   "links": [
@@ -10940,12 +11041,52 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "controllers/AuthController.js",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "controllers_authcontroller_getcookieoptions",
+      "target": "controllers_authcontroller_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "controllers/AuthController.js",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "controllers_authcontroller_getclientip",
+      "target": "controllers_authcontroller_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "controllers/AuthController.js",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "controllers_authcontroller_publicuserandcsrf",
+      "target": "controllers_authcontroller_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "ward-backend/controllers/PharmacyController.js",
       "source_location": "L16",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ward_backend_controllers_pharmacycontroller_js",
       "target": "controllers_pharmacycontroller_validatebatchpayload"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "controllers/PharmacyController.js",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "controllers_pharmacycontroller_validatebatchpayload",
+      "target": "controllers_pharmacycontroller_js",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -10960,7 +11101,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/controllers/ReportController.js",
+      "source_file": "controllers/ReportController.js",
       "source_location": "L9",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -10970,7 +11111,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/controllers/ReportController.js",
+      "source_file": "controllers/ReportController.js",
       "source_location": "L58",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -10980,12 +11121,22 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/controllers/ReportController.js",
+      "source_file": "controllers/ReportController.js",
       "source_location": "L69",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "controllers_reportcontroller_reportcontroller",
       "target": "controllers_reportcontroller_reportcontroller_verifyreport"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "controllers/ReportController.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "controllers_reportcontroller_reportcontroller",
+      "target": "controllers_reportcontroller_js",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -11388,9 +11539,19 @@
       "target": "repositories_patientrepository_patientrepository"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "repositories/PatientRepository.js",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "repositories_patientrepository_collectfullpatientsnapshot",
+      "target": "repositories_patientrepository_js",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L52",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11400,7 +11561,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L73",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11410,7 +11571,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L81",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11420,7 +11581,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L152",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11430,7 +11591,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L169",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11440,7 +11601,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L174",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11450,7 +11611,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
+      "source_file": "repositories/PatientRepository.js",
       "source_location": "L182",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11460,8 +11621,8 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
-      "source_location": "L203",
+      "source_file": "repositories/PatientRepository.js",
+      "source_location": "L210",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "repositories_patientrepository_patientrepository",
@@ -11470,12 +11631,33 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/PatientRepository.js",
-      "source_location": "L212",
+      "source_file": "repositories/PatientRepository.js",
+      "source_location": "L219",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "repositories_patientrepository_patientrepository",
       "target": "repositories_patientrepository_patientrepository_discharge"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "repositories/PatientRepository.js",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "repositories_patientrepository_patientrepository",
+      "target": "repositories_patientrepository_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "repositories/PatientRepository.js",
+      "source_location": "L186",
+      "weight": 1.0,
+      "source": "repositories_patientrepository_patientrepository_findbyid",
+      "target": "repositories_patientrepository_patientrepository_update",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -11640,12 +11822,42 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/repositories/AuthRepository.js",
+      "source_file": "repositories/AuthRepository.js",
       "source_location": "L4",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "repositories_authrepository_authrepository",
       "target": "repositories_authrepository_authrepository_finduserbyname"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "repositories/AuthRepository.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "repositories_authrepository_authrepository",
+      "target": "repositories_authrepository_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "repositories/AuthRepository.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "repositories_authrepository_authrepository",
+      "target": "repositories_authrepository_authrepository_findtenantbyid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "repositories/AuthRepository.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "repositories_authrepository_authrepository",
+      "target": "repositories_authrepository_authrepository_createtenantandadmin",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -12948,12 +13160,32 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/services/AuthService.js",
+      "source_file": "services/AuthService.js",
       "source_location": "L8",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_authservice_authservice",
       "target": "services_authservice_authservice_authenticateuser"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "services/AuthService.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "services_authservice_authservice",
+      "target": "services_authservice_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "services/AuthService.js",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "services_authservice_authservice",
+      "target": "services_authservice_authservice_registerhospital",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -13138,7 +13370,7 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
+      "source_file": "services/pharmacy/StockService.js",
       "source_location": "L7",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -13148,8 +13380,8 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
-      "source_location": "L30",
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L34",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "pharmacy_stockservice_stockservice",
@@ -13158,8 +13390,8 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
-      "source_location": "L89",
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L93",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "pharmacy_stockservice_stockservice",
@@ -13168,12 +13400,32 @@
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "ward-backend/services/pharmacy/StockService.js",
-      "source_location": "L95",
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L99",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "pharmacy_stockservice_stockservice",
       "target": "pharmacy_stockservice_stockservice_removemedication"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "pharmacy_stockservice_stockservice",
+      "target": "services_pharmacy_stockservice_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "services/pharmacy/StockService.js",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "pharmacy_stockservice_stockservice",
+      "target": "pharmacy_stockservice_stockservice_getstockbyid",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -13304,6 +13556,16 @@
       "confidence_score": 1.0,
       "source": "ward_backend_db_schema_js",
       "target": "db_schema_initdb"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "db/schema.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "db_schema_initdb",
+      "target": "db_schema_js",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -13506,6 +13768,16 @@
       "confidence_score": 1.0,
       "source": "ward_backend_middleware_csrf_js",
       "target": "middleware_csrf_verifycsrfformutations"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "middleware/csrf.js",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "middleware_csrf_verifycsrfformutations",
+      "target": "middleware_csrf_js",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -17771,67 +18043,18 @@
       "weight": 1.0,
       "source": "env_vite_api_base",
       "target": "frontend_api_util"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/signup.test.js",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "tests_integration_signup_test_js",
+      "target": "integration_signup_test_uniquecode",
+      "confidence_score": 1.0
     }
   ],
-  "hyperedges": [
-    {
-      "id": "postgres_smoke_pipeline",
-      "label": "Postgres CI Smoke Pipeline: Service \u2192 Migration \u2192 Smoke Test",
-      "nodes": [
-        "service_postgres",
-        "step_apply_postgres_migrations",
-        "step_postgres_smoke_test"
-      ],
-      "relation": "participate_in",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": ".github/workflows/postgres-ci.yml"
-    },
-    {
-      "id": "postgres_env_config_group",
-      "label": "Postgres Connection Config Keys (PG_*)",
-      "nodes": [
-        "env_pg_host",
-        "env_pg_port",
-        "env_pg_database",
-        "env_pg_user",
-        "env_pg_password",
-        "env_pg_pool_max",
-        "env_pg_pool_idle_timeout",
-        "env_pg_pool_connection_timeout"
-      ],
-      "relation": "implement",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "ward-backend/.env.postgres.example"
-    },
-    {
-      "id": "full_ci_pipeline",
-      "label": "Full CI Pipeline: Security Audit + Backend Tests + Frontend QA",
-      "nodes": [
-        "job_security_audit",
-        "job_backend_tests",
-        "job_frontend_qa"
-      ],
-      "relation": "participate_in",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": ".github/workflows/ci.yml"
-    },
-    {
-      "id": "backend_auth_config",
-      "label": "Backend Auth and Server Config (JWT_SECRET, NODE_ENV, PORT, CORS_ORIGIN)",
-      "nodes": [
-        "env_jwt_secret",
-        "env_node_env",
-        "env_port",
-        "env_cors_origin"
-      ],
-      "relation": "implement",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "source_file": "ward-backend/.env.example"
-    }
-  ],
-  "built_at_commit": "5bdb7c3726c70c795446443b1f6840fe0df1c143"
+  "hyperedges": [],
+  "built_at_commit": "d1d226a540ee34347b000a3bf0f173659afc5cc1"
 }

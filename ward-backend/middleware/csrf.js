@@ -11,6 +11,7 @@ function verifyCsrfForMutations(req, res, next) {
   // Endpoints that MUST be accessible without a CSRF token (e.g., initial authentication).
   const CSRF_ALLOWLIST = [
     '/api/auth/login',
+    '/api/auth/signup',
     '/health',
     '/api/version'
   ];

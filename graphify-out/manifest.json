@@ -1,200 +1,4 @@
 {
-  "/home/vn/Documents/General-Ward/codemap/generate-codemap-index.mjs": {
-    "mtime": 1773937386.2867537,
-    "hash": "5312239a161494fd86a9b47d47fa6ff2"
-  },
-  "/home/vn/Documents/General-Ward/codemap/build-codemap-md.mjs": {
-    "mtime": 1778066461.722751,
-    "hash": "18795fec5da8c26c239866eee0b8bdbf"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/vite.config.js": {
-    "mtime": 1777528285.3122835,
-    "hash": "bd0c2a878fd535da317fdcf8e9c9aa77"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/eslint.config.js": {
-    "mtime": 1773927797.2779655,
-    "hash": "49c8473bcfcec3aef596a5fb04a6df06"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/App.jsx": {
-    "mtime": 1778063266.5592017,
-    "hash": "f78ba89b764a53ca093a605d7f212e58"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/main.jsx": {
-    "mtime": 1777528256.436243,
-    "hash": "ec05c83d9bfed70d888b2da13f269eef"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/vite-env.d.ts": {
-    "mtime": 1774015755.3809373,
-    "hash": "bd8f4cb3b8d0cea9485b69e89893e369"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/utils/api.ts": {
-    "mtime": 1774870443.7057862,
-    "hash": "6f9cb0728bf8874af8a123790dd84d5f"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/utils/patientDisplay.ts": {
-    "mtime": 1774015639.665894,
-    "hash": "d6501bb9fb6da51e0bdbd792f6315ac9"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/utils/queryKeys.ts": {
-    "mtime": 1777645051.0807824,
-    "hash": "2cc282df9b2efcb847e6e01bf8962d93"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/Signup.jsx": {
-    "mtime": 1774886426.8551846,
-    "hash": "8cb4287ffd067d51243f4b0c8e2f7dae"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/VerifyReport.jsx": {
-    "mtime": 1777799054.2433546,
-    "hash": "a3c6036a7713456f5fe42c3e2ae4358c"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/AdminAudit.jsx": {
-    "mtime": 1774881806.235607,
-    "hash": "2f3ea431a19f3d2f28a6e08348d24791"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/PatientDetail.jsx": {
-    "mtime": 1778064273.051351,
-    "hash": "2f2eb180e092e97ff8881abe3a9d1eb3"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/Login.test.jsx": {
-    "mtime": 1777528331.0993474,
-    "hash": "0dc1bca7d19fe6034defffb138b47418"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/Tasks.jsx": {
-    "mtime": 1774873030.3175201,
-    "hash": "e7c4d9367d10d3af398c2df30d03fe7e"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/NotFound.jsx": {
-    "mtime": 1774881840.8873556,
-    "hash": "b20975cfe83ae3a71877d64d98847116"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/Login.jsx": {
-    "mtime": 1778062917.594934,
-    "hash": "de57c69a695d1921b20222b01713469f"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/HospitalArchiveDetail.jsx": {
-    "mtime": 1774886935.8463488,
-    "hash": "b41d8c00c91cd9c93b78d7380a48d61d"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/Layout.jsx": {
-    "mtime": 1778063259.5023973,
-    "hash": "cce960489d4ddd1573fe317df9022ce0"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/BarcodeScanner.jsx": {
-    "mtime": 1778063931.0505888,
-    "hash": "5cf67e957b189b2b17c4cf68b79de7d6"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/modals/EscalateModal.jsx": {
-    "mtime": 1777645010.9470294,
-    "hash": "61019a6bcf216051259c40943ff7901d"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/modals/DischargeModal.jsx": {
-    "mtime": 1777645023.3312616,
-    "hash": "6edcf72dc6c1121b7003f76ff4e64497"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/modals/EditPatientModal.jsx": {
-    "mtime": 1778064394.2768822,
-    "hash": "d8c5b3bef039205296c381e9c8263dd1"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/ui/tabs.jsx": {
-    "mtime": 1774881882.2075315,
-    "hash": "cb21f5253d8ac18400f51db5dee5d90a"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/stats/HandoverNotesPanel.jsx": {
-    "mtime": 1774881826.7922955,
-    "hash": "047fcd54fa19b5199059a13500dc7b63"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/stats/VitalsTab.jsx": {
-    "mtime": 1773991345.147332,
-    "hash": "046f95ced1e08dc73fdc396aa4050bba"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/stats/HistoryTab.jsx": {
-    "mtime": 1778064290.542261,
-    "hash": "de8481c193b2f855e7cdfeb0b04947ca"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/stats/DietTab.jsx": {
-    "mtime": 1773940775.8674006,
-    "hash": "ab636f76eec162da81abdec5af664657"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/stats/MedsTab.jsx": {
-    "mtime": 1777797719.420252,
-    "hash": "dd0f523f0557072476916c347c896fd7"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/stats/DischargeSummaryTab.jsx": {
-    "mtime": 1777798336.1236184,
-    "hash": "da164e254cf6620d8d7c408a81b59664"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/components/stats/SleepTab.jsx": {
-    "mtime": 1773940767.6843905,
-    "hash": "bbb08d620e3b007496f41e4be1ab2b89"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/context/AuthContext.jsx": {
-    "mtime": 1774886290.0056124,
-    "hash": "aa65c7c9b862949c5c4f248ba5e3be75"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/dashboard/DashboardView.jsx": {
-    "mtime": 1778063505.7606738,
-    "hash": "d872f74842ca160840efc672c4c53eed"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/dashboard/components/DashboardAlerts.jsx": {
-    "mtime": 1777994240.4543872,
-    "hash": "1d5b9d1bbd8fc077bf23c2c109563bbe"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/dashboard/components/AddPatientModal.jsx": {
-    "mtime": 1778064387.7959058,
-    "hash": "e61d00329443bc02c4ac934522c84c68"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/dashboard/components/PatientCard.jsx": {
-    "mtime": 1778064236.3456972,
-    "hash": "0b8c330b3963c8684cf5e1a9c720e767"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/dashboard/components/DashboardStats.jsx": {
-    "mtime": 1777994227.2052548,
-    "hash": "acba06d208ba66df81990e7a428c435d"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/dashboard/components/PatientGrid.jsx": {
-    "mtime": 1777994265.7626405,
-    "hash": "0786c2ec0dd91e7d2bc63b127b36f38e"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/PharmacyView.jsx": {
-    "mtime": 1778063915.685736,
-    "hash": "2dbd5d8af422dc031c2a4f53f2fa6665"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/components/WasteTab.jsx": {
-    "mtime": 1777994521.158196,
-    "hash": "ef1604014a1af6fb5bf4a9e5322b360c"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/components/AddStockModal.jsx": {
-    "mtime": 1777994552.5115097,
-    "hash": "d0425f62b286d4f636c3f803f8e305ee"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/components/AddBatchModal.jsx": {
-    "mtime": 1777994566.118646,
-    "hash": "deae4ae0c4e02e3720d25905b06db7d5"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/components/StockStats.jsx": {
-    "mtime": 1777994446.201446,
-    "hash": "6b7613ce97e3afc23884da3d6400e99c"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/components/RegisterBarcodeModal.jsx": {
-    "mtime": 1777994578.6847715,
-    "hash": "7abf5fcff7892133506175ed8af031fb"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/components/AuditLogSlideover.jsx": {
-    "mtime": 1777994536.3013475,
-    "hash": "c773dc637669978838a126b3568cc02d"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/components/ProcurementTab.jsx": {
-    "mtime": 1777994491.5979002,
-    "hash": "b5fbe1ed89231a7655209d636ef1e2bc"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/features/pharmacy/components/InventoryTable.jsx": {
-    "mtime": 1777994473.9117231,
-    "hash": "9fcaa7f54fc91fd8afd13a8efb4e025a"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/test/setup.js": {
-    "mtime": 1777528291.5662923,
-    "hash": "a20647eb01b11813b7e0d1c2b7a6007e"
-  },
   "/home/vn/Documents/General-Ward/ward-backend/server.js": {
     "mtime": 1778066093.4092393,
     "hash": "bfea884931048f67abe35c6b59adb58f"
@@ -252,32 +56,32 @@
     "hash": "06b2dd63e23c7a0bdcb38b7063f6eeb1"
   },
   "/home/vn/Documents/General-Ward/ward-backend/controllers/AuthController.js": {
-    "mtime": 1778066093.4109666,
-    "hash": "656f09b196f3430fd06a5de9f9e9e7bd"
+    "mtime": 1778149614.336114,
+    "hash": "538d49bc30d18e3279963dda407543c5"
   },
   "/home/vn/Documents/General-Ward/ward-backend/controllers/BarcodeController.js": {
-    "mtime": 1778066093.41118,
-    "hash": "de85e341e4a97d4c5deaa50dcbaa4702"
+    "mtime": 1778148929.2721455,
+    "hash": "4d9daa2da9e548f13c35edbeeaabaeab"
   },
   "/home/vn/Documents/General-Ward/ward-backend/controllers/ObservationController.js": {
     "mtime": 1778066093.4115186,
     "hash": "f311231ec7730c0491df1e275f7eb98a"
   },
   "/home/vn/Documents/General-Ward/ward-backend/controllers/PatientController.js": {
-    "mtime": 1778066093.4117806,
-    "hash": "9bc9474fff2c2cccf0dbabed08db8e64"
+    "mtime": 1778149097.7353837,
+    "hash": "06b61229f525ee7647e65a0371248382"
   },
   "/home/vn/Documents/General-Ward/ward-backend/controllers/PharmacyController.js": {
-    "mtime": 1778066256.6141524,
-    "hash": "1e23dcc4580fedc107caa62cf29f5628"
+    "mtime": 1778149352.9517446,
+    "hash": "9e70c9f53336c72e14b020f1ec87e9ae"
   },
   "/home/vn/Documents/General-Ward/ward-backend/controllers/EscalationController.js": {
     "mtime": 1778066093.4123034,
     "hash": "18099e6079c64e4a0593a7fec280d1ec"
   },
   "/home/vn/Documents/General-Ward/ward-backend/controllers/ReportController.js": {
-    "mtime": 1778066093.4125252,
-    "hash": "bc1f11736482df0e2cb66be7dd9687b5"
+    "mtime": 1778148640.0048537,
+    "hash": "da9b710a1f0478b43c2f558faa7d1dce"
   },
   "/home/vn/Documents/General-Ward/ward-backend/controllers/MedicationController.js": {
     "mtime": 1778066093.412761,
@@ -308,8 +112,8 @@
     "hash": "8f8d680eeeb538ff170e523128aa5796"
   },
   "/home/vn/Documents/General-Ward/ward-backend/repositories/PatientRepository.js": {
-    "mtime": 1778066093.4143708,
-    "hash": "3087d2a9bec3ae3ff257291e390b9c31"
+    "mtime": 1778148850.8430347,
+    "hash": "2a190ab6dec9c01c455f23a205800e0e"
   },
   "/home/vn/Documents/General-Ward/ward-backend/repositories/ReportRepository.js": {
     "mtime": 1778066093.4146268,
@@ -324,8 +128,8 @@
     "hash": "ab734977f143f95426cb494f2b8ba4e4"
   },
   "/home/vn/Documents/General-Ward/ward-backend/repositories/AuthRepository.js": {
-    "mtime": 1778066093.4158852,
-    "hash": "8771d5b8641cc1f33dc1ba1bbc9012aa"
+    "mtime": 1778149363.78776,
+    "hash": "1f229914421d5e0ffa23e185d3c9a7f9"
   },
   "/home/vn/Documents/General-Ward/ward-backend/repositories/TaskRepository.js": {
     "mtime": 1778066093.4160979,
@@ -396,8 +200,8 @@
     "hash": "5d165a51fb0caccf8a3e3326850da534"
   },
   "/home/vn/Documents/General-Ward/ward-backend/services/AuthService.js": {
-    "mtime": 1778066093.4212797,
-    "hash": "14fe64923514e25a2dd993c0762230d6"
+    "mtime": 1778149376.4887779,
+    "hash": "17a2813fc406d0a202000d299087fa8e"
   },
   "/home/vn/Documents/General-Ward/ward-backend/services/EscalationService.js": {
     "mtime": 1778066093.4214747,
@@ -420,8 +224,8 @@
     "hash": "48253487f49220ebf5c420cc57bc513f"
   },
   "/home/vn/Documents/General-Ward/ward-backend/services/pharmacy/StockService.js": {
-    "mtime": 1778066114.6998956,
-    "hash": "da53260e368cb5cb1638eddc975a662c"
+    "mtime": 1778148725.8154752,
+    "hash": "9f099cceb209041be5303efc6a9a9f46"
   },
   "/home/vn/Documents/General-Ward/ward-backend/services/pharmacy/BatchService.js": {
     "mtime": 1778066114.6996324,
@@ -434,6 +238,10 @@
   "/home/vn/Documents/General-Ward/ward-backend/legacy/routes/patients.js": {
     "mtime": 1778066093.4226732,
     "hash": "39d9c18f047c15f1f65b1a3e4b233e79"
+  },
+  "/home/vn/Documents/General-Ward/ward-backend/tests/integration/signup.test.js": {
+    "mtime": 1778149449.6178813,
+    "hash": "7a4fb7fc3623f4897a22c4111f4c2440"
   },
   "/home/vn/Documents/General-Ward/ward-backend/tests/integration/reports.test.js": {
     "mtime": 1778066093.4232788,
@@ -454,6 +262,10 @@
   "/home/vn/Documents/General-Ward/ward-backend/tests/integration/notes.test.js": {
     "mtime": 1778066093.4242942,
     "hash": "5fc9bb300598c7b80b03ab28b7f241f3"
+  },
+  "/home/vn/Documents/General-Ward/ward-backend/tests/integration/patient_guard.test.js": {
+    "mtime": 1778148874.0810676,
+    "hash": "fef3eada5b7ec1da14e94df43aa7d6fa"
   },
   "/home/vn/Documents/General-Ward/ward-backend/tests/integration/tasks.test.js": {
     "mtime": 1778066093.4245203,
@@ -520,8 +332,8 @@
     "hash": "0b4574a17b26c226859dece5b30a20f1"
   },
   "/home/vn/Documents/General-Ward/ward-backend/db/schema.js": {
-    "mtime": 1778066093.4284303,
-    "hash": "2f94de4695c828236865e8a8f48ea5e7"
+    "mtime": 1778149393.0888014,
+    "hash": "121341c2de45a6840ee17ae8815ca2b7"
   },
   "/home/vn/Documents/General-Ward/ward-backend/middleware/auth.js": {
     "mtime": 1778066093.4288347,
@@ -548,8 +360,8 @@
     "hash": "065e2c47a485789372fe2e0a12208099"
   },
   "/home/vn/Documents/General-Ward/ward-backend/middleware/csrf.js": {
-    "mtime": 1778066093.4311714,
-    "hash": "d6455a255052d997775cca9fe2213b1d"
+    "mtime": 1778149387.9781787,
+    "hash": "88ad7c77198f5abc565914cf64129607"
   },
   "/home/vn/Documents/General-Ward/ward-backend/scripts/comprehensive_seeder.js": {
     "mtime": 1778066093.4317973,
@@ -623,6 +435,10 @@
     "mtime": 1778065547.1788802,
     "hash": "116bcb994d6182337911081ff03d06ae"
   },
+  "/home/vn/Documents/General-Ward/ward-backend/postgres-migrations/migrations/009_users_email.sql": {
+    "mtime": 1778149405.637819,
+    "hash": "7c19f89b8925702d1f22faee59d09a6d"
+  },
   "/home/vn/Documents/General-Ward/ward-backend/postgres-migrations/migrations/002_create_application_schema.sql": {
     "mtime": 1778065531.4227731,
     "hash": "c9d61facd92c88f08993a8e44a232bef"
@@ -647,62 +463,6 @@
     "mtime": 1774886894.1111712,
     "hash": "6f2c26aea75907428b7af046639afadb"
   },
-  "/home/vn/Documents/General-Ward/doctor_cookies.txt": {
-    "mtime": 1777528188.018312,
-    "hash": "6f5157ec03cc99cbdbe56e01aa1e96b3"
-  },
-  "/home/vn/Documents/General-Ward/ward-management.html": {
-    "mtime": 1773988179.9520705,
-    "hash": "739a4fa24bd246722458fcc2edb31307"
-  },
-  "/home/vn/Documents/General-Ward/README.md": {
-    "mtime": 1777460026.2017617,
-    "hash": "517bbd09d6ebc9e5b34c807fbf4455f8"
-  },
-  "/home/vn/Documents/General-Ward/admin_cookies.txt": {
-    "mtime": 1777527953.3193507,
-    "hash": "3e8ea1c2324f8048759c3ba26ce5861f"
-  },
-  "/home/vn/Documents/General-Ward/cursorrules.md": {
-    "mtime": 1777461989.6880248,
-    "hash": "74420a65b1b554fa11be56e56d5ed204"
-  },
-  "/home/vn/Documents/General-Ward/docker-compose.postgres.yml": {
-    "mtime": 1778065456.4542642,
-    "hash": "aadb6d6053c4261e59aee53e0dba2f10"
-  },
-  "/home/vn/Documents/General-Ward/cookies.txt": {
-    "mtime": 1777527327.1139805,
-    "hash": "03c16d9abbe174c1c256c43a301f6279"
-  },
-  "/home/vn/Documents/General-Ward/codemap/CODEMAP.md": {
-    "mtime": 1778066468.5067577,
-    "hash": "eef99689dd92ab9bb2cb14418b083614"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/README.md": {
-    "mtime": 1773991281.8941345,
-    "hash": "d9fd7cfabfb84b9852d6535f64c8ad11"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/CODENAV.md": {
-    "mtime": 1777717091.0759132,
-    "hash": "9b91b89e9a0db40c13b8666135afc08b"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/index.html": {
-    "mtime": 1773927797.2779655,
-    "hash": "57447aa3e49e03ebe9136c58dfabfd9d"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/close_divs.txt": {
-    "mtime": 1777718018.2830982,
-    "hash": "eaa51005189b4613785e70e696ff7f53"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/views/divs.txt": {
-    "mtime": 1777718018.2829387,
-    "hash": "879fc66c16697c91446ef47f8864347d"
-  },
-  "/home/vn/Documents/General-Ward/cursorrules/SESSION_INIT.md": {
-    "mtime": 1777461958.8100548,
-    "hash": "2665eb9dae87053493dd305f75a5650c"
-  },
   "/home/vn/Documents/General-Ward/ward-backend/CODENAV.md": {
     "mtime": 1777716635.9445024,
     "hash": "0e06eaccf7f5b40f1aa44306d53bded1"
@@ -710,81 +470,5 @@
   "/home/vn/Documents/General-Ward/ward-backend/legacy/README.md": {
     "mtime": 1777459915.5130105,
     "hash": "6d95ee61a04bbf0f9d453134b007323f"
-  },
-  "/home/vn/Documents/General-Ward/docs/COMPLIANCE.md": {
-    "mtime": 1773991406.7204387,
-    "hash": "15b7d242abbf62f7f1d60080aed01e9b"
-  },
-  "/home/vn/Documents/General-Ward/docs/POSTGRES_INSTALL.md": {
-    "mtime": 1778065731.8171504,
-    "hash": "e99fac503b66c18543ee21a4eb9a94ee"
-  },
-  "/home/vn/Documents/General-Ward/docs/SECURITY_LOGGING.md": {
-    "mtime": 1777460737.1631432,
-    "hash": "84b2b11b886f8607594178d15f842900"
-  },
-  "/home/vn/Documents/General-Ward/docs/runbooks/postgres-cutover.md": {
-    "mtime": 1774541930.03746,
-    "hash": "cd52927d694e15fa5201d295215354df"
-  },
-  "/home/vn/Documents/General-Ward/docs/runbooks/multi-device-sync-validation.md": {
-    "mtime": 1774541957.4874732,
-    "hash": "5e7815618af1c9a3ec52ae3eff65bdbf"
-  },
-  "/home/vn/Documents/General-Ward/docs/runbooks/stress-test-gate.md": {
-    "mtime": 1774877213.0897536,
-    "hash": "ec9e945d2cad6890c38c186d92cb9044"
-  },
-  "/home/vn/Documents/General-Ward/docs/runbooks/core-workflow-manual-test.md": {
-    "mtime": 1774873856.2370307,
-    "hash": "b634887cd8e76ea4d2faf4473ff9f1ba"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/security-remediation-PROGRESS.md": {
-    "mtime": 1777460811.4135847,
-    "hash": "705b1c61192b88ecb450c572762636b0"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/patient-detail-ui-refresh-PROGRESS.md": {
-    "mtime": 1773989947.3420606,
-    "hash": "6e10ff731ef6532a132e5a30602e0b69"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/launch-monitoring-contingency-detailed.md": {
-    "mtime": 1774884989.0841486,
-    "hash": "f7a8f2ee5a7152616bd775f4b0568e2d"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/launch-monitoring-contingency-PROGRESS.md": {
-    "mtime": 1774883923.2525628,
-    "hash": "9d6b66ff2cd3a257471bff24c514a200"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/signup-payment-detailed.md": {
-    "mtime": 1774885532.241444,
-    "hash": "b908f3a26f26401bec70b7edb22e598a"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/enterprise-hardening-PROGRESS.md": {
-    "mtime": 1774712353.0753565,
-    "hash": "2903adc37f84b947d92f3bc44a591569"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/patient-detail-ui-refresh-detailed.md": {
-    "mtime": 1773989623.7069755,
-    "hash": "e770f784fd425428d351b6ad26eb53da"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/enterprise-hardening-detailed.md": {
-    "mtime": 1773991157.6348207,
-    "hash": "b92bdaae3b0ee9ab19529e85da3ae80c"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/legal-gdpr-mapping.md": {
-    "mtime": 1774879187.072331,
-    "hash": "7cf16d5a28a8feb707774dd4b2298b63"
-  },
-  "/home/vn/Documents/General-Ward/docs/plans/signup-payment-PROGRESS.md": {
-    "mtime": 1774885562.2775698,
-    "hash": "49a58a6022f2ce73706d4c4aa4421048"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/src/assets/react.svg": {
-    "mtime": 1773927797.2785146,
-    "hash": "f0402b67b6ce880f65666bb49e841696"
-  },
-  "/home/vn/Documents/General-Ward/ward-frontend/public/vite.svg": {
-    "mtime": 1773927797.2779655,
-    "hash": "8e3a10e157f75ada21ab742c022d5430"
   }
 }

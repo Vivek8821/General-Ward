@@ -35,31 +35,39 @@ class AuthService {
     };
   }
 
-  async signup({ username, password, role, hospitalName }) {
-    if (!username || !password || !role) {
-      throw new Error('Username, password and role are required');
+  async registerHospital({ hospitalName, hospitalCode, adminName, email, password }) {
+    if (!hospitalName || !String(hospitalName).trim()) {
+      throw new Error('Hospital name is required');
+    }
+    if (!hospitalCode || !String(hospitalCode).trim()) {
+      throw new Error('Hospital code is required');
+    }
+    if (!adminName || !String(adminName).trim()) {
+      throw new Error('Admin name is required');
+    }
+    if (!password || password.length < 8) {
+      throw new Error('Password must be at least 8 characters');
     }
 
-    const existingUser = await authRepository.findUserByName(username);
-    if (existingUser) {
-      throw new Error('Username already exists');
-    }
+    const tenantId = String(hospitalCode).trim().toLowerCase().replace(/\s+/g, '-');
+    const tenantName = String(hospitalName).trim();
+    const name = String(adminName).trim();
 
     const userId = crypto.randomUUID();
-    const passwordHash = await bcrypt.hash(password, 10);
-    const tenantId = 'tenant-default'; // In a real system, we'd create a new tenant if hospitalName is provided
+    const passwordHash = await bcrypt.hash(password, 12);
 
-    await authRepository.createUser({
-      id: userId,
-      name: username,
-      role,
+    await authRepository.createTenantAndAdmin({
       tenantId,
+      tenantName,
+      userId,
+      name,
+      email: email ? String(email).trim().toLowerCase() : null,
       passwordHash,
     });
 
     const csrfToken = crypto.randomBytes(32).toString('hex');
     const token = jwt.sign(
-      { id: userId, name: username, role, tenantId, csrf: csrfToken },
+      { id: userId, name, role: 'admin', tenantId, csrf: csrfToken },
       JWT_SECRET,
       { expiresIn: '8h' }
     );
@@ -67,7 +75,7 @@ class AuthService {
     return {
       token,
       csrfToken,
-      user: { id: userId, name: username, role, tenantId },
+      user: { id: userId, name, role: 'admin', tenantId },
     };
   }
 }
