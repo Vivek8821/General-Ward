@@ -13,8 +13,16 @@ const reportLimiter = rateLimit({
   message: { error: 'Too many report generation requests, please try again later.' },
 });
 
+const verifyLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many verification requests, please try again later.' },
+});
+
 // Public Verification Endpoint
-router.get('/verify', (req, res) => reportController.verifyReport(req, res));
+router.get('/verify', verifyLimiter, (req, res) => reportController.verifyReport(req, res));
 
 // Protected Endpoints
 router.post('/patient/:patientId/generate', authenticateToken, requireTenantPatient('patientId'), reportLimiter, (req, res) => reportController.generateReport(req, res));

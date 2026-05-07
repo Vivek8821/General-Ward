@@ -31,8 +31,7 @@ class ReportVerificationService {
         return {
           verified: false,
           tamperEvident: true,
-          message: "Hash mismatch — report integrity cannot be guaranteed",
-          patient: patient ? { name: patient.name, mrn: patient.mrn } : null
+          message: "Hash mismatch — report integrity cannot be guaranteed"
         };
       }
 

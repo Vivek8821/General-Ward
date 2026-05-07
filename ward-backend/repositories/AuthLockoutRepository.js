@@ -20,7 +20,7 @@ class AuthLockoutRepository {
     );
     if (!row || !row.lockedUntil) return false;
     const lockedUntilMs = new Date(row.lockedUntil).getTime();
-    return Number.isFinite(lockedUntilMs) && lockedUntilMs > Date.now();
+    return Number.isFinite(lockedUntilMs) && lockedUntilMs >= Date.now();
   }
 
   async reset(username, ipAddress) {

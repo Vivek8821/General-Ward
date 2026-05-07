@@ -39,7 +39,7 @@ router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_VITALS, PERM
         });
         res.status(201).json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.status || 500).json({ error: err.message });
     }
 });
 
@@ -58,7 +58,7 @@ router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireT
         const result = await observationService.getObservations(req.params.patientId, tenantId, req.query);
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.status || 500).json({ error: err.message });
     }
 });
 
@@ -70,7 +70,7 @@ router.get('/ews/latest', authenticateToken, authorize(PERMISSIONS.READ_PATIENT)
         if (!result) return res.status(404).json({ error: 'No vitals found' });
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.status || 500).json({ error: err.message });
     }
 });
 
@@ -81,7 +81,7 @@ router.get('/trends', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), re
         const result = await observationService.getTrends(req.params.patientId, tenantId);
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.status || 500).json({ error: err.message });
     }
 });
 
@@ -97,7 +97,7 @@ router.post('/ingest', ingestLimiter, authenticateToken, authorizeAny([PERMISSIO
         const { status, body } = await observationService.ingestObservation(patientId, tenantId, req.user, req.body, idempotencyKey);
         res.status(status).json(body);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.status || 500).json({ error: err.message });
     }
 });
 

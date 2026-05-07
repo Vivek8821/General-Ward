@@ -104,7 +104,7 @@ class PDFReportService {
     // QR Code
     const qrPayload = JSON.stringify({
       rid: reportId,
-      pid: data.patient.mrn,
+      pid: data.patient.id,
       t: data.patient.tenantId,
       h: hash.substring(0, 16),
       v: 1

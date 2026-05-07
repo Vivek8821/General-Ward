@@ -13,6 +13,13 @@ const STALE_THRESHOLDS_MINUTES = {
 };
 
 class ObservationService {
+  _parseTimestamp(raw) {
+    if (!raw) return null;
+    const parsed = new Date(raw);
+    if (isNaN(parsed.getTime())) throw Object.assign(new Error('Invalid timestamp format'), { status: 400 });
+    return parsed.toISOString();
+  }
+
   computeStaleness(row) {
     const thresholdMinutes = STALE_THRESHOLDS_MINUTES[row.type];
     if (!thresholdMinutes) return { isStale: false, ageMinutes: null };
@@ -111,7 +118,7 @@ class ObservationService {
       type,
       data,
       recordedBy: user.name,
-      timestamp
+      timestamp: this._parseTimestamp(timestamp)
     });
 
     await clinicalAuditService.recordClinicalObservation({
@@ -163,7 +170,7 @@ class ObservationService {
         type: 'vital',
         data: enrichedData,
         recordedBy: user.name,
-        timestamp: timestamp ? new Date(timestamp).toISOString() : null
+        timestamp: this._parseTimestamp(timestamp)
       });
 
       if (idempotencyKey) {
