@@ -13,7 +13,7 @@ class AuthRepository {
     return dbAdapter.withTransaction(async (tx) => {
       const existing = await tx.get(`SELECT id FROM Tenants WHERE id = ?`, [tenantId]);
       if (existing) {
-        const err = new Error(`Hospital code "${tenantId}" is already registered`);
+        const err = new Error('Registration failed. That hospital code is already registered.');
         err.code = 'TENANT_EXISTS';
         throw err;
       }
@@ -22,7 +22,7 @@ class AuthRepository {
 
       const existingUser = await tx.get(`SELECT id FROM Users WHERE name = ?`, [name]);
       if (existingUser) {
-        const err = new Error(`Username "${name}" is already taken`);
+        const err = new Error('Registration failed. Please try a different username.');
         err.code = 'USER_EXISTS';
         throw err;
       }
@@ -39,7 +39,7 @@ class AuthRepository {
     return dbAdapter.withTransaction(async (tx) => {
       const existing = await tx.get(`SELECT id FROM Users WHERE name = ?`, [name]);
       if (existing) {
-        const err = new Error(`Username "${name}" is already taken`);
+        const err = new Error('Registration failed. Please try a different username.');
         err.code = 'USER_EXISTS';
         throw err;
       }
@@ -48,6 +48,13 @@ class AuthRepository {
         [userId, name, role, tenantId, passwordHash, email || null]
       );
     });
+  }
+
+  async incrementTokenVersion(userId) {
+    await dbAdapter.run(
+      `UPDATE Users SET tokenVersion = tokenVersion + 1 WHERE id = ?`,
+      [userId]
+    );
   }
 }
 

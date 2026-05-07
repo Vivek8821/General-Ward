@@ -138,6 +138,6 @@ describe('Patient Treatment Reports Integration', () => {
       .post(`/api/reports/patient/${patientId}/generate`)
       .set('Authorization', `Bearer ${alienToken}`);
     
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(403);
   });
 });

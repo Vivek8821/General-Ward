@@ -100,13 +100,14 @@ router.post('/signup', signupLimiter, async (req, res) => {
   }
 });
 
-router.post('/logout', async (req, res) => {
+router.post('/logout', authenticateToken, async (req, res) => {
   try {
-    res.clearCookie('ward_token', getCookieOptions());
-    res.json({ message: 'Logged out' });
-  } catch (err) {
-    res.json({ message: 'Logged out' });
+    await authService.logout(req.user.id);
+  } catch (_) {
+    // Token version increment failed — still clear cookie
   }
+  res.clearCookie('ward_token', getCookieOptions());
+  res.json({ message: 'Logged out' });
 });
 
 router.get('/me', authenticateToken, (req, res) => {

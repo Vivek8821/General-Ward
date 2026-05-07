@@ -107,6 +107,7 @@ const initDb = (db) => {
 
         runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN email TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN tokenVersion INTEGER NOT NULL DEFAULT 0`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN admittedAt DATETIME`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN gender TEXT`);

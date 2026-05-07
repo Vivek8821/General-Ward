@@ -23,7 +23,7 @@ class AuthService {
     const tenantId = user.tenantId || 'tenant-default';
     const csrfToken = crypto.randomBytes(32).toString('hex');
     const token = jwt.sign(
-      { id: user.id, name: user.name, role: user.role, tenantId, csrf: csrfToken },
+      { id: user.id, name: user.name, role: user.role, tenantId, csrf: csrfToken, tv: user.tokenVersion ?? 0 },
       JWT_SECRET,
       { expiresIn: '8h' }
     );
@@ -67,7 +67,7 @@ class AuthService {
 
     const csrfToken = crypto.randomBytes(32).toString('hex');
     const token = jwt.sign(
-      { id: userId, name, role: 'admin', tenantId, csrf: csrfToken },
+      { id: userId, name, role: 'admin', tenantId, csrf: csrfToken, tv: 0 },
       JWT_SECRET,
       { expiresIn: '8h' }
     );
@@ -98,6 +98,10 @@ class AuthService {
       passwordHash,
     });
     return { id: userId, name: String(name).trim(), role, tenantId: adminUser.tenantId };
+  }
+
+  async logout(userId) {
+    await authRepository.incrementTokenVersion(userId);
   }
 }
 

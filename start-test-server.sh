@@ -68,7 +68,7 @@ fi
 
 # ── 4. Start backend ──────────────────────────────────────────────────────────
 header "Starting backend (port $BACKEND_PORT)"
-(cd "$BACKEND" && NODE_ENV=development node server.js > /tmp/ward-backend.log 2>&1) &
+(cd "$BACKEND" && NODE_ENV=development JWT_SECRET=dev-local-secret node server.js > /tmp/ward-backend.log 2>&1) &
 BACKEND_PID=$!
 
 READY=0

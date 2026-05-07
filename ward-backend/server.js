@@ -61,7 +61,9 @@ function getCorsMiddleware() {
 }
 
 // Middleware
-app.set('trust proxy', parseInt(process.env.TRUST_PROXY || '1', 10));
+// Only trust proxy headers when explicitly enabled (set TRUST_PROXY=1 behind nginx/ELB).
+// Default 0 prevents X-Forwarded-For spoofing of IP-based rate limits.
+app.set('trust proxy', parseInt(process.env.TRUST_PROXY || '0', 10));
 app.use(getCorsMiddleware());
 app.use(
     helmet({

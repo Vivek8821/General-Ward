@@ -17,20 +17,10 @@ function isProdLike(nodeEnv) {
   return nodeEnv === 'production' || nodeEnv === 'staging';
 }
 
-function getJwtSecret({ nodeEnv }) {
+function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
   if (secret && String(secret).trim() !== '') return String(secret);
-
-  // Never allow a silent weak default in prod-like envs.
-  if (isProdLike(nodeEnv)) {
-    throw new Error('[config] JWT_SECRET must be set in production/staging.');
-  }
-
-  // Explicitly allow a fallback only for local dev/test.
-  // Keep it stable so tokens work across restarts in local workflows.
-  // eslint-disable-next-line no-console
-  console.warn('[config] JWT_SECRET not set; using insecure fallback (development/test only).');
-  return 'super-secret-key-change-in-production';
+  throw new Error('[config] JWT_SECRET must be set. Add JWT_SECRET=<random-secret> to your .env file.');
 }
 
 function getCorsOrigins({ nodeEnv }) {
@@ -60,7 +50,7 @@ const config = {
   isTest: nodeEnv === 'test',
   isDev: nodeEnv === 'development',
   isProdLike: isProdLike(nodeEnv),
-  jwtSecret: getJwtSecret({ nodeEnv }),
+  jwtSecret: getJwtSecret(),
   cors: getCorsOrigins({ nodeEnv }),
 };
 
