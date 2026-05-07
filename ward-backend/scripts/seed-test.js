@@ -17,9 +17,48 @@ db.on('error', () => {});
 const run = (sql, p = []) =>
   new Promise((res, rej) => db.run(sql, p, err => err ? rej(err) : res()));
 
+const get = (sql, p = []) =>
+  new Promise((res, rej) => db.get(sql, p, (err, row) => err ? rej(err) : res(row)));
+
 const TENANT = 'tenant-default';
-const NOW    = new Date().toISOString();
-const ago = h => new Date(Date.now() - h * 3600000).toISOString();
+
+// ─── FIXED REFERENCE DATE ────────────────────────────────────────────────────
+// All timestamps are anchored to this snapshot date so the dataset remains
+// historically consistent regardless of when the seed is run.
+const SNAPSHOT_DATE = '2026-05-07';
+
+/** Build an ISO timestamp string for a given date + UTC hour + minute. */
+const ts = (dateStr, hour = 0, minute = 0) =>
+  `${dateStr}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00.000Z`;
+
+/** Return a date string N days before SNAPSHOT_DATE. */
+const daysAgo = (n) => {
+  const d = new Date(SNAPSHOT_DATE + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+};
+
+/**
+ * Stable UUID derived from content hash — identical inputs always produce the
+ * same ID, so INSERT OR IGNORE correctly skips records that already exist.
+ */
+const stableId = (...parts) => {
+  const h = crypto.createHash('sha256').update(parts.join('|')).digest('hex');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-${h.slice(16,20)}-${h.slice(20,32)}`;
+};
+
+// Admission dates derived from each patient's clinical context
+// (e.g. "Post-Op Day 3" on 2026-05-07 → admitted 2026-05-04)
+const ADMITTED = {
+  p01:'2026-05-02', p02:'2026-05-05', p03:'2026-05-04', p04:'2026-05-05',
+  p05:'2026-05-04', p06:'2026-05-05', p07:'2026-05-04', p08:'2026-05-06',
+  p09:'2026-05-03', p10:'2026-05-05', p11:'2026-05-03', p12:'2026-05-06',
+  p13:'2026-05-06', p14:'2026-05-05', p15:'2026-05-04', p16:'2026-05-05',
+  p17:'2026-05-05', p18:'2026-05-05', p19:'2026-05-03', p20:'2026-05-05',
+  p21:'2026-05-06', p22:'2026-05-05', p23:'2026-05-06', p24:'2026-05-06',
+  p25:'2026-04-28', p26:'2026-05-04', p27:'2026-05-05', p28:'2026-05-06',
+  p29:'2026-05-03', p30:'2026-05-04',
+};
 
 // ─── PATIENTS ────────────────────────────────────────────────────────────────
 const PATIENTS = [
@@ -552,18 +591,100 @@ const PATIENTS = [
   },
 ];
 
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+/** Vary a numeric vital value within ±pct% of baseline, clamped to [min, max]. */
+const jitter = (val, pct, min = 0, max = Infinity) => {
+  if (val === undefined || val === null) return undefined;
+  const range = val * (pct / 100);
+  const v = val + (Math.random() * 2 - 1) * range;
+  return Math.round(Math.max(min, Math.min(max, v)) * 10) / 10;
+};
+
+/**
+ * Build one vitals record from a patient's baseline, with realistic variation.
+ * Strips non-frontend fields (levelOfConsciousness, supplementalO2).
+ */
+const makeVital = (vb) => {
+  const r = {
+    bpSystolic:  Math.round(jitter(vb.bpSystolic,  7, 50, 260)),
+    bpDiastolic: Math.round(jitter(vb.bpDiastolic, 7, 30, 150)),
+    pulse:       Math.round(jitter(vb.pulse,        9, 20, 250)),
+    temp:        +jitter(vb.temp, 1, 35, 42).toFixed(1),
+  };
+  if (vb.respRate != null) r.respRate = Math.round(jitter(vb.respRate, 10, 4, 60));
+  if (vb.spo2    != null) r.spo2     = Math.min(100, Math.round(jitter(vb.spo2, 2, 50, 100)));
+  return r;
+};
+
+/**
+ * Return all dates between admittedAt (inclusive) and SNAPSHOT_DATE (inclusive).
+ * Capped at 7 days so long-stay patients don't bloat the initial dataset.
+ */
+const daysSinceAdmission = (admittedAt) => {
+  const admitted = new Date(admittedAt + 'T00:00:00Z');
+  const snapshot = new Date(SNAPSHOT_DATE + 'T00:00:00Z');
+  const days = [];
+  const start = new Date(Math.max(admitted, new Date(snapshot.getTime() - 6 * 86400000)));
+  for (let d = new Date(start); d <= snapshot; d.setUTCDate(d.getUTCDate() + 1))
+    days.push(d.toISOString().slice(0, 10));
+  return days;
+};
+
+/** Vital check schedule by care intensity (times = UTC hours). */
+const VITAL_SCHEDULE = {
+  1: [6, 14, 22],
+  2: [6, 10, 14, 18],
+  3: [6, 10, 14, 18, 22],
+  4: [2, 6, 10, 14, 18, 22],
+};
+
+/** Extract the baseline intake percentage from strings like "80%", "35%", "0%". */
+const parsePct = (s) => { const m = String(s || '').match(/(\d+)/); return m ? +m[1] : 70; };
+
+/** Build diet data object in the format the frontend expects. */
+const makeDiet = (p, mealName, dayDate) => {
+  const basePct  = parsePct(p.diet.intake);
+  const dtype    = p.diet.type || '';
+  const isNPO    = basePct === 0 || /nil|npo|nothing by mouth/i.test(dtype);
+  const isClear  = !isNPO && /clear (liquid|fluid)|sips/i.test(dtype);
+  const isRestr  = /restrict|1L\b|1\.5L|1500/i.test(dtype);
+
+  const mealType = isNPO ? 'NPO (Nothing by Mouth)' : isClear ? 'Clear Liquids Only' : mealName;
+  const bias     = mealName === 'Breakfast' ? -10 : mealName === 'Lunch' ? +8 : 0;
+  const pct      = isNPO ? 0 : Math.max(0, Math.min(100, Math.round(basePct + bias + (Math.random() * 14 - 7))));
+  const fluid    = isNPO ? 0 : Math.round(((isRestr ? 150 : 240) + Math.random() * 120) / 10) * 10;
+
+  const data = { mealType, consumedPercentage: pct, fluidIntakeMl: fluid };
+  // Attach nurse notes to the first meal of the most recent day only
+  if (mealName === 'Breakfast' && dayDate === SNAPSHOT_DATE && p.diet.notes)
+    data.notes = p.diet.notes;
+  return data;
+};
+
 // ─── SEED ────────────────────────────────────────────────────────────────────
-async function seed() {
+async function seed(force = false) {
   await initDb(db);
   await run('SELECT 1'); // sync barrier
 
-  // Wipe
-  const tables = [
-    'HandoverNotes','Tasks','Escalations','MedicationAdministrations',
-    'Medications','DailyStats','Patients','PharmacyBatches',
-    'PharmacyTransactions','PharmacyStock','Users',
-  ];
-  for (const t of tables) await run(`DELETE FROM ${t}`);
+  // ── Idempotency check ──────────────────────────────────────────────────────
+  if (!force) {
+    const { cnt } = await get('SELECT COUNT(*) as cnt FROM Patients WHERE tenantId = ?', [TENANT]);
+    if (cnt >= PATIENTS.length) {
+      console.log(`✓ Patient data already loaded (${cnt} patients). Run with --fresh to reset.`);
+      return;
+    }
+  }
+
+  // ── Fresh reset (only when explicitly requested) ───────────────────────────
+  if (force) {
+    console.log('⚠  --fresh: clearing all clinical data…');
+    for (const t of [
+      'HandoverNotes','Tasks','Escalations','MedicationAdministrations',
+      'Medications','DailyStats','Patients','PharmacyBatches',
+      'PharmacyTransactions','PurchaseOrders','PharmacyStock','Users',
+    ]) await run(`DELETE FROM ${t}`);
+  }
 
   // ── Users ──────────────────────────────────────────────────────────────────
   console.log('Seeding users…');
@@ -573,123 +694,159 @@ async function seed() {
     bcrypt.hash('nurse123', 10),
     bcrypt.hash('pharma123', 10),
   ]);
-  const users = [
-    ['u-admin',      TENANT, 'Admin User',   'admin',      adminHash],
-    ['u-doctor',     TENANT, 'Dr. Smith',    'doctor',     doctorHash],
-    ['u-doctor2',    TENANT, 'Dr. Patel',    'doctor',     doctorHash],
-    ['u-nurse',      TENANT, 'Nurse Joy',    'nurse',      nurseHash],
-    ['u-nurse2',     TENANT, 'Nurse Riya',   'nurse',      nurseHash],
-    ['u-pharmacist', TENANT, 'PharmD Jones', 'pharmacist', pharmacistHash],
-  ];
-  for (const u of users)
-    await run('INSERT INTO Users (id,tenantId,name,role,passwordHash) VALUES (?,?,?,?,?)', u);
+  for (const [id, name, role, hash] of [
+    ['u-admin',      'Admin User',   'admin',      adminHash],
+    ['u-doctor',     'Dr. Smith',    'doctor',     doctorHash],
+    ['u-doctor2',    'Dr. Patel',    'doctor',     doctorHash],
+    ['u-nurse',      'Nurse Joy',    'nurse',      nurseHash],
+    ['u-nurse2',     'Nurse Riya',   'nurse',      nurseHash],
+    ['u-pharmacist', 'PharmD Jones', 'pharmacist', pharmacistHash],
+  ]) await run(
+    'INSERT OR IGNORE INTO Users (id,tenantId,name,role,passwordHash) VALUES (?,?,?,?,?)',
+    [id, TENANT, name, role, hash]
+  );
 
   // ── Patients ───────────────────────────────────────────────────────────────
   console.log(`Seeding ${PATIENTS.length} patients…`);
   for (const p of PATIENTS) {
+    const admittedAt = ADMITTED[p.id];
     await run(
-      `INSERT INTO Patients (id,tenantId,name,mrn,bedNumber,dob,diagnosis,allergies,careIntensity,status,gender,bloodGroup,contactNumber,emergencyContact)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT OR IGNORE INTO Patients
+         (id,tenantId,name,mrn,bedNumber,dob,diagnosis,allergies,careIntensity,
+          status,admittedAt,gender,bloodGroup,contactNumber,emergencyContact)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [p.id, TENANT, p.name, p.mrn, p.bed, p.dob, p.diagnosis, p.allergies,
-       p.ci, p.status, p.gender, p.bloodGroup, p.contact, p.emergency]
+       p.ci, p.status, admittedAt + 'T08:00:00.000Z',
+       p.gender, p.bloodGroup, p.contact, p.emergency]
     );
 
-    // Vitals
-    await run(
-      'INSERT INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
-      [crypto.randomUUID(), TENANT, p.id, 'vital', JSON.stringify(p.vitals), 'Dr. Smith', ago(2)]
-    );
+    const days = daysSinceAdmission(admittedAt);
+    const nurses = ['Nurse Joy', 'Nurse Riya'];
 
-    // Symptoms
-    for (const s of p.symptoms)
+    // Vitals — recorded at proper clinical intervals each day since admission
+    for (const day of days) {
+      const hours = VITAL_SCHEDULE[p.ci] || VITAL_SCHEDULE[2];
+      for (const h of hours) {
+        const stamp = ts(day, h);
+        const nurse = nurses[h % 2];
+        await run(
+          'INSERT OR IGNORE INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
+          [stableId(p.id, 'vital', stamp), TENANT, p.id, 'vital',
+           JSON.stringify(makeVital(p.vitals)), nurse, stamp]
+        );
+      }
+    }
+
+    // Diet — Breakfast 08:00, Lunch 13:00, Dinner 18:00 each day
+    for (const day of days) {
+      for (const [meal, hour] of [['Breakfast', 8], ['Lunch', 13], ['Dinner', 18]]) {
+        const stamp = ts(day, hour);
+        await run(
+          'INSERT OR IGNORE INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
+          [stableId(p.id, 'diet', stamp), TENANT, p.id, 'diet',
+           JSON.stringify(makeDiet(p, meal, day)), 'Nurse Joy', stamp]
+        );
+      }
+    }
+
+    // Symptoms — recorded on admission day at 09:00
+    for (let i = 0; i < p.symptoms.length; i++) {
+      const stamp = ts(admittedAt, 9, i * 5);
       await run(
-        'INSERT INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
-        [crypto.randomUUID(), TENANT, p.id, 'symptom', JSON.stringify(s), 'Nurse Joy', ago(3)]
+        'INSERT OR IGNORE INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
+        [stableId(p.id, 'symptom', stamp), TENANT, p.id, 'symptom',
+         JSON.stringify(p.symptoms[i]), 'Nurse Joy', stamp]
       );
+    }
 
-    // Diet
-    await run(
-      'INSERT INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
-      [crypto.randomUUID(), TENANT, p.id, 'diet', JSON.stringify(p.diet), 'Nurse Joy', ago(4)]
-    );
-
-    // Sleep
-    await run(
-      'INSERT INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
-      [crypto.randomUUID(), TENANT, p.id, 'sleep', JSON.stringify(p.sleep), 'Nurse Joy', ago(8)]
-    );
-
-    // History
-    await run(
-      'INSERT INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
-      [crypto.randomUUID(), TENANT, p.id, 'history', JSON.stringify(p.history), 'Dr. Smith', ago(24)]
-    );
-
-    // Medications
-    for (const m of p.meds) {
+    // Sleep — recorded each morning at 07:00
+    for (const day of days) {
+      const stamp = ts(day, 7);
       await run(
-        `INSERT INTO Medications (id,tenantId,patientId,name,dosage,route,frequency,scheduledTimes,prn,startDate,prescribedBy,status)
+        'INSERT OR IGNORE INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
+        [stableId(p.id, 'sleep', stamp), TENANT, p.id, 'sleep',
+         JSON.stringify(p.sleep), 'Nurse Joy', stamp]
+      );
+    }
+
+    // History — recorded once on admission day
+    await run(
+      'INSERT OR IGNORE INTO DailyStats (id,tenantId,patientId,type,data,recordedBy,timestamp) VALUES (?,?,?,?,?,?,?)',
+      [stableId(p.id, 'history', admittedAt), TENANT, p.id, 'history',
+       JSON.stringify(p.history), 'Dr. Smith', ts(admittedAt, 10)]
+    );
+
+    // Medications — start date = admission date, prescriber alternates by patient
+    const prescriber = ['p02','p05','p09','p14','p18','p22','p26','p30'].includes(p.id) ? 'Dr. Patel' : 'Dr. Smith';
+    for (let i = 0; i < p.meds.length; i++) {
+      const m = p.meds[i];
+      await run(
+        `INSERT OR IGNORE INTO Medications
+           (id,tenantId,patientId,name,dosage,route,frequency,scheduledTimes,prn,startDate,prescribedBy,status)
          VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-        [crypto.randomUUID(), TENANT, p.id, m.name, m.dosage, m.route, m.freq,
-         m.times, m.prn ? 1 : 0, '2026-05-01', 'Dr. Smith', 'active']
+        [stableId(p.id, 'med', m.name, m.dosage), TENANT, p.id,
+         m.name, m.dosage, m.route, m.freq, m.times, m.prn ? 1 : 0,
+         admittedAt, prescriber, 'active']
       );
     }
   }
 
-  // ── Escalations (critical patients) ────────────────────────────────────────
+  // ── Escalations ────────────────────────────────────────────────────────────
   console.log('Seeding escalations…');
   const escalations = [
-    ['p05', 'NEWS2 score 9 — SpO2 89%, HR 118, RR 28. Immediate senior review required.', 'pending'],
-    ['p13', 'Cardiogenic shock post-STEMI. BP 88/54. CCU bed requested urgently.', 'pending'],
-    ['p18', 'Severe preeclampsia — BP 172/112. Consultant obstetrics notified. Delivery being considered.', 'pending'],
-    ['p24', 'Thyroid storm (BWS 65). ICU transfer arranged. Endocrinology attending.', 'pending'],
-    ['p28', 'Complete heart block, HR 36. Temporary pacing wire in situ. Cardiology for permanent pacemaker.', 'reviewed'],
-    ['p07', 'Pneumonia — SpO2 92% despite 4L O2. Consider respiratory HDU.', 'reviewed'],
+    ['p05', ts('2026-05-07', 6,30),  'NEWS2 score 9 — SpO2 89%, HR 118, RR 28. Immediate senior review required.',                          'pending',  'Nurse Joy'],
+    ['p13', ts('2026-05-07', 7,15),  'Cardiogenic shock post-STEMI. BP 88/54. CCU bed requested urgently.',                                  'pending',  'Nurse Joy'],
+    ['p18', ts('2026-05-07', 8,00),  'Severe preeclampsia — BP 172/112. Consultant obstetrics notified. Delivery being considered.',         'pending',  'Nurse Riya'],
+    ['p24', ts('2026-05-07', 9,10),  'Thyroid storm (BWS 65). ICU transfer arranged. Endocrinology attending.',                              'pending',  'Nurse Joy'],
+    ['p28', ts('2026-05-06', 22,45), 'Complete heart block, HR 36. Temporary pacing wire in situ. Cardiology for permanent pacemaker.',      'reviewed', 'Nurse Riya'],
+    ['p07', ts('2026-05-06', 14,00), 'Pneumonia — SpO2 92% despite 4L O2. Consider respiratory HDU.',                                       'reviewed', 'Nurse Joy'],
   ];
-  for (const [pId, reason, status] of escalations)
+  for (const [pId, stamp, reason, status, nurse] of escalations)
     await run(
-      'INSERT INTO Escalations (id,tenantId,patientId,reason,escalatedBy,status,timestamp) VALUES (?,?,?,?,?,?,?)',
-      [crypto.randomUUID(), TENANT, pId, reason, 'Nurse Joy', status, ago(Math.random() * 6)]
+      'INSERT OR IGNORE INTO Escalations (id,tenantId,patientId,reason,escalatedBy,status,timestamp) VALUES (?,?,?,?,?,?,?)',
+      [stableId('esc', pId, stamp), TENANT, pId, reason, nurse, status, stamp]
     );
 
   // ── Tasks ──────────────────────────────────────────────────────────────────
   console.log('Seeding tasks…');
   const tasks = [
-    ['p05', 'vital',      1,  'Nurse Joy',  'open',      null,          null],
-    ['p13', 'vital',      1,  'Nurse Joy',  'open',      null,          null],
-    ['p18', 'assessment', 2,  'Dr. Smith',  'open',      null,          null],
-    ['p07', 'vital',      2,  'Nurse Riya', 'open',      null,          null],
-    ['p09', 'vital',      3,  'Nurse Riya', 'open',      null,          null],
-    ['p27', 'assessment', 4,  'Dr. Patel',  'open',      null,          null],
-    ['p24', 'vital',      0.5,'Nurse Joy',  'open',      null,          null],
-    ['p01', 'followup',  -2,  'Dr. Smith',  'completed', 'Dr. Smith',   ago(1.5)],
-    ['p10', 'followup',  -3,  'Nurse Joy',  'completed', 'Nurse Joy',   ago(2)],
-    ['p20', 'assessment',-1,  'Dr. Patel',  'completed', 'Dr. Patel',   ago(0.5)],
+    // open tasks — due in the near future
+    ['p05', 'vital',      ts('2026-05-07', 14),    'Nurse Joy',  'open',      null,         null,                    'Dr. Smith'],
+    ['p13', 'vital',      ts('2026-05-07', 14),    'Nurse Joy',  'open',      null,         null,                    'Dr. Smith'],
+    ['p18', 'assessment', ts('2026-05-07', 15),    'Dr. Smith',  'open',      null,         null,                    'Dr. Smith'],
+    ['p07', 'vital',      ts('2026-05-07', 16),    'Nurse Riya', 'open',      null,         null,                    'Dr. Patel'],
+    ['p09', 'vital',      ts('2026-05-07', 16),    'Nurse Riya', 'open',      null,         null,                    'Dr. Patel'],
+    ['p27', 'assessment', ts('2026-05-07', 17),    'Dr. Patel',  'open',      null,         null,                    'Dr. Patel'],
+    ['p24', 'vital',      ts('2026-05-07', 13,30), 'Nurse Joy',  'open',      null,         null,                    'Dr. Smith'],
+    // completed tasks — historically done today / yesterday
+    ['p01', 'followup',   ts('2026-05-07', 10),    'Dr. Smith',  'completed', 'Dr. Smith',  ts('2026-05-07', 10,30), 'Dr. Smith'],
+    ['p10', 'followup',   ts('2026-05-06', 14),    'Nurse Joy',  'completed', 'Nurse Joy',  ts('2026-05-06', 14,45), 'Dr. Smith'],
+    ['p20', 'assessment', ts('2026-05-07', 11),    'Dr. Patel',  'completed', 'Dr. Patel',  ts('2026-05-07', 11,20), 'Dr. Patel'],
   ];
-  for (const [pId, type, hoursFromNow, assignee, status, completedBy, completedAt] of tasks)
+  for (const [pId, type, dueAt, assignee, status, completedBy, completedAt, createdBy] of tasks)
     await run(
-      'INSERT INTO Tasks (id,tenantId,patientId,type,dueAt,status,assignee,createdBy,completedBy,completedAt) VALUES (?,?,?,?,?,?,?,?,?,?)',
-      [crypto.randomUUID(), TENANT, pId, type, ago(-hoursFromNow), status, assignee, 'Dr. Smith', completedBy, completedAt]
+      'INSERT OR IGNORE INTO Tasks (id,tenantId,patientId,type,dueAt,status,assignee,createdBy,completedBy,completedAt) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      [stableId('task', pId, type, dueAt), TENANT, pId, type, dueAt, status, assignee, createdBy, completedBy, completedAt]
     );
 
   // ── Handover notes ─────────────────────────────────────────────────────────
   console.log('Seeding handover notes…');
   const notes = [
-    ['p05', 'morning', 'Patient remains critical. SpO2 89% on high-flow O2. Furosemide 80mg IV given. Family at bedside. Escalation raised. Consultant review at 10:00.', '["critical","oxygen","family"]'],
-    ['p13', 'morning', 'Post-PCI Day 1. BP borderline at 88/54. Cardiologist reviewed — continue inotropes. Repeat echo at 14:00. CCU transfer pending bed availability.', '["post-pci","critical","echo"]'],
-    ['p07', 'morning', 'Pneumonia Day 3. Sputum culture — Strep pneumoniae sensitive to Ceftriaxone. Fever persisting (38.6°C). SpO2 improved slightly to 92% on 4L O2.', '["fever","infection","culture"]'],
-    ['p09', 'morning', 'COPD exacerbation. SpO2 88% on controlled O2 at 28% venti-mask. ABG: pH 7.33, PaCO2 58. NIV discussed with patient — declined initially.', '["copd","o2","niv"]'],
-    ['p18', 'morning', 'Preeclampsia 32wks. MgSO4 infusion running. BP 172/112 — nifedipine 10mg given, BP now 148/96. CTG reassuring. Obstetric MDT at 11:00.', '["obstetrics","bp","ctg"]'],
-    ['p01', 'evening', 'T2DM — blood glucose stable 7.2 mmol/L post-dinner. Metformin tolerated. Patient walked to bathroom independently. Mood good.', '["stable","diabetes"]'],
-    ['p03', 'evening', 'Post-op Day 3. Pain 4/10 controlled on Tramadol. Mobilised with physiotherapist — walked 10m with frame. DVT prophylaxis given.', '["post-op","mobilisation","pain"]'],
-    ['p27', 'evening', 'Sickle cell crisis. Pain 7/10 despite NCA pump. PCA reviewed — basal rate increased to 2mg/hr. Haematology aware. SpO2 93% on 2L O2.', '["pain","sickle-cell","haematology"]'],
-    ['p29', 'evening', 'Cirrhosis. Post-paracentesis Day 1 (4L drained). Abdomen less tense. Lactulose — 2 soft stools today. Asterixis grade 1, unchanged.', '["cirrhosis","ascites","encephalopathy"]'],
-    ['p24', 'evening', 'Thyroid storm. HR 148 — propranolol 40mg given, HR now 128. Temp 39.9°C — cooling blanket applied. ICU bed confirmed for morning.', '["thyroid","icu","critical"]'],
+    ['p05', ts('2026-05-07', 7,30),  'morning', 'Patient remains critical. SpO2 89% on high-flow O2. Furosemide 80mg IV given. Family at bedside. Escalation raised. Consultant review at 10:00.',             '["critical","oxygen","family"]',         'Nurse Joy'],
+    ['p13', ts('2026-05-07', 7,45),  'morning', 'Post-PCI Day 1. BP borderline at 88/54. Cardiologist reviewed — continue inotropes. Repeat echo at 14:00. CCU transfer pending bed availability.',           '["post-pci","critical","echo"]',         'Nurse Joy'],
+    ['p07', ts('2026-05-07', 8,00),  'morning', 'Pneumonia Day 3. Sputum culture — Strep pneumoniae sensitive to Ceftriaxone. Fever persisting (38.6°C). SpO2 improved slightly to 92% on 4L O2.',           '["fever","infection","culture"]',        'Nurse Riya'],
+    ['p09', ts('2026-05-07', 8,10),  'morning', 'COPD exacerbation. SpO2 88% on controlled O2 at 28% venti-mask. ABG: pH 7.33, PaCO2 58. NIV discussed with patient — declined initially.',                 '["copd","o2","niv"]',                    'Nurse Riya'],
+    ['p18', ts('2026-05-07', 8,30),  'morning', 'Preeclampsia 32wks. MgSO4 infusion running. BP 172/112 — nifedipine 10mg given, BP now 148/96. CTG reassuring. Obstetric MDT at 11:00.',                   '["obstetrics","bp","ctg"]',              'Nurse Joy'],
+    ['p01', ts('2026-05-06', 20,00), 'evening', 'T2DM — blood glucose stable 7.2 mmol/L post-dinner. Metformin tolerated. Patient walked to bathroom independently. Mood good.',                             '["stable","diabetes"]',                  'Nurse Joy'],
+    ['p03', ts('2026-05-06', 20,15), 'evening', 'Post-op Day 3. Pain 4/10 controlled on Tramadol. Mobilised with physiotherapist — walked 10m with frame. DVT prophylaxis given.',                          '["post-op","mobilisation","pain"]',      'Nurse Riya'],
+    ['p27', ts('2026-05-06', 21,00), 'evening', 'Sickle cell crisis. Pain 7/10 despite NCA pump. PCA reviewed — basal rate increased to 2mg/hr. Haematology aware. SpO2 93% on 2L O2.',                    '["pain","sickle-cell","haematology"]',   'Nurse Joy'],
+    ['p29', ts('2026-05-06', 21,30), 'evening', 'Cirrhosis. Post-paracentesis Day 1 (4L drained). Abdomen less tense. Lactulose — 2 soft stools today. Asterixis grade 1, unchanged.',                      '["cirrhosis","ascites","encephalopathy"]','Nurse Joy'],
+    ['p24', ts('2026-05-06', 22,00), 'evening', 'Thyroid storm. HR 148 — propranolol 40mg given, HR now 128. Temp 39.9°C — cooling blanket applied. ICU bed confirmed for morning.',                       '["thyroid","icu","critical"]',           'Nurse Riya'],
   ];
-  for (const [pId, shift, note, tags] of notes)
+  for (const [pId, stamp, shift, note, tags, nurse] of notes)
     await run(
-      'INSERT INTO HandoverNotes (id,tenantId,patientId,shift,note,tags,createdBy,timestamp) VALUES (?,?,?,?,?,?,?,?)',
-      [crypto.randomUUID(), TENANT, pId, shift, note, tags, 'Nurse Joy', ago(Math.random() * 4)]
+      'INSERT OR IGNORE INTO HandoverNotes (id,tenantId,patientId,shift,note,tags,createdBy,timestamp) VALUES (?,?,?,?,?,?,?,?)',
+      [stableId('note', pId, stamp), TENANT, pId, shift, note, tags, nurse, stamp]
     );
 
   // ── Pharmacy stock ─────────────────────────────────────────────────────────
@@ -763,22 +920,33 @@ async function seed() {
   ];
 
   for (const item of stockItems) {
-    const sid = crypto.randomUUID();
+    const sid = stableId('stock', item.name, item.composition);
     const totalQty = item.batches.reduce((s, b) => s + b.qty, 0);
     await run(
-      'INSERT INTO PharmacyStock (id,tenantId,name,composition,type,category,quantityPerUnit,totalUnits,totalQuantity,unit,itemUnit,costPerUnit,expiryDate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      `INSERT OR IGNORE INTO PharmacyStock
+         (id,tenantId,name,composition,type,category,quantityPerUnit,totalUnits,
+          totalQuantity,unit,itemUnit,costPerUnit,expiryDate)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [sid, TENANT, item.name, item.composition, item.type, item.category,
-       item.qpu, Math.floor(totalQty / item.qpu), totalQty, item.unit, item.iunit, item.cpu, item.batches[0].exp]
+       item.qpu, Math.floor(totalQty / item.qpu), totalQty,
+       item.unit, item.iunit, item.cpu, item.batches[0].exp]
     );
     for (const b of item.batches)
       await run(
-        'INSERT INTO PharmacyBatches (id,tenantId,stockId,batchNumber,expiryDate,quantity,costPerUnit,manufacturer,receivedDate,status) VALUES (?,?,?,?,?,?,?,?,?,?)',
-        [crypto.randomUUID(), TENANT, sid, b.lot, b.exp, b.qty, b.cost, b.mfr, '2026-01-15', 'active']
+        `INSERT OR IGNORE INTO PharmacyBatches
+           (id,tenantId,stockId,batchNumber,expiryDate,quantity,costPerUnit,manufacturer,receivedDate,status)
+         VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        [stableId('batch', sid, b.lot), TENANT, sid,
+         b.lot, b.exp, b.qty, b.cost, b.mfr, '2026-01-15', 'active']
       );
     console.log(`  ✓ ${item.name}: ${item.batches.length} batches, ${totalQty} units`);
   }
 
-  console.log('\n✓ Test database seeded successfully.');
+  const totalMeds = PATIENTS.reduce((s, p) => s + p.meds.length, 0);
+  const totalVitals = PATIENTS.reduce((s, p) => s + daysSinceAdmission(ADMITTED[p.id]).length * (VITAL_SCHEDULE[p.ci] || VITAL_SCHEDULE[2]).length, 0);
+  const totalDiet   = PATIENTS.reduce((s, p) => s + daysSinceAdmission(ADMITTED[p.id]).length * 3, 0);
+
+  console.log('\n✓ Database loaded successfully.');
   console.log('─────────────────────────────────────────────────────');
   console.log('  Admin        → "Admin User"    password: admin123');
   console.log('  Doctor 1     → "Dr. Smith"     password: doctor123');
@@ -787,14 +955,16 @@ async function seed() {
   console.log('  Nurse 2      → "Nurse Riya"    password: nurse123');
   console.log('  Pharmacist   → "PharmD Jones"  password: pharma123');
   console.log('─────────────────────────────────────────────────────');
-  console.log(`  Patients: ${PATIENTS.length} | Medications: ${PATIENTS.reduce((s,p)=>s+p.meds.length,0)}`);
+  console.log(`  Patients: ${PATIENTS.length} | Medications: ${totalMeds}`);
+  console.log(`  Vital readings: ${totalVitals} | Diet records: ${totalDiet}`);
   console.log(`  Escalations: 6 | Tasks: 10 | Handover notes: 10`);
   console.log('─────────────────────────────────────────────────────\n');
 
   db.close();
 }
 
-seed().catch(err => {
+const isFresh = process.argv.includes('--fresh');
+seed(isFresh).catch(err => {
   console.error('Seed failed:', err.message);
   db.close();
   process.exit(1);
