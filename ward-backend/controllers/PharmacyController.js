@@ -75,7 +75,7 @@ router.patch('/inventory/:id', authenticateToken, authorize(PERMISSIONS.WRITE_ME
     const tenantId = req.user.tenantId || 'tenant-default';
     const { totalUnits, notes } = req.body;
     
-    const item = await stockService.getInventory(tenantId).then(inv => inv.find(i => i.id === req.params.id));
+    const item = await stockService.getStockById(req.params.id, tenantId);
     if (!item) return res.status(404).json({ error: 'Medication not found' });
 
     const diff = (parseInt(totalUnits) * item.quantityPerUnit) - item.totalQuantity;

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const barcodeService = require('../services/BarcodeService');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const rateLimit = require('express-rate-limit');
 
@@ -44,7 +44,7 @@ router.get('/qr/:id', authenticateToken, async (req, res, next) => {
   }
 });
 
-router.get('/history/:barcode', authenticateToken, requireRole(['admin']), async (req, res, next) => {
+router.get('/history/:barcode', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res, next) => {
   try {
     const { barcode } = req.params;
     const history = await barcodeService.getHistory(req.user.tenantId, decodeURIComponent(barcode));

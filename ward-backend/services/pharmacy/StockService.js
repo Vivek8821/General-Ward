@@ -27,6 +27,10 @@ class StockService {
     return enriched;
   }
 
+  async getStockById(id, tenantId) {
+    return await stockRepo.findById(id, tenantId);
+  }
+
   async addMedication(tenantId, payload) {
     const { 
       name, composition, type, category, quantityPerUnit, totalUnits,

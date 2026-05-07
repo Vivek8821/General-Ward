@@ -181,18 +181,25 @@ class PatientRepository {
 
   async update(id, patientData, tenantId) {
     const tenant = tenantId || 'tenant-default';
+    
+    // Fetch existing to preserve admittedAt if missing in payload
+    const existing = await this.findById(id, tenant);
+    if (!existing) return 0;
+
+    const admittedAt = patientData.admittedAt || existing.admittedAt;
+
     const result = await dbAdapter.run(
       `UPDATE Patients
            SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ?, admittedAt = ?
            WHERE id = ? AND tenantId = ?`,
       [
-        patientData.name,
-        patientData.bedNumber,
-        patientData.dob,
-        patientData.diagnosis,
-        patientData.allergies,
-        patientData.careIntensity,
-        patientData.admittedAt,
+        patientData.name || existing.name,
+        patientData.bedNumber || existing.bedNumber,
+        patientData.dob || existing.dob,
+        patientData.diagnosis || existing.diagnosis,
+        patientData.allergies || existing.allergies,
+        patientData.careIntensity !== undefined ? patientData.careIntensity : existing.careIntensity,
+        admittedAt,
         id,
         tenant,
       ]
