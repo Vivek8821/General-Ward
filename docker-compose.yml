@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PG_DATABASE:-warddb}
+      POSTGRES_USER: ${PG_USER:-wardapp}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-wardapp} -d ${PG_DATABASE:-warddb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Not exposed externally — only reachable from backend on the internal network
+
+  backend:
+    build:
+      context: ./ward-backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_DIALECT: postgres
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: ${PG_DATABASE:-warddb}
+      PG_USER: ${PG_USER:-wardapp}
+      PG_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD is required}
+      PG_POOL_MAX: ${PG_POOL_MAX:-20}
+      PG_POOL_IDLE_TIMEOUT: 30000
+      PG_POOL_CONNECTION_TIMEOUT: 5000
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN is required}
+      PORT: 3001
+
+  frontend:
+    build:
+      context: ./ward-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-/api}
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      # Uncomment for HTTPS (after adding certs to ./nginx/certs/):
+      # - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
+      # Uncomment for HTTPS:
+      # - ./nginx/certs:/etc/nginx/certs:ro
+
+volumes:
+  postgres_data:

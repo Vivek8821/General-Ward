@@ -61,7 +61,7 @@ function getCorsMiddleware() {
 }
 
 // Middleware
-app.set('trust proxy', 1);
+app.set('trust proxy', parseInt(process.env.TRUST_PROXY || '1', 10));
 app.use(getCorsMiddleware());
 app.use(
     helmet({

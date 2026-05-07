@@ -9,7 +9,7 @@ const pool = new Pool({
   database: process.env.PG_DATABASE || 'warddb',
   user: process.env.PG_USER || 'wardapp',
   password: process.env.PG_PASSWORD || 'changeme',
-  max: parseInt(process.env.PG_POOL_MAX || '10'),
+  max: parseInt(process.env.PG_POOL_MAX || '20'),
   idleTimeoutMillis: parseInt(process.env.PG_POOL_IDLE_TIMEOUT || '30000'),
   connectionTimeoutMillis: parseInt(process.env.PG_POOL_CONNECTION_TIMEOUT || '5000'),
 });
