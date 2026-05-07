@@ -11,18 +11,6 @@ class AuthLockoutRepository {
     this.lockoutMs = Number(process.env.LOGIN_LOCKOUT_DURATION_MS || DEFAULT_LOCKOUT_MS);
   }
 
-  async isLocked(username, ipAddress) {
-    if (!username || !ipAddress) return false;
-
-    const row = await dbAdapter.get(
-      `SELECT lockedUntil FROM AuthLoginAttempts WHERE username = ? AND ipAddress = ?`,
-      [username, ipAddress]
-    );
-    if (!row || !row.lockedUntil) return false;
-    const lockedUntilMs = new Date(row.lockedUntil).getTime();
-    return Number.isFinite(lockedUntilMs) && lockedUntilMs >= Date.now();
-  }
-
   async reset(username, ipAddress) {
     if (!username || !ipAddress) return;
     await dbAdapter.run(`DELETE FROM AuthLoginAttempts WHERE username = ? AND ipAddress = ?`, [
@@ -31,59 +19,65 @@ class AuthLockoutRepository {
     ]);
   }
 
-  async recordFailure(username, ipAddress) {
+  // Atomic: in a single transaction, check the lockout state and reserve an attempt slot.
+  // Caller MUST invoke this BEFORE running bcrypt so that concurrent failed attempts
+  // can't all slip past a stale lockout check and burn through the counter in parallel.
+  // Returns { locked: true } if the request must be rejected, { locked: false } if the
+  // caller may proceed (and a slot has already been atomically debited).
+  async tryAttempt(username, ipAddress) {
+    if (!username || !ipAddress) return { locked: false };
+
     return dbAdapter.withTransaction(async ({ getAsync, runAsync }) => {
-      if (!username || !ipAddress) {
-        return { lockedNow: false };
-      }
-
       const now = Date.now();
-
       const row = await getAsync(
         `SELECT attemptCount, firstAttemptAt, lockedUntil FROM AuthLoginAttempts WHERE username = ? AND ipAddress = ?`,
         [username, ipAddress]
       );
 
+      // Active lockout from a previous round? Reject without incrementing.
       if (row?.lockedUntil) {
         const lockedUntilMs = new Date(row.lockedUntil).getTime();
-        if (Number.isFinite(lockedUntilMs) && lockedUntilMs > now) {
-          return { lockedNow: true };
+        if (Number.isFinite(lockedUntilMs) && lockedUntilMs >= now) {
+          return { locked: true };
         }
       }
 
       let attemptCount = Number(row?.attemptCount || 0);
       let firstAttemptAtMs = row?.firstAttemptAt ? new Date(row.firstAttemptAt).getTime() : null;
 
+      // Rolling window expired -> reset the counter.
       if (!Number.isFinite(firstAttemptAtMs) || now - firstAttemptAtMs > this.windowMs) {
-        attemptCount = 1;
+        attemptCount = 0;
         firstAttemptAtMs = now;
-      } else {
-        attemptCount += 1;
       }
 
-      let lockedUntil = null;
-      const lockedNow = attemptCount >= this.maxAttempts;
-      if (lockedNow) {
-        lockedUntil = new Date(now + this.lockoutMs).toISOString();
+      // Counter already at the limit (e.g. parallel siblings just filled it) -> lock and reject.
+      if (attemptCount >= this.maxAttempts) {
+        const lockedUntil = new Date(now + this.lockoutMs).toISOString();
+        await runAsync(
+          `INSERT INTO AuthLoginAttempts (username, ipAddress, attemptCount, firstAttemptAt, lockedUntil)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT (username, ipAddress) DO UPDATE SET
+             attemptCount = excluded.attemptCount,
+             firstAttemptAt = excluded.firstAttemptAt,
+             lockedUntil = excluded.lockedUntil`,
+          [username, ipAddress, attemptCount, new Date(firstAttemptAtMs).toISOString(), lockedUntil]
+        );
+        return { locked: true };
       }
 
+      // Reserve the slot: increment counter atomically before bcrypt runs.
+      attemptCount += 1;
       await runAsync(
         `INSERT INTO AuthLoginAttempts (username, ipAddress, attemptCount, firstAttemptAt, lockedUntil)
-         VALUES (?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, NULL)
          ON CONFLICT (username, ipAddress) DO UPDATE SET
            attemptCount = excluded.attemptCount,
            firstAttemptAt = excluded.firstAttemptAt,
-           lockedUntil = excluded.lockedUntil`,
-        [
-          username,
-          ipAddress,
-          attemptCount,
-          new Date(firstAttemptAtMs).toISOString(),
-          lockedUntil,
-        ]
+           lockedUntil = NULL`,
+        [username, ipAddress, attemptCount, new Date(firstAttemptAtMs).toISOString()]
       );
-
-      return { lockedNow };
+      return { locked: false };
     });
   }
 }

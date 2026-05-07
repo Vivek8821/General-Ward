@@ -37,32 +37,34 @@ function publicUserAndCsrf(userPayload) {
 }
 
 router.post('/login', loginLimiter, async (req, res) => {
+  const { username, password } = req.body || {};
+  const ipAddress = getClientIp(req);
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  // Atomic check-and-reserve: if the lockout is active OR this attempt would exceed
+  // the limit, reject before running bcrypt. Otherwise the counter is debited NOW so
+  // parallel attempts can't all slip past a stale read and burn extra guesses.
+  let reservation;
   try {
-    const { username, password } = req.body || {};
-    const ipAddress = getClientIp(req);
+    reservation = await authLockoutRepository.tryAttempt(username, ipAddress);
+  } catch (_) {
+    reservation = { locked: false };
+  }
+  if (reservation.locked) {
+    return res.status(429).json({ error: LOGIN_LOCKOUT_MESSAGE });
+  }
 
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
-    }
-
-    if (await authLockoutRepository.isLocked(username, ipAddress)) {
-      return res.status(429).json({ error: LOGIN_LOCKOUT_MESSAGE });
-    }
-
+  try {
     const result = await authService.authenticateUser(username, password);
+    // Success clears the failure counter so the user starts fresh next time.
     await authLockoutRepository.reset(username, ipAddress);
     res.cookie('ward_token', result.token, getCookieOptions());
     res.json({ user: result.user, csrfToken: result.csrfToken });
   } catch (error) {
-    const { username } = req.body || {};
-    const ipAddress = getClientIp(req);
-
-    try {
-      if (username) await authLockoutRepository.recordFailure(username, ipAddress);
-    } catch (_) {
-      // ignore
-    }
-
+    // Counter was already incremented atomically by tryAttempt; nothing to do here.
     res.status(401).json({ error: 'Invalid credentials' });
   }
 });
