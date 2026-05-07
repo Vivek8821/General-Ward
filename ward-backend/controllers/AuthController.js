@@ -67,6 +67,18 @@ router.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
+router.post('/signup', loginLimiter, async (req, res) => {
+  try {
+    const { username, password, role, hospitalName } = req.body || {};
+    const result = await authService.signup({ username, password, role, hospitalName });
+    
+    res.cookie('ward_token', result.token, getCookieOptions());
+    res.status(201).json({ user: result.user, csrfToken: result.csrfToken });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 router.post('/logout', async (req, res) => {
   try {
     res.clearCookie('ward_token', getCookieOptions());

@@ -34,6 +34,42 @@ class AuthService {
       user: { id: user.id, name: user.name, role: user.role, tenantId },
     };
   }
+
+  async signup({ username, password, role, hospitalName }) {
+    if (!username || !password || !role) {
+      throw new Error('Username, password and role are required');
+    }
+
+    const existingUser = await authRepository.findUserByName(username);
+    if (existingUser) {
+      throw new Error('Username already exists');
+    }
+
+    const userId = crypto.randomUUID();
+    const passwordHash = await bcrypt.hash(password, 10);
+    const tenantId = 'tenant-default'; // In a real system, we'd create a new tenant if hospitalName is provided
+
+    await authRepository.createUser({
+      id: userId,
+      name: username,
+      role,
+      tenantId,
+      passwordHash,
+    });
+
+    const csrfToken = crypto.randomBytes(32).toString('hex');
+    const token = jwt.sign(
+      { id: userId, name: username, role, tenantId, csrf: csrfToken },
+      JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    return {
+      token,
+      csrfToken,
+      user: { id: userId, name: username, role, tenantId },
+    };
+  }
 }
 
 module.exports = new AuthService();
