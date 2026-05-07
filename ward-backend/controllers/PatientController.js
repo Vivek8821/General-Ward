@@ -6,15 +6,14 @@ const { requireTenantPatient } = require('../middleware/tenant');
 const patientService = require('../services/PatientService');
 const clinicalAuditService = require('../services/ClinicalAuditService');
 const medicationRoutes = require('./MedicationController');
-const historyRoutes = require('./ObservationController');
-const statRoutes = require('./ObservationController');
+const observationRoutes = require('./ObservationController');
 const escalationRoutes = require('./EscalationController');
 const handoverRoutes = require('./HandoverController');
 
 // Sub-routers for nested resources
 router.use('/:patientId/medications', medicationRoutes);
-router.use('/:patientId/history', historyRoutes);
-router.use('/:patientId/stats', statRoutes);
+router.use('/:patientId/history', observationRoutes);
+router.use('/:patientId/stats', observationRoutes);
 router.use('/:patientId/escalations', escalationRoutes);
 router.use('/:patientId', handoverRoutes);
 
