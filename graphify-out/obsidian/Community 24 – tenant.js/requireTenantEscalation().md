@@ -1,0 +1,23 @@
+---
+id: "middleware_tenant_requiretenantescalation"
+file_type: code
+community: "Community 24 – tenant.js"
+community_id: 24
+source_file: "ward-backend/middleware/tenant.js"
+source_location: "L95"
+tags:
+  - "code"
+  - community/Community_24_–_tenant.js
+---
+
+# requireTenantEscalation()
+
+**Source:** `ward-backend/middleware/tenant.js` · `L95`
+
+## Referenced by
+
+- [[Community 24 – tenant.js/tenant.js|tenant.js]] → **contains**
+
+---
+
+*Community: [[Community 24 – tenant.js/_COMMUNITY_Community 24 – tenant.js|Community 24 – tenant.js]]*
