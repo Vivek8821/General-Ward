@@ -2,3 +2,15 @@
 ward-backend/ward.db
 ward-backend/ward.db-shm
 ward-backend/ward.db-wal
+
+# Auth token files — never commit these
+cookies.txt
+admin_cookies.txt
+doctor_cookies.txt
+*_cookies.txt
+
+# Graphify knowledge-graph output (regenerable via /graphify)
+graphify-out/
+
+# Codemap generated index (regenerable via codemap scripts)
+codemap/file-inventory.json
