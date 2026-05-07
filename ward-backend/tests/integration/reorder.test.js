@@ -1,5 +1,6 @@
 const request = require('supertest');
 const { app } = require('../../server');
+const { initDb } = require('../../db');
 const dbAdapter = require('../../db-adapter');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
@@ -7,11 +8,12 @@ const { JWT_SECRET } = require('../../middleware/auth');
 
 describe('Pharmacy Automated Reorder Integration', () => {
   const tenantId = 'tenant-reorder-test';
-  const doctor = { id: 'admin1', name: 'Admin Reorder', role: 'doctor', tenantId };
+  const doctor = { id: 'admin1', name: 'Admin Reorder', role: 'pharmacist', tenantId };
   const token = jwt.sign(doctor, JWT_SECRET);
   let stockId;
 
   beforeAll(async () => {
+    await initDb();
     // Ensure tenant exists
     await dbAdapter.run('INSERT OR IGNORE INTO Tenants (id, name) VALUES (?, ?)', [tenantId, 'Reorder Test Tenant']);
     

@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS Users (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
-  role TEXT CHECK(role IN ('doctor', 'nurse', 'admin')) NOT NULL,
+  role TEXT CHECK(role IN ('doctor', 'nurse', 'pharmacist', 'admin')) NOT NULL,
   tenantId TEXT,
   passwordHash TEXT NOT NULL
 );

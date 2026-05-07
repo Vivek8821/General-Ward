@@ -78,6 +78,27 @@ class AuthService {
       user: { id: userId, name, role: 'admin', tenantId },
     };
   }
+
+  async createStaffMember({ adminUser, name, role, email, password }) {
+    const ALLOWED_ROLES = ['doctor', 'nurse', 'pharmacist'];
+    if (!name || !String(name).trim()) throw new Error('Name is required');
+    if (!role || !ALLOWED_ROLES.includes(role))
+      throw new Error(`Role must be one of: ${ALLOWED_ROLES.join(', ')}`);
+    if (!password || String(password).length < 8)
+      throw new Error('Password must be at least 8 characters');
+
+    const userId = crypto.randomUUID();
+    const passwordHash = await bcrypt.hash(String(password), 12);
+    await authRepository.createUser({
+      userId,
+      tenantId: adminUser.tenantId,
+      name: String(name).trim(),
+      role,
+      email: email || null,
+      passwordHash,
+    });
+    return { id: userId, name: String(name).trim(), role, tenantId: adminUser.tenantId };
+  }
 }
 
 module.exports = new AuthService();

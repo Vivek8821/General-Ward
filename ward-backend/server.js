@@ -101,6 +101,7 @@ app.use('/api/observations', observationsRoutes);
 app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/pharmacy/barcodes', barcodeRoutes);
 app.use('/api/admin', adminAuditRoutes);
+app.use('/api/admin/users', require('./controllers/UserController'));
 app.use('/api/reports', require('./routes/reports'));
 
 // Health check

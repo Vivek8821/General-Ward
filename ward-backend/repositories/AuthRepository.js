@@ -34,6 +34,21 @@ class AuthRepository {
       );
     });
   }
+
+  async createUser({ userId, tenantId, name, role, email, passwordHash }) {
+    return dbAdapter.withTransaction(async (tx) => {
+      const existing = await tx.get(`SELECT id FROM Users WHERE name = ?`, [name]);
+      if (existing) {
+        const err = new Error(`Username "${name}" is already taken`);
+        err.code = 'USER_EXISTS';
+        throw err;
+      }
+      await tx.run(
+        `INSERT INTO Users (id, name, role, tenantId, passwordHash, email) VALUES (?, ?, ?, ?, ?, ?)`,
+        [userId, name, role, tenantId, passwordHash, email || null]
+      );
+    });
+  }
 }
 
 module.exports = new AuthRepository();

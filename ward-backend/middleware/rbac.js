@@ -1,31 +1,30 @@
-/**
- * RBAC Policy Module
- * Defines roles and their associated permissions.
- */
-
 const ROLES = {
-  DOCTOR: 'doctor',
-  NURSE: 'nurse',
-  ADMIN: 'admin',
+  DOCTOR:      'doctor',
+  NURSE:       'nurse',
+  PHARMACIST:  'pharmacist',
+  ADMIN:       'admin',
 };
 
 const PERMISSIONS = {
-  // Patient Data
-  READ_PATIENT: 'read_patient',
-  WRITE_PATIENT: 'write_patient', // Create/Edit patient
+  // Patient & clinical
+  READ_PATIENT:      'read_patient',
+  WRITE_PATIENT:     'write_patient',
   DISCHARGE_PATIENT: 'discharge_patient',
-
-  // Clinical Actions
-  WRITE_VITALS: 'write_vitals',
+  WRITE_VITALS:      'write_vitals',
   WRITE_MEDICATIONS: 'write_medications',
-  ADMINISTER_MEDS: 'administer_meds',
-  WRITE_NOTES: 'write_notes',
-  WRITE_TASKS: 'write_tasks',
-  READ_TASKS: 'read_tasks',
+  ADMINISTER_MEDS:   'administer_meds',
+  WRITE_NOTES:       'write_notes',
+  WRITE_TASKS:       'write_tasks',
+  READ_TASKS:        'read_tasks',
 
-  // Administrative
-  VIEW_AUDIT: 'view_audit',
-  PURGE_AUDIT: 'purge_audit',
+  // Pharmacy
+  READ_PHARMACY:   'read_pharmacy',
+  MANAGE_PHARMACY: 'manage_pharmacy',
+
+  // Admin
+  VIEW_AUDIT:   'view_audit',
+  PURGE_AUDIT:  'purge_audit',
+  MANAGE_USERS: 'manage_users',
 };
 
 const ROLE_PERMISSIONS = {
@@ -39,6 +38,7 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.WRITE_NOTES,
     PERMISSIONS.WRITE_TASKS,
     PERMISSIONS.READ_TASKS,
+    PERMISSIONS.READ_PHARMACY,
   ],
   [ROLES.NURSE]: [
     PERMISSIONS.READ_PATIENT,
@@ -47,66 +47,47 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.WRITE_NOTES,
     PERMISSIONS.WRITE_TASKS,
     PERMISSIONS.READ_TASKS,
+    PERMISSIONS.READ_PHARMACY,
+  ],
+  [ROLES.PHARMACIST]: [
+    PERMISSIONS.READ_PHARMACY,
+    PERMISSIONS.MANAGE_PHARMACY,
   ],
   [ROLES.ADMIN]: [
     PERMISSIONS.READ_PATIENT,
     PERMISSIONS.VIEW_AUDIT,
     PERMISSIONS.PURGE_AUDIT,
     PERMISSIONS.READ_TASKS,
+    PERMISSIONS.MANAGE_USERS,
   ],
 };
 
-/**
- * Middleware to check if the authenticated user has a specific permission.
- */
 function authorize(permission) {
   return (req, res, next) => {
-    if (!req.user || !req.user.role) {
+    if (!req.user || !req.user.role)
       return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const userRole = req.user.role;
-    const allowedPermissions = ROLE_PERMISSIONS[userRole] || [];
-
-    if (!allowedPermissions.includes(permission)) {
+    const allowed = ROLE_PERMISSIONS[req.user.role] || [];
+    if (!allowed.includes(permission))
       return res.status(403).json({
         error: `Forbidden: Missing required permission [${permission}]`,
         code: 'INSUFFICIENT_PERMISSIONS',
       });
-    }
-
     next();
   };
 }
 
-/**
- * Convenience middleware for multiple permissions (OR logic).
- */
 function authorizeAny(permissions) {
   return (req, res, next) => {
-    if (!req.user || !req.user.role) {
+    if (!req.user || !req.user.role)
       return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const userRole = req.user.role;
-    const allowedPermissions = ROLE_PERMISSIONS[userRole] || [];
-
-    const hasAny = permissions.some((p) => allowedPermissions.includes(p));
-
-    if (!hasAny) {
+    const allowed = ROLE_PERMISSIONS[req.user.role] || [];
+    if (!permissions.some(p => allowed.includes(p)))
       return res.status(403).json({
         error: `Forbidden: Missing one of required permissions [${permissions.join(', ')}]`,
         code: 'INSUFFICIENT_PERMISSIONS',
       });
-    }
-
     next();
   };
 }
 
-module.exports = {
-  ROLES,
-  PERMISSIONS,
-  authorize,
-  authorizeAny,
-};
+module.exports = { ROLES, PERMISSIONS, ROLE_PERMISSIONS, authorize, authorizeAny };

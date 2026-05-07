@@ -1,0 +1,63 @@
+const express = require('express');
+const router = express.Router();
+const { authenticateToken } = require('../middleware/auth');
+const { PERMISSIONS, authorize } = require('../middleware/rbac');
+const authService = require('../services/AuthService');
+const dbAdapter = require('../db-adapter');
+
+// GET /api/admin/users — list all staff in tenant
+router.get('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const rows = await dbAdapter.all(
+      `SELECT id, name, role, email, tenantId FROM Users WHERE tenantId = ? ORDER BY role, name`,
+      [tenantId]
+    );
+    res.json({ users: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/users — create a doctor, nurse, or pharmacist
+router.post('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res) => {
+  try {
+    const { name, role, email, password } = req.body || {};
+    const user = await authService.createStaffMember({
+      adminUser: req.user,
+      name,
+      role,
+      email,
+      password,
+    });
+    res.status(201).json({ user });
+  } catch (err) {
+    if (err.code === 'USER_EXISTS') return res.status(409).json({ error: err.message, code: 'USER_EXISTS' });
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/users/:id — remove a staff member (cannot remove self or other admins)
+router.delete('/:id', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { id } = req.params;
+
+    if (id === req.user.id)
+      return res.status(400).json({ error: 'Cannot delete your own account', code: 'CANNOT_DELETE_SELF' });
+
+    const target = await dbAdapter.get(
+      `SELECT id, role FROM Users WHERE id = ? AND tenantId = ?`, [id, tenantId]
+    );
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (target.role === 'admin')
+      return res.status(403).json({ error: 'Cannot delete admin accounts', code: 'CANNOT_DELETE_ADMIN' });
+
+    await dbAdapter.run(`DELETE FROM Users WHERE id = ? AND tenantId = ?`, [id, tenantId]);
+    res.json({ message: 'User removed' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;

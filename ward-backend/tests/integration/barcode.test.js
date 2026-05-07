@@ -10,7 +10,7 @@ describe('Barcode & QR Integration', () => {
   let app;
   const tenantId = 'test-tenant-' + Date.now();
   const userId = 'user-' + Date.now();
-  const token = jwt.sign({ id: userId, role: 'doctor', tenantId }, config.jwtSecret);
+  const token = jwt.sign({ id: userId, role: 'pharmacist', tenantId }, config.jwtSecret);
   const barcodePrefix = 'BC' + Date.now();
 
   beforeAll(async () => {

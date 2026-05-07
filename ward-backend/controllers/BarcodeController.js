@@ -11,7 +11,7 @@ const scanLimiter = rateLimit({
   message: { error: 'Too many scans, please slow down' }
 });
 
-router.get('/scan/:barcode', authenticateToken, authorizeAny([PERMISSIONS.READ_PATIENT, PERMISSIONS.WRITE_MEDICATIONS]), scanLimiter, async (req, res, next) => {
+router.get('/scan/:barcode', authenticateToken, authorize(PERMISSIONS.READ_PHARMACY), scanLimiter, async (req, res, next) => {
   try {
     const { barcode } = req.params;
     const result = await barcodeService.resolveScan(req.user.tenantId, decodeURIComponent(barcode));
@@ -21,7 +21,7 @@ router.get('/scan/:barcode', authenticateToken, authorizeAny([PERMISSIONS.READ_P
   }
 });
 
-router.post('/register', authenticateToken, authorize(PERMISSIONS.WRITE_MEDICATIONS), async (req, res, next) => {
+router.post('/register', authenticateToken, authorize(PERMISSIONS.MANAGE_PHARMACY), async (req, res, next) => {
   try {
     const result = await barcodeService.registerBarcode(req.user.tenantId, req.body, req.user);
     res.status(201).json(result);
@@ -44,7 +44,7 @@ router.get('/qr/:id', authenticateToken, async (req, res, next) => {
   }
 });
 
-router.get('/history/:barcode', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res, next) => {
+router.get('/history/:barcode', authenticateToken, authorizeAny([PERMISSIONS.MANAGE_PHARMACY, PERMISSIONS.VIEW_AUDIT]), async (req, res, next) => {
   try {
     const { barcode } = req.params;
     const history = await barcodeService.getHistory(req.user.tenantId, decodeURIComponent(barcode));

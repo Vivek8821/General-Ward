@@ -17,7 +17,7 @@ const initDb = (db) => {
           CREATE TABLE IF NOT EXISTS Users (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL UNIQUE,
-            role TEXT CHECK(role IN ('doctor', 'nurse', 'admin')) NOT NULL,
+            role TEXT CHECK(role IN ('doctor', 'nurse', 'pharmacist', 'admin')) NOT NULL,
             tenantId TEXT,
             passwordHash TEXT NOT NULL
           )
@@ -108,6 +108,11 @@ const initDb = (db) => {
         runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN email TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN tenantId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN admittedAt DATETIME`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN gender TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN bloodGroup TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN contactNumber TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN emergencyContact TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE DailyStats ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Medications ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE MedicationAdministrations ADD COLUMN tenantId TEXT`);
@@ -292,6 +297,83 @@ const initDb = (db) => {
 
         runIgnoreDuplicateColumn(`ALTER TABLE AuditLogs ADD COLUMN statusCode INTEGER`);
         runIgnoreDuplicateColumn(`ALTER TABLE AuditLogs ADD COLUMN success INTEGER`);
+
+        // Pharmacy Tables
+        db.run(`
+          CREATE TABLE IF NOT EXISTS PharmacyStock (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            name TEXT NOT NULL,
+            composition TEXT,
+            type TEXT,
+            category TEXT,
+            quantityPerUnit INTEGER DEFAULT 1,
+            totalUnits INTEGER DEFAULT 0,
+            totalQuantity INTEGER DEFAULT 0,
+            unit TEXT,
+            itemUnit TEXT,
+            costPerUnit REAL DEFAULT 0,
+            expiryDate DATE,
+            manufacturer TEXT,
+            minThreshold INTEGER DEFAULT 10,
+            barcode TEXT,
+            lastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(tenantId, name, composition)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS PharmacyTransactions (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            medicationId TEXT NOT NULL,
+            type TEXT CHECK(type IN ('restock', 'dispense', 'adjustment', 'waste')) NOT NULL,
+            quantity INTEGER NOT NULL,
+            userId TEXT NOT NULL,
+            userName TEXT NOT NULL,
+            patientId TEXT,
+            notes TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (medicationId) REFERENCES PharmacyStock(id)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS PharmacyBatches (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            stockId TEXT NOT NULL,
+            batchNumber TEXT NOT NULL,
+            expiryDate DATE NOT NULL,
+            quantity INTEGER NOT NULL DEFAULT 0,
+            costPerUnit REAL DEFAULT 0,
+            manufacturer TEXT,
+            receivedDate DATE,
+            status TEXT DEFAULT 'active' CHECK(status IN ('active', 'expired', 'recalled', 'depleted')),
+            barcode TEXT,
+            notes TEXT,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            lastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (stockId) REFERENCES PharmacyStock(id),
+            UNIQUE(tenantId, stockId, batchNumber)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS PurchaseOrders (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            stockId TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            status TEXT CHECK(status IN ('pending', 'ordered', 'received', 'cancelled')) DEFAULT 'pending',
+            generatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            orderedAt DATETIME,
+            receivedAt DATETIME,
+            createdBy TEXT,
+            notes TEXT,
+            FOREIGN KEY (stockId) REFERENCES PharmacyStock(id)
+          )
+        `);
 
         // WasteRecords
         db.run(`
