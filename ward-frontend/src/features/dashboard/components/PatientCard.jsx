@@ -2,25 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { isPatientCritical, isPatientWarning } from '../../../utils/clinicalUtils';
 
-export function TelemetryMini({ label, value }) {
-  return (
-    <div className="flex-1 bg-bg-primary rounded-md p-1.5 border border-border/50 text-center">
-      <div className="text-[8px] font-black text-text-muted uppercase tracking-tighter leading-none mb-1">{label}</div>
-      <div className="text-[11px] font-bold text-text-primary leading-none">{value}</div>
-    </div>
-  );
-}
-
 export default function PatientCard({ patient, viewMode }) {
   const ews = patient.ews;
   const critical = isPatientCritical(patient);
   const warning = isPatientWarning(patient);
-  const riskColor = critical ? 'border-red-500 bg-red-500/5' :
-                    warning  ? 'border-amber-500 bg-amber-500/5' :
-                    'border-border';
-  const ewsBg = critical ? 'bg-red-600 text-white' :
-                warning  ? 'bg-amber-500 text-white' :
-                'bg-emerald-500 text-white';
+
+  const borderColor = critical ? 'border-red-500/60' : warning ? 'border-amber-400/50' : 'border-border';
+  const ewsBg = critical ? 'bg-red-500 text-white' : warning ? 'bg-amber-400 text-white' : 'bg-emerald-500 text-white';
+  const statusDot = patient.status === 'escalated' ? 'bg-red-500' : critical ? 'bg-orange-400' : 'bg-emerald-400';
 
   return (
     <Link
@@ -29,62 +18,65 @@ export default function PatientCard({ patient, viewMode }) {
           ? `/archive/${patient.archiveId}`
           : `/patient/${patient.patientId || patient.id}`
       }
-      className={`card p-5 cursor-pointer hover:-translate-y-1 flex flex-col justify-between h-full group transition-all duration-300 no-underline text-inherit border-2 ${riskColor} rounded-xl`}
+      className={`group flex flex-col gap-3 rounded-2xl border ${borderColor} bg-bg-secondary/40 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-bg-secondary hover:shadow-md no-underline text-inherit`}
     >
-      <div>
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="min-w-0">
-            <h3 className="text-lg font-bold text-text-primary group-hover:text-primary transition-colors truncate">
-              {patient.name}
-            </h3>
-            <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
-              <span className="bg-bg-tertiary px-1.5 py-0.5 rounded border border-border">Bed {patient.bedNumber}</span>
-              <span className="font-mono">L{patient.careIntensity}</span>
-            </div>
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="font-bold text-text-primary group-hover:text-primary transition-colors truncate leading-tight">
+            {patient.name}
+          </h3>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="text-[10px] font-semibold text-text-muted bg-bg-tertiary border border-border px-1.5 py-0.5 rounded-md">
+              Bed {patient.bedNumber}
+            </span>
+            <span className="text-[10px] font-semibold text-text-muted">L{patient.careIntensity}</span>
           </div>
-          
-          {viewMode === 'active' && ews && (
-            <div className={`shrink-0 w-10 h-10 rounded-lg flex flex-col items-center justify-center ${ewsBg} shadow-sm`}>
-              <span className="text-[10px] font-bold leading-none mb-0.5">EWS</span>
-              <span className="text-lg font-black leading-none">{ews.score}</span>
-            </div>
-          )}
         </div>
 
-        <div className="flex flex-col gap-1 mb-3">
-          <div className="text-slate-500 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest font-mono">
-            MRN {patient.mrn}
-          </div>
-          {patient.admittedAt && (
-            <div className="text-[10px] font-bold text-primary/70 uppercase tracking-tight">
-              Admitted: {new Date(patient.admittedAt).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-            </div>
-          )}
-        </div>
-        
-        <div className="bg-bg-tertiary rounded-lg p-3 border border-border/60 mb-3">
-           <span className="text-text-muted text-[10px] font-bold uppercase tracking-wider block mb-1">Diagnosis</span>
-           <span className="text-xs font-medium text-text-primary line-clamp-2 leading-relaxed">{patient.diagnosis}</span>
-        </div>
-
-        {viewMode === 'active' && ews && !ews.warnings.includes('Respiration rate missing') && (
-          <div className="flex gap-2 mb-1">
-            <TelemetryMini label="HR" value={patient.ews.heartRate || '--'} />
-            <TelemetryMini label="BP" value={patient.ews.systolicBP || '--'} />
-            <TelemetryMini label="O2" value={patient.ews.spo2 ? `${patient.ews.spo2}%` : '--'} />
+        {viewMode === 'active' && ews && (
+          <div className={`shrink-0 w-9 h-9 rounded-xl flex flex-col items-center justify-center ${ewsBg}`}>
+            <span className="text-[8px] font-bold leading-none opacity-80">EWS</span>
+            <span className="text-sm font-black leading-tight">{ews.score}</span>
           </div>
         )}
       </div>
-      
-      <div className="mt-auto pt-3 border-t border-border/40 flex justify-between items-center">
-        <span className={`text-[10px] font-black uppercase tracking-widest ${patient.status === 'escalated' || ews?.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-text-muted'}`}>
-          {viewMode === 'archived' && patient.archivedAt
-            ? new Date(patient.archivedAt).toLocaleDateString()
-            : patient.status}
-        </span>
-        <span className="text-[10px] font-bold text-text-secondary group-hover:text-primary transition-colors">
-          Profile &rarr;
-        </span>
+
+      {/* Meta */}
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[10px] font-mono font-semibold text-text-muted">MRN {patient.mrn}</span>
+        {patient.admittedAt && (
+          <span className="text-[10px] text-text-muted">
+            {new Date(patient.admittedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </span>
+        )}
+      </div>
+
+      {/* Diagnosis */}
+      <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
+        {patient.diagnosis}
+      </p>
+
+      {/* Vitals */}
+      {viewMode === 'active' && ews && !ews.warnings?.includes('Respiration rate missing') && (
+        <div className="flex gap-3 text-[10px] font-semibold text-text-muted">
+          {ews.heartRate != null && <span>HR <span className="text-text-primary">{ews.heartRate}</span></span>}
+          {ews.systolicBP != null && <span>BP <span className="text-text-primary">{ews.systolicBP}</span></span>}
+          {ews.spo2 != null && <span>O₂ <span className="text-text-primary">{ews.spo2}%</span></span>}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="mt-auto flex items-center justify-between pt-2 border-t border-border/40">
+        <div className="flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
+          <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
+            {viewMode === 'archived' && patient.archivedAt
+              ? new Date(patient.archivedAt).toLocaleDateString()
+              : patient.status}
+          </span>
+        </div>
+        <span className="text-[10px] font-semibold text-text-muted group-hover:text-primary transition-colors">→</span>
       </div>
     </Link>
   );

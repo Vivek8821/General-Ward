@@ -42,7 +42,7 @@ export function EscalationAlert({ user, viewMode, criticalPatients, isReviewingC
             : 'bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-900 border border-red-800 dark:border-red-900'
         }`}
       >
-        {isReviewingCases ? 'View All Patients' : 'Review Cases'}
+        {isReviewingCases ? '← Back to All Patients' : 'Review Cases'}
       </button>
     </div>
   );

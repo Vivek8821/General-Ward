@@ -159,7 +159,7 @@ export default function DashboardView() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
 
       <WelcomeBanner showWelcome={showWelcome} dismissWelcome={dismissWelcome} />
 
@@ -180,62 +180,68 @@ export default function DashboardView() {
         />
       )}
 
-      {/* Patient List Container */}
-      <div className="card overflow-hidden">
-        <div className="bg-bg-tertiary p-6 border-b border-border flex flex-wrap justify-between items-center gap-4">
-          <h2 className="text-xl font-bold">{viewMode === 'active' ? 'Active Patient Roster' : 'Archived Discharge Records'}</h2>
-          
-          <div className="flex items-center gap-4 flex-wrap w-full md:w-auto">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-5 h-5" aria-hidden />
-              <input 
-                type="text" 
-                placeholder="Search MRN, Name, Bed..." 
+      {/* Patient List */}
+      <div>
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-5">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold text-text-secondary">
+              {isReviewingCases
+                ? 'Critical Patients'
+                : viewMode === 'active' ? 'Active Patient Roster' : 'Archived Discharge Records'}
+            </h2>
+            {isReviewingCases && (
+              <button
+                onClick={() => setIsReviewingCases(false)}
+                className="btn !py-1.5 !px-3 text-xs"
+              >
+                ← Show All Patients
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" aria-hidden />
+              <input
+                type="text"
+                placeholder="Search MRN, Name, Bed…"
                 aria-label="Search patients by MRN, name, or bed number"
-                className="input-field !pl-10"
+                className="input-field !pl-9 !py-2 text-sm w-56"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
-            
-            <button 
+
+            <button
               onClick={() => setIsAddingPatient(true)}
-              className="btn btn-primary whitespace-nowrap"
+              className="btn btn-primary !py-2 text-sm whitespace-nowrap"
             >
-              <Plus className="w-5 h-5" /> Add Patient
+              <Plus className="w-4 h-4" /> Add Patient
             </button>
 
             {viewMode === 'active' && user.role === 'nurse' && escalatedPatients.length > 0 && (
               <button
                 onClick={() => setIsReviewingCases(!isReviewingCases)}
-                className={`text-sm px-4 py-2.5 rounded-xl font-semibold transition-colors whitespace-nowrap ${isReviewingCases ? 'btn bg-bg-tertiary text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/40' : 'bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-900 border border-red-800 dark:border-red-900'}`}
+                className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors whitespace-nowrap ${isReviewingCases ? 'btn bg-bg-tertiary text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/40' : 'bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-900 border border-red-800 dark:border-red-900'}`}
               >
-                {isReviewingCases ? 'View All Patients' : 'Review Escalated Patients'}
+                {isReviewingCases ? 'View All' : 'Review Escalated'}
               </button>
             )}
           </div>
         </div>
 
         {isPatientsLoading ? (
-          <div className="p-10 text-center text-text-muted">Loading patients...</div>
+          <div className="py-20 text-center text-text-muted text-sm">Loading patients…</div>
         ) : isPatientsError ? (
-          <div className="p-10 text-center space-y-3">
+          <div className="py-20 text-center space-y-3">
             <p className="text-danger font-semibold">Failed to load patients.</p>
-            <button
-              type="button"
-              onClick={() => refetchPatients()}
-              className="btn btn-secondary text-sm"
-            >
-              Retry
-            </button>
+            <button type="button" onClick={() => refetchPatients()} className="btn btn-secondary text-sm">Retry</button>
           </div>
         ) : filteredPatients.length === 0 ? (
-          <div className="p-10 text-center text-text-muted flex flex-col items-center justify-center gap-3">
-            <Users size={48} className="opacity-20" />
-            <p className="font-semibold">
-              {isReviewingCases 
-                ? "No pending cases require immediate attention." 
-                : "No patients found matching your search."}
+          <div className="py-20 text-center text-text-muted flex flex-col items-center gap-3">
+            <Users size={40} className="opacity-20" />
+            <p className="text-sm font-semibold">
+              {isReviewingCases ? 'No pending cases require immediate attention.' : 'No patients found matching your search.'}
             </p>
           </div>
         ) : (
