@@ -20,15 +20,32 @@ class PatientService {
         if (isNaN(Date.parse(dob))) {
             throw new Error('Invalid Date of Birth');
         }
-        
+
+        const admissionDate = data.admittedAt ? new Date(data.admittedAt) : new Date();
+        const ageAtAdmission = (admissionDate - new Date(dob)) / (1000 * 60 * 60 * 24 * 365.25);
+        const isMinor = ageAtAdmission < 18 ? 1 : 0;
+
+        if (isMinor && (!data.guardian_name || !data.guardian_name.trim())) {
+            throw new Error('Guardian name is required for patients under 18');
+        }
+
         const tenantId = data.tenantId || 'tenant-default';
         const newPatient = {
             id: crypto.randomUUID(),
             ...data,
             tenantId,
-            careIntensity: Math.max(1, Math.min(4, careIntensity || 1))
+            careIntensity: Math.max(1, Math.min(4, careIntensity || 1)),
+            is_minor: isMinor,
+            notice_given_at: data.notice_given_at || null,
+            notice_given_by: data.notice_given_by || null,
+            guardian_name: isMinor ? (data.guardian_name || null) : null,
+            guardian_contact: isMinor ? (data.guardian_contact || null) : null,
+            guardian_notice_at: isMinor ? (data.guardian_notice_at || null) : null,
+            data_nominee: data.data_nominee || null,
+            data_nominee_relationship: data.data_nominee_relationship || null,
+            retention_due_at: null,
         };
-        
+
         return await patientRepository.create(newPatient);
     }
 

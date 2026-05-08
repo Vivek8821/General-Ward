@@ -1,5 +1,6 @@
 import React from 'react';
-import { Users, Bed, Activity, AlertTriangle } from 'lucide-react';
+import { Users, Bed, Activity } from 'lucide-react';
+import { isPatientCritical } from '../../../utils/clinicalUtils';
 
 export function StatCard({ title, value, icon, color = 'text-primary' }) {
   return (
@@ -15,22 +16,18 @@ export function StatCard({ title, value, icon, color = 'text-primary' }) {
   );
 }
 
-export default function DashboardStats({ patients, activePatients, escalatedPatients }) {
+export default function DashboardStats({ patients, activePatients }) {
+  const clinicallyCritical = activePatients.filter(isPatientCritical).length;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <StatCard title="Total Patients" value={patients.length} icon={<Users size={24} />} />
       <StatCard title="Active Beds" value={activePatients.length} icon={<Bed size={24} />} />
-      <StatCard 
-        title="Critical Care (Level 4)" 
-        value={activePatients.filter(p => p.careIntensity === 4).length} 
-        icon={<Activity size={24} />} 
-        color="text-danger" 
-      />
-      <StatCard 
-        title="Escalations" 
-        value={escalatedPatients.length} 
-        icon={<AlertTriangle size={22} strokeWidth={2} />} 
-        color="text-red-600 dark:text-red-400" 
+      <StatCard
+        title="Clinically Critical"
+        value={clinicallyCritical}
+        icon={<Activity size={24} />}
+        color="text-danger"
       />
     </div>
   );

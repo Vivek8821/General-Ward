@@ -550,3 +550,18 @@ router.use('/:patientId/stats', observationRoutes);
 | C.1 | 🟡 Minor | `BarcodeController.js:47` | Use `authorize(PERMISSIONS.VIEW_AUDIT)` |
 | C.2 | 🟡 Minor | `AuthController.js:11` | Drop login rate limit from 100 to 10 |
 | C.3 | 🟡 Minor | `PatientController.js:9-10` | Deduplicate import |
+
+---
+
+## 10. DPDPA 2023 Compliance Audit
+
+| Requirement | Status | Gap / Recommendation |
+|---|---|---|
+| **Section 5: Notice** | 🔴 Missing | No workflow to generate or record service of notice to patients at collection. |
+| **Section 6: Consent** | 🟡 Partial | System assumes implicit clinical consent; lacks structured consent flags for non-essential research use. |
+| **Section 8: Accuracy** | 🟢 Good | `ClinicalChangeLog` tracks all mutations; `admittedAt` is now guarded from overwrite. |
+| **Section 8: Retention** | 🟠 Gapped | Patients are archived at discharge but no "Right to Erasure" or auto-purge policy exists. |
+| **Section 9: Minors** | 🔴 Critical | No "Guardian" field or age-gate logic for patients under 18. |
+| **Section 11: Access** | 🟢 Good | `ReportController` allows full patient record export (portability/access right). |
+| **Section 12: Correction**| 🟡 Partial | Record editing exists, but no formal "Correction Request" workflow/log. |
+| **Rule 6: Security** | 🟠 Gapped | `AuditLogs` capture mutations, but a dedicated "Read Access Log" for sensitive records is required. |

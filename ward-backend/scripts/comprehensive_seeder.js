@@ -1,3 +1,8 @@
+if (process.env.NODE_ENV === 'production' || process.env.DB_DIALECT === 'postgres') {
+  console.error('ERROR: comprehensive_seeder.js must not run in production or against PostgreSQL. Aborting.');
+  process.exit(1);
+}
+
 const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
 const db = new sqlite3.Database('ward.db');

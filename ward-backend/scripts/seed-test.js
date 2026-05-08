@@ -4,6 +4,11 @@
  * Safe to run repeatedly — wipes tables first.
  */
 
+if (process.env.NODE_ENV === 'production' || process.env.DB_DIALECT === 'postgres') {
+  console.error('ERROR: seed-test.js must not run in production or against PostgreSQL. Aborting.');
+  process.exit(1);
+}
+
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt   = require('bcrypt');
 const crypto   = require('crypto');

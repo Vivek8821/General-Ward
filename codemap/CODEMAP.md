@@ -157,6 +157,35 @@ flowchart LR
   - `ward-backend/controllers/PatientController.js`
   - `ward-backend/services/PatientService.js`
 
+### DPDPA 2023 Compliance Panel (Admin only)
+
+Implements DPDPA 2023 + DPDP Rules 2025 obligations. Enforcement date: 13 May 2027.
+
+- UI: `ward-frontend/src/views/AdminAudit.jsx` — "DPDPA Compliance" tab with 5 sub-sections:
+  - Correction Requests, Grievances, Data Sharing Log, Breach Report, Retention Review
+- Patient Admission: `ward-frontend/src/features/dashboard/components/AddPatientModal.jsx` — notice checkbox + minor/guardian detection + data nominee fields
+
+- API endpoints (all `VIEW_AUDIT` permission, admin-only):
+  - `GET  /api/admin/audit-logs/patient/:patientId` — who accessed this patient's data (DPDPA Section 11)
+  - `GET  /api/admin/dpdpa/breach-report?from=&to=` — structured breach notification report (Section 8)
+  - `POST /api/admin/dpdpa/correction-requests` — log correction/erasure request (Section 12)
+  - `GET  /api/admin/dpdpa/correction-requests` — list with status/patientId filter
+  - `PUT  /api/admin/dpdpa/correction-requests/:id` — update status (resolved/rejected)
+  - `POST /api/admin/dpdpa/grievances` — log grievance (Section 13)
+  - `GET  /api/admin/dpdpa/grievances` — list with status filter
+  - `PUT  /api/admin/dpdpa/grievances/:id` — update status/assignee
+  - `POST /api/admin/dpdpa/data-sharing` — log data sharing event (Section 11)
+  - `GET  /api/admin/dpdpa/data-sharing` — list sharing events by patient
+  - `GET  /api/admin/dpdpa/retention-review?daysAhead=` — patients approaching 5-year NMC retention deadline (Rule 8)
+
+- Key implementation files:
+  - `ward-backend/repositories/DpdpaRepository.js` — NEW: all 3 DPDPA table CRUD + retention review
+  - `ward-backend/routes/adminAudit.js` — all DPDPA endpoints added here
+  - `ward-backend/middleware/audit.js` — patientId extraction from URL added to all audit log entries
+  - `ward-backend/services/PatientService.js` — is_minor computed from DOB, guardian validation for minors
+  - `ward-backend/repositories/PatientRepository.js` — create() includes all DPDPA fields; discharge() sets retention_due_at
+  - `ward-backend/postgres-migrations/migrations/012_dpdpa_compliance.sql` — NEW: PostgreSQL migration for all DPDPA schema changes
+
 ## Automation and scripts
 
 | Location | Command | Purpose |
@@ -172,6 +201,19 @@ flowchart LR
 ## Data model (PostgreSQL / SQLite)
 
 The system supports both PostgreSQL and SQLite backends via `db-adapter.js`. Schema migrations for PostgreSQL are managed in `ward-backend/postgres-migrations/`.
+
+### DPDPA 2023 Schema Additions (migration 012)
+
+**New columns on `Patients` table** (all nullable):
+`notice_given_at`, `notice_given_by`, `is_minor` (0/1), `guardian_name`, `guardian_contact`, `guardian_notice_at`, `data_nominee`, `data_nominee_relationship`, `retention_due_at` (YYYY-MM-DD, set at discharge = 5 years from discharge date)
+
+**New column on `AuditLogs` table**:
+`patientId` — extracted from URL path by `audit.js` middleware; null for non-patient requests
+
+**New tables**:
+- `DpdpaCorrectionRequests` — Section 12 correction/erasure requests; statuses: pending → under_review → resolved/rejected
+- `DpdpaGrievances` — Section 13 grievances; statuses: open → in_progress → resolved/escalated
+- `DpdpaDataSharingLog` — Section 11 data sharing record; legalBasis: care_referral/legal_obligation/consent/other
 
 ### Data files on disk
 
@@ -1268,6 +1310,6 @@ HTML entry/prototype for the SPA or legacy UI.
 
 ## Completeness and known limitations
 
-- Inventory counts: **firstParty 216**, **thirdParty 38176**, **data 2**, total 38394.
+- Inventory counts: **firstParty 218** (+2: DpdpaRepository.js, 012_dpdpa_compliance.sql), **thirdParty 38176**, **data 2**, total 38396.
 - `.git/` is skipped by the walker; the `codemap/` directory is skipped by default to avoid recursion.
 - Descriptions are high-level; this codemap is meant to map responsibilities and entry points, not replace reading code.

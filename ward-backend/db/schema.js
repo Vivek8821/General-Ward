@@ -114,6 +114,15 @@ const initDb = (db) => {
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN bloodGroup TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN contactNumber TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN emergencyContact TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN notice_given_at TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN notice_given_by TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN is_minor INTEGER DEFAULT 0`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN guardian_name TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN guardian_contact TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN guardian_notice_at TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN data_nominee TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN data_nominee_relationship TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN retention_due_at TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE DailyStats ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Medications ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE MedicationAdministrations ADD COLUMN tenantId TEXT`);
@@ -229,6 +238,59 @@ const initDb = (db) => {
           )
         `);
 
+        // DPDPA 2023 Compliance Tables
+        db.run(`
+          CREATE TABLE IF NOT EXISTS DpdpaCorrectionRequests (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            patientId TEXT NOT NULL,
+            requestedBy TEXT NOT NULL,
+            requestedAt TEXT NOT NULL,
+            requestType TEXT NOT NULL CHECK(requestType IN ('correction', 'erasure')),
+            fieldsAffected TEXT,
+            description TEXT NOT NULL,
+            status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'under_review', 'resolved', 'rejected')),
+            reviewedBy TEXT,
+            resolvedAt TEXT,
+            resolutionNotes TEXT,
+            createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS DpdpaGrievances (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            patientId TEXT,
+            complainantName TEXT NOT NULL,
+            complainantContact TEXT,
+            description TEXT NOT NULL,
+            category TEXT CHECK(category IN ('data_access', 'correction_delay', 'breach', 'other')),
+            filedAt TEXT NOT NULL,
+            status TEXT DEFAULT 'open' CHECK(status IN ('open', 'in_progress', 'resolved', 'escalated')),
+            assignedTo TEXT,
+            resolvedAt TEXT,
+            resolutionNotes TEXT,
+            createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS DpdpaDataSharingLog (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            patientId TEXT NOT NULL,
+            sharedWith TEXT NOT NULL,
+            purposeOfSharing TEXT NOT NULL,
+            dataCategories TEXT NOT NULL,
+            sharedAt TEXT NOT NULL,
+            sharedBy TEXT NOT NULL,
+            legalBasis TEXT CHECK(legalBasis IN ('care_referral', 'legal_obligation', 'consent', 'other')),
+            consentReference TEXT,
+            createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+
         // IdempotencyKeys Table
         db.run(`
           CREATE TABLE IF NOT EXISTS IdempotencyKeys (
@@ -298,6 +360,7 @@ const initDb = (db) => {
 
         runIgnoreDuplicateColumn(`ALTER TABLE AuditLogs ADD COLUMN statusCode INTEGER`);
         runIgnoreDuplicateColumn(`ALTER TABLE AuditLogs ADD COLUMN success INTEGER`);
+        runIgnoreDuplicateColumn(`ALTER TABLE AuditLogs ADD COLUMN patientId TEXT`);
 
         // Pharmacy Tables
         db.run(`
@@ -462,6 +525,13 @@ const initDb = (db) => {
         `);
         db.run(`CREATE INDEX IF NOT EXISTS idx_patientreports_patient ON PatientReports(patientId, tenantId)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_patientreports_hash ON PatientReports(reportHash)`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_auditlogs_patientid ON AuditLogs(patientId) WHERE patientId IS NOT NULL`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_correction_req_tenant ON DpdpaCorrectionRequests(tenantId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_correction_req_patient ON DpdpaCorrectionRequests(patientId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_grievances_tenant ON DpdpaGrievances(tenantId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_sharing_log_tenant ON DpdpaDataSharingLog(tenantId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_sharing_log_patient ON DpdpaDataSharingLog(patientId)`);
         
         resolve();
       } catch (err) {

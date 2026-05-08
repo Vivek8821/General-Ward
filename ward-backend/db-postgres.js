@@ -8,7 +8,13 @@ const pool = new Pool({
   port: parseInt(process.env.PG_PORT || '5432'),
   database: process.env.PG_DATABASE || 'warddb',
   user: process.env.PG_USER || 'wardapp',
-  password: process.env.PG_PASSWORD || 'changeme',
+  password: (() => {
+    const pw = process.env.PG_PASSWORD;
+    if (!pw || !pw.trim()) {
+      throw new Error('[db-postgres] PG_PASSWORD must be set. Generate one with: openssl rand -hex 32');
+    }
+    return pw;
+  })(),
   max: parseInt(process.env.PG_POOL_MAX || '20'),
   idleTimeoutMillis: parseInt(process.env.PG_POOL_IDLE_TIMEOUT || '30000'),
   connectionTimeoutMillis: parseInt(process.env.PG_POOL_CONNECTION_TIMEOUT || '5000'),

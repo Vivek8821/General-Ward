@@ -34,7 +34,14 @@ export default function DashboardView() {
     dob: '',
     diagnosis: '',
     allergies: '',
-    careIntensity: 1
+    careIntensity: 1,
+    notice_given_at: null,
+    notice_given_by: null,
+    guardian_name: '',
+    guardian_contact: '',
+    guardian_notice_at: null,
+    data_nominee: '',
+    data_nominee_relationship: '',
   });
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -113,7 +120,14 @@ export default function DashboardView() {
         dob: '',
         diagnosis: '',
         allergies: '',
-        careIntensity: 1
+        careIntensity: 1,
+        notice_given_at: null,
+        notice_given_by: null,
+        guardian_name: '',
+        guardian_contact: '',
+        guardian_notice_at: null,
+        data_nominee: '',
+        data_nominee_relationship: '',
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.patients(viewMode) });
     } catch (err) {

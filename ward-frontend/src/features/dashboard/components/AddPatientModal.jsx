@@ -1,7 +1,14 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
-export default function AddPatientModal({ 
+function isUnder18(dob) {
+  if (!dob) return false;
+  const age = (new Date() - new Date(dob)) / (1000 * 60 * 60 * 24 * 365.25);
+  return age < 18;
+}
+
+export default function AddPatientModal({
   isAddingPatient, 
   setIsAddingPatient, 
   handleSavePatient, 
@@ -9,6 +16,8 @@ export default function AddPatientModal({
   setNewPatient, 
   addingPatient 
 }) {
+  const { user } = useAuth();
+
   if (!isAddingPatient) return null;
 
   return (
@@ -108,6 +117,94 @@ export default function AddPatientModal({
                 onChange={e => setNewPatient({...newPatient, admittedAt: e.target.value})} 
               />
               <p className="text-[10px] text-text-muted mt-1 italic">Defaults to current time if left blank.</p>
+            </div>
+            {/* DPDPA Notice Confirmation */}
+            <div className="col-span-2 border-t border-border pt-4">
+              <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3">DPDPA Notice Confirmation</p>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={!!newPatient.notice_given_at}
+                  onChange={e => setNewPatient({
+                    ...newPatient,
+                    notice_given_at: e.target.checked ? new Date().toISOString() : null,
+                    notice_given_by: e.target.checked ? (user?.name || '') : null,
+                  })}
+                />
+                <span className="text-sm text-text-secondary leading-snug">
+                  I confirm that the patient (or guardian, if minor) has been given the data collection notice as required under Section 5 of the DPDPA 2023, including the purpose of data collection and their right to access, correct, and have their data erased.
+                </span>
+              </label>
+            </div>
+
+            {/* Minor Patient — Guardian Details */}
+            {isUnder18(newPatient.dob) && (
+              <div className="col-span-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+                  Minor Patient — Guardian Details Required (DPDPA Section 9)
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-bold mb-1 text-text-secondary">Guardian Name *</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={newPatient.guardian_name || ''}
+                      onChange={e => setNewPatient({ ...newPatient, guardian_name: e.target.value })}
+                      required={isUnder18(newPatient.dob)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-1 text-text-secondary">Guardian Contact *</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={newPatient.guardian_contact || ''}
+                      onChange={e => setNewPatient({ ...newPatient, guardian_contact: e.target.value })}
+                      required={isUnder18(newPatient.dob)}
+                    />
+                  </div>
+                </div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={!!newPatient.guardian_notice_at}
+                    onChange={e => setNewPatient({
+                      ...newPatient,
+                      guardian_notice_at: e.target.checked ? new Date().toISOString() : null,
+                    })}
+                  />
+                  <span className="text-sm text-amber-700 dark:text-amber-300">
+                    Guardian has been given the DPDPA data collection notice.
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {/* Data Rights Nominee */}
+            <div className="col-span-2">
+              <label className="block text-sm font-bold mb-1 text-text-secondary">
+                Data Rights Nominee <span className="text-xs font-normal text-text-muted">(DPDPA Section 14 — optional)</span>
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Nominee full name"
+                  value={newPatient.data_nominee || ''}
+                  onChange={e => setNewPatient({ ...newPatient, data_nominee: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Relationship (e.g. Spouse, Son)"
+                  value={newPatient.data_nominee_relationship || ''}
+                  onChange={e => setNewPatient({ ...newPatient, data_nominee_relationship: e.target.value })}
+                />
+              </div>
+              <p className="text-[10px] text-text-muted mt-1">Person authorised to exercise data rights on behalf of the patient in case of death or incapacity.</p>
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-border">

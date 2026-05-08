@@ -1,8 +1,8 @@
 const dbSqlite = require('./db');
-const dbPostgres = require('./db-postgres');
 const logger = require('./utils/logger');
 
 const dialect = process.env.DB_DIALECT || 'sqlite';
+const dbPostgres = dialect === 'postgres' ? require('./db-postgres') : null;
 
 /**
  * Translates SQLite style '?' placeholders to PostgreSQL style '$1', '$2', etc.

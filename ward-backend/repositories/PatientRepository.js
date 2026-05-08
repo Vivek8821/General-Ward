@@ -52,8 +52,12 @@ class PatientRepository {
   async create(patientData) {
     const tenantId = patientData.tenantId || 'tenant-default';
     await dbAdapter.run(
-      `INSERT INTO Patients (id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status, admittedAt)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+      `INSERT INTO Patients (
+        id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status, admittedAt,
+        gender, bloodGroup, contactNumber, emergencyContact,
+        is_minor, notice_given_at, notice_given_by, guardian_name, guardian_contact, guardian_notice_at,
+        data_nominee, data_nominee_relationship, retention_due_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         patientData.id,
         tenantId,
@@ -62,9 +66,22 @@ class PatientRepository {
         patientData.bedNumber,
         patientData.dob,
         patientData.diagnosis,
-        patientData.allergies,
+        patientData.allergies || null,
         patientData.careIntensity || 1,
         patientData.admittedAt || new Date().toISOString(),
+        patientData.gender || null,
+        patientData.bloodGroup || null,
+        patientData.contactNumber || null,
+        patientData.emergencyContact || null,
+        patientData.is_minor || 0,
+        patientData.notice_given_at || null,
+        patientData.notice_given_by || null,
+        patientData.guardian_name || null,
+        patientData.guardian_contact || null,
+        patientData.guardian_notice_at || null,
+        patientData.data_nominee || null,
+        patientData.data_nominee_relationship || null,
+        patientData.retention_due_at || null,
       ]
     );
     return { ...patientData, status: 'active' };
@@ -281,6 +298,15 @@ class PatientRepository {
           p.bedNumber,
           JSON.stringify(snapshot),
         ]
+      );
+
+      // NMC medical record retention: 5 years for IPD (general ward = inpatient).
+      // DPDPA Rule 8 1-year inactivity rule does not override this legally mandated period.
+      const retentionDueAt = new Date();
+      retentionDueAt.setFullYear(retentionDueAt.getFullYear() + 5);
+      await run(
+        `UPDATE Patients SET retention_due_at = ? WHERE id = ? AND tenantId = ?`,
+        [retentionDueAt.toISOString().slice(0, 10), patientId, tenant]
       );
 
       return { message: 'Patient discharged successfully', summaryId, archiveId };
