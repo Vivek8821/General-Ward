@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { isPatientCritical, isPatientWarning } from '../../../utils/clinicalUtils';
 
 export function TelemetryMini({ label, value }) {
   return (
@@ -11,16 +13,18 @@ export function TelemetryMini({ label, value }) {
 
 export default function PatientCard({ patient, viewMode }) {
   const ews = patient.ews;
-  const riskColor = ews?.status === 'critical' ? 'border-red-500 bg-red-500/5' : 
-                    ews?.status === 'warning' ? 'border-amber-500 bg-amber-500/5' : 
+  const critical = isPatientCritical(patient);
+  const warning = isPatientWarning(patient);
+  const riskColor = critical ? 'border-red-500 bg-red-500/5' :
+                    warning  ? 'border-amber-500 bg-amber-500/5' :
                     'border-border';
-  const ewsBg = ews?.status === 'critical' ? 'bg-red-600 text-white' : 
-                ews?.status === 'warning' ? 'bg-amber-500 text-white' : 
+  const ewsBg = critical ? 'bg-red-600 text-white' :
+                warning  ? 'bg-amber-500 text-white' :
                 'bg-emerald-500 text-white';
 
   return (
-    <a
-      href={
+    <Link
+      to={
         viewMode === 'archived' && patient.archiveId
           ? `/archive/${patient.archiveId}`
           : `/patient/${patient.patientId || patient.id}`
@@ -82,6 +86,6 @@ export default function PatientCard({ patient, viewMode }) {
           Profile &rarr;
         </span>
       </div>
-    </a>
+    </Link>
   );
 }

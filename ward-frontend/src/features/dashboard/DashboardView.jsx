@@ -11,6 +11,7 @@ import DashboardStats from './components/DashboardStats';
 import { WelcomeBanner, EscalationAlert } from './components/DashboardAlerts';
 import PatientGrid from './components/PatientGrid';
 import AddPatientModal from './components/AddPatientModal';
+import { isPatientCritical } from '../../utils/clinicalUtils';
 
 const WELCOME_DISMISSED_KEY = 'ward_welcome_dismissed';
 
@@ -124,14 +125,18 @@ export default function DashboardView() {
 
   const activePatients = patients.filter(p => ['active', 'escalated'].includes(p.status));
   const escalatedPatients = activePatients.filter(p => p.status === 'escalated');
-  let filteredPatients = patients.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.mrn.toLowerCase().includes(search.toLowerCase()) ||
-    p.bedNumber.toLowerCase().includes(search.toLowerCase())
+  const criticalPatients = activePatients.filter(isPatientCritical);
+  const q = search.toLowerCase();
+  let filteredPatients = patients.filter(p =>
+    (p.name || '').toLowerCase().includes(q) ||
+    (p.mrn || '').toLowerCase().includes(q) ||
+    (p.bedNumber || '').toLowerCase().includes(q)
   );
-  
+
   if (isReviewingCases) {
-      filteredPatients = filteredPatients.filter(p => p.status === 'escalated');
+    filteredPatients = filteredPatients.filter(p =>
+      user.role === 'doctor' ? isPatientCritical(p) : p.status === 'escalated'
+    );
   }
 
   const dismissWelcome = () => {
@@ -145,12 +150,12 @@ export default function DashboardView() {
       <WelcomeBanner showWelcome={showWelcome} dismissWelcome={dismissWelcome} />
 
 
-      <EscalationAlert 
-        user={user} 
-        viewMode={viewMode} 
-        escalated={escalated} 
-        isReviewingCases={isReviewingCases} 
-        setIsReviewingCases={setIsReviewingCases} 
+      <EscalationAlert
+        user={user}
+        viewMode={viewMode}
+        criticalPatients={criticalPatients}
+        isReviewingCases={isReviewingCases}
+        setIsReviewingCases={setIsReviewingCases}
       />
 
       {viewMode === 'active' && (

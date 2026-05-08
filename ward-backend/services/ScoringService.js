@@ -139,7 +139,7 @@ class ScoringService {
     const vitals = {
       respirationRate: data.respRate !== undefined ? Number(data.respRate) : undefined,
       spo2: data.spo2 !== undefined ? Number(data.spo2) : undefined,
-      onOxygen: data.onOxygen || false,
+      onOxygen: data.onOxygen === true || data.onOxygen === 1 || data.onOxygen === '1' || data.onOxygen === 'true',
       systolicBP: data.bpSystolic !== undefined ? Number(data.bpSystolic) : undefined,
       heartRate: data.pulse !== undefined ? Number(data.pulse) : undefined,
       consciousness: data.consciousness || 'alert',
@@ -147,11 +147,18 @@ class ScoringService {
     };
 
     const news2 = this.calculateNEWS2(vitals);
-    
+
     return {
       ...news2,
       risk: news2.status, // Legacy field mapping
-      timestamp: timestamp || null
+      timestamp: timestamp || null,
+      // Individual vitals — available for frontend display and deterministic classification
+      heartRate: vitals.heartRate,
+      systolicBP: vitals.systolicBP,
+      spo2: vitals.spo2,
+      respirationRate: vitals.respirationRate,
+      temperature: vitals.temperature,
+      onOxygen: vitals.onOxygen,
     };
   }
 }

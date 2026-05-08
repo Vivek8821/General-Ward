@@ -108,6 +108,7 @@ export default function PatientDetail() {
     mutationFn: (reason) => api.post(`/patients/${id}/escalations`, { reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.patientDetail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.patients('active') });
       setEscalateModalOpen(false);
       setEscalateReason('');
       toast.success('Case escalated.');
@@ -116,7 +117,7 @@ export default function PatientDetail() {
   });
 
   const reviewEscalationMutation = useMutation({
-    mutationFn: (escalationId) => api.post(`/escalations/${escalationId}/review`),
+    mutationFn: (escalationId) => api.post(`/escalations/${escalationId}/review`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.patientDetail(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.escalations() });

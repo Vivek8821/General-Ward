@@ -23,8 +23,8 @@ export function WelcomeBanner({ showWelcome, dismissWelcome }) {
   );
 }
 
-export function EscalationAlert({ user, viewMode, escalated, isReviewingCases, setIsReviewingCases }) {
-  if (viewMode !== 'active' || user?.role !== 'doctor' || !escalated || escalated.length === 0) {
+export function EscalationAlert({ user, viewMode, criticalPatients, isReviewingCases, setIsReviewingCases }) {
+  if (viewMode !== 'active' || user?.role !== 'doctor' || !criticalPatients || criticalPatients.length === 0) {
     return null;
   }
 
@@ -32,7 +32,7 @@ export function EscalationAlert({ user, viewMode, escalated, isReviewingCases, s
     <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 border-l-4 border-l-red-500 p-5 rounded-r-xl flex justify-between items-center gap-4">
       <div className="flex items-center gap-3 text-red-700 dark:text-red-400 font-semibold text-lg">
         <AlertTriangle className="w-6 h-6 shrink-0" aria-hidden />
-        {escalated.length} Patient{escalated.length > 1 ? 's' : ''} Require Immediate Attention
+        {criticalPatients.length} Patient{criticalPatients.length > 1 ? 's' : ''} Require Immediate Attention
       </div>
       <button 
         onClick={() => setIsReviewingCases(!isReviewingCases)}
