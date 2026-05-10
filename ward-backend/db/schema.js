@@ -118,6 +118,7 @@ const initDb = (db) => {
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN bloodGroup TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN contactNumber TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN emergencyContact TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN residence TEXT CHECK(residence IS NULL OR residence IN ('rural', 'suburban', 'urban'))`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN notice_given_at TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN notice_given_by TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN is_minor INTEGER DEFAULT 0`);

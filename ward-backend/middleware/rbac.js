@@ -21,6 +21,9 @@ const PERMISSIONS = {
   READ_PHARMACY:   'read_pharmacy',
   MANAGE_PHARMACY: 'manage_pharmacy',
 
+  // Statistics
+  VIEW_STATISTICS: 'view_statistics',
+
   // Admin
   VIEW_AUDIT:   'view_audit',
   PURGE_AUDIT:  'purge_audit',
@@ -39,6 +42,7 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.WRITE_TASKS,
     PERMISSIONS.READ_TASKS,
     PERMISSIONS.READ_PHARMACY,
+    PERMISSIONS.VIEW_STATISTICS,
   ],
   [ROLES.NURSE]: [
     PERMISSIONS.READ_PATIENT,
@@ -59,6 +63,7 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.PURGE_AUDIT,
     PERMISSIONS.READ_TASKS,
     PERMISSIONS.MANAGE_USERS,
+    PERMISSIONS.VIEW_STATISTICS,
   ],
 };
 

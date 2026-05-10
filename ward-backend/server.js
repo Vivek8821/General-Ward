@@ -105,6 +105,7 @@ app.use('/api/pharmacy/barcodes', barcodeRoutes);
 app.use('/api/admin', adminAuditRoutes);
 app.use('/api/admin/users', require('./controllers/UserController'));
 app.use('/api/reports', require('./routes/reports'));
+app.use('/api/statistics', require('./controllers/StatisticsController'));
 
 // Health check
 app.get('/', (req, res) => {

@@ -379,3 +379,12 @@ ALTER TABLE Users ADD COLUMN tokenVersion INTEGER DEFAULT 0;
 -- Migration: Tenants code
 ALTER TABLE Tenants ADD COLUMN code TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tenants_code ON Tenants(code) WHERE code IS NOT NULL;
+
+-- Migration: residence + statistics indexes (014)
+ALTER TABLE Patients ADD COLUMN residence TEXT
+  CHECK(residence IS NULL OR residence IN ('rural', 'suburban', 'urban'));
+CREATE INDEX IF NOT EXISTS idx_patients_residence ON Patients(residence) WHERE residence IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_patients_dob ON Patients(dob);
+CREATE INDEX IF NOT EXISTS idx_patients_gender ON Patients(gender) WHERE gender IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_patients_admitted_at ON Patients(admittedAt);
+CREATE INDEX IF NOT EXISTS idx_archives_duration ON HospitalArchives(tenantId, archivedAt);

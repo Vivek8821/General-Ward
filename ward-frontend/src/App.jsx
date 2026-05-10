@@ -12,6 +12,7 @@ import Tasks from './views/Tasks';
 import AdminAudit from './views/AdminAudit';
 import PharmacyView from './features/pharmacy/PharmacyView';
 import VerifyReport from './views/VerifyReport';
+import StatisticsDashboard from './features/statistics/StatisticsDashboard';
 import NotFound from './views/NotFound';
 import './App.css';
 
@@ -41,6 +42,7 @@ function App() {
               <Route path="/patient/:id" element={<PatientDetail />} />
               <Route path="/archive/:archiveId" element={<HospitalArchiveDetail />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/statistics" element={<StatisticsDashboard />} />
             </Route>
 
             <Route element={<ProtectedLayout allowedRoles={['pharmacist', 'admin']} />}>

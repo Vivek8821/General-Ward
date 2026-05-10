@@ -1,6 +1,6 @@
 import { Outlet, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck, Archive } from 'lucide-react';
+import { LogOut, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck, Archive, BarChart3 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
 export const ProtectedLayout = ({ allowedRoles }) => {
@@ -56,6 +56,9 @@ export const ProtectedLayout = ({ allowedRoles }) => {
               <NavItem to="/archives" icon={Archive} label="Archives" />
               <NavItem to="/tasks" icon={ClipboardList} label="Tasks" />
             </>
+          )}
+          {(user.role === 'doctor' || user.role === 'admin') && (
+            <NavItem to="/statistics" icon={BarChart3} label="Statistics" />
           )}
           {(user.role === 'pharmacist' || user.role === 'admin') && (
             <NavItem to="/pharmacy" icon={Package} label="Pharmacy" />
