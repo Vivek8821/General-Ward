@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patient Discharge Record — Reference Template</title>
+<style>
+/* =========================================================
+   BASE & A4 SETUP
+   ========================================================= */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.45;
+  color: #2d3748;
+  background: #f7fafc;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.page {
+  width: 186mm;
+  min-height: 273mm;
+  padding: 14mm;
+  margin: 0 auto 10mm auto;
+  background: #ffffff;
+  position: relative;
+  page-break-after: always;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  border-radius: 4px;
+}
+.page:last-child { page-break-after: auto; }
+
+/* =========================================================
+   TYPOGRAPHY
+   ========================================================= */
+h1 { font-size: 18pt; font-weight: 700; letter-spacing: -0.3px; }
+h2 { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+h3 { font-size: 10pt; font-weight: 600; }
+.small { font-size: 8pt; color: #718096; }
+.label { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.06em; color: #718096; font-weight: 600; }
+.divider { height: 1px; background: linear-gradient(90deg, transparent, #cbd5e0, transparent); margin: 12px 0; }
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+.doc-header {
+  background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #3182ce 100%);
+  color: #fff;
+  padding: 18px 22px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.doc-header .brand { display: flex; flex-direction: column; gap: 2px; }
+.doc-header .brand span { opacity: 0.9; font-size: 8pt; }
+.doc-header .meta { text-align: right; font-size: 8pt; opacity: 0.95; }
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(4px);
+}
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+.section {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.04);
+  page-break-inside: avoid;
+}
+.section-header {
+  padding: 10px 18px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 9.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.section-body { padding: 16px 18px; background: #fff; }
+
+/* --- Gradient Themes (Distinct colours) --- */
+.g-teal    { background: linear-gradient(90deg, #0f766e, #14b8a6); }
+.g-coral   { background: linear-gradient(90deg, #c05621, #ed8936); }
+.g-sage    { background: linear-gradient(90deg, #4a7c59, #68d391); }
+.g-cobalt  { background: linear-gradient(90deg, #1e40af, #3b82f6); }
+.g-slate   { background: linear-gradient(90deg, #4c1d95, #7c3aed); }
+.g-steel   { background: linear-gradient(90deg, #374151, #6b7280); }
+.g-amber   { background: linear-gradient(90deg, #92400e, #f59e0b); }
+.g-forest  { background: linear-gradient(90deg, #14532d, #22c55e); }
+.g-indigo  { background: linear-gradient(90deg, #312e81, #6366f1); }
+.g-rose    { background: linear-gradient(90deg, #9f1239, #f43f5e); }
+.g-sky     { background: linear-gradient(90deg, #0369a1, #38bdf8); }
+.g-orange  { background: linear-gradient(90deg, #9a3412, #fb923c); }
+.g-mint    { background: linear-gradient(90deg, #065f46, #34d399); }
+.g-lav     { background: linear-gradient(90deg, #581c87, #a855f7); }
+.g-gold    { background: linear-gradient(90deg, #78350f, #eab308); }
+.g-silver  { background: linear-gradient(90deg, #475569, #94a3b8); }
+.g-stone   { background: linear-gradient(90deg, #44403c, #a8a29e); }
+
+/* =========================================================
+   GRIDS & TABLES
+   ========================================================= */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+
+.info-card {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border-left: 4px solid #cbd5e0;
+}
+.info-card .value { font-weight: 700; color: #1a202c; font-size: 10pt; margin-top: 2px; }
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 8.5pt;
+  margin-top: 8px;
+}
+th {
+  background: #f1f5f9;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 700;
+  color: #475569;
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #e2e8f0;
+}
+td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+tr:hover td { background: #f8fafc; }
+
+/* Lab result flags */
+.flag-normal { color: #047857; font-weight: 700; }
+.flag-border { color: #b45309; font-weight: 700; }
+.flag-high   { color: #dc2626; font-weight: 700; }
+.flag-low    { color: #dc2626; font-weight: 700; }
+.flag-critical { 
+  color: #dc2626; 
+  font-weight: 800; 
+  background: #fef2f2; 
+  padding: 1px 6px; 
+  border-radius: 4px; 
+  border: 1px solid #fecaca;
+}
+
+/* =========================================================
+   VITALS & SPARKLINES
+   ========================================================= */
+.vitals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+.vital-box {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.vital-box::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent, #cbd5e0);
+}
+.vital-box .vital-value { font-size: 16pt; font-weight: 800; color: #1e293b; margin: 6px 0; }
+.vital-box .vital-unit { font-size: 8pt; color: #64748b; }
+.sparkline { margin-top: 8px; height: 30px; }
+
+/* =========================================================
+   BILLING
+   ========================================================= */
+.bill-total {
+  margin-top: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, #f0fdf4, #ecfdf5);
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12pt;
+  font-weight: 800;
+  color: #14532d;
+}
+
+/* =========================================================
+   TEAM & REMARKS
+   ========================================================= */
+.team-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.team-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 10pt; flex-shrink: 0;
+}
+.team-info h4 { font-size: 9.5pt; color: #1e293b; }
+.team-info p { font-size: 8pt; color: #64748b; margin: 1px 0 0 0; }
+
+.remark-box {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  padding: 12px 14px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 10px;
+}
+.remark-box.clinical { background: #eff6ff; border-left-color: #3b82f6; }
+.remark-box.nursing { background: #fdf2f8; border-left-color: #ec4899; }
+
+/* =========================================================
+   INSTRUCTIONS & HANDOVER
+   ========================================================= */
+.instruction-list {
+  list-style: none;
+  counter-reset: item;
+}
+.instruction-list li {
+  counter-increment: item;
+  margin-bottom: 8px;
+  padding-left: 28px;
+  position: relative;
+}
+.instruction-list li::before {
+  content: counter(item);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 18px; height: 18px;
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 7.5pt;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.warning-box {
+  background: linear-gradient(90deg, #fef2f2, #fff1f2);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+.warning-box h4 { color: #b91c1c; font-size: 9pt; margin-bottom: 4px; }
+
+/* =========================================================
+   SIGNATURES
+   ========================================================= */
+.sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+.sig-box {
+  border: 1px dashed #cbd5e0;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  background: #fafaf9;
+}
+.sig-line {
+  margin-top: 30px;
+  border-top: 1px solid #94a3b8;
+  padding-top: 6px;
+  font-size: 8pt;
+  color: #475569;
+}
+
+/* =========================================================
+   QR & FOOTER
+   ========================================================= */
+.qr-placeholder {
+  width: 72px; height: 72px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7pt; color: #94a3b8;
+  text-align: center;
+}
+.footer-bar {
+  position: absolute;
+  bottom: 10mm; left: 14mm; right: 14mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 7pt;
+  color: #94a3b8;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 6px;
+}
+
+/* =========================================================
+   PRINT UTILITIES
+   ========================================================= */
+@media print {
+  body { background: #fff; }
+  .page { box-shadow: none; margin: 0; border-radius: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+     PAGE 1 — HEADER + PATIENT ID + ADMISSION + ALLERGIES + DIET
+     ========================================================= -->
+<div class="page">
+  <div class="doc-header">
+    <div class="brand">
+      <h1>City General Hospital</h1>
+      <span>14, Civil Lines, Pune – 411001, Maharashtra, India</span>
+      <span>NABH Accredited | NABL Accredited Laboratory</span>
+    </div>
+    <div class="meta">
+      <div class="badge">Discharge Record</div>
+      <div style="margin-top:6px;">Report ID: <strong>CGH-DR-2026-04891-0430</strong></div>
+      <div>Generated: 09 May 2026, 08:24 hrs</div>
+    </div>
+  </div>
+
+  <!-- Section 1: Patient Identification -->
+  <div class="section">
+    <div class="section-header g-teal">
+      <span>Section 1 — Patient Identification & Admission Summary</span>
+      <span style="font-size:8pt;opacity:0.9;">UHID: UHID-MH-2024-948271</span>
+    </div>
+    <div class="section-body">
+      <div class="grid-4">
+        <div class="info-card" style="border-left-color: #14b8a6;">
+          <div class="label">Full Name</div>
+          <div class="value">Rajesh Kumar Sharma</div>
+        </div>
+        <div class="info-card" style="border-left-color: #14b8a6;">
+          <div class="label">Patient ID</div>
+          <div class="value">CGH-2024-04891</div>
+        </div>
+        <div class="info-card" style="border-left-color: #14b8a6;">
+          <div class="label">DOB / Age</div>
+          <div class="value">12 Mar 1978 (46 yrs)</div>
+        </div>
+        <div class="info-card" style="border-left-color: #14b8a6;">
+          <div class="label">Sex / Blood Group</div>
+          <div class="value">Male / B Positive (B+)</div>
+        </div>
+        <div class="info-card" style="border-left-color: #14b8a6;">
+          <div class="label">Admission</div>
+          <div class="value">22 Apr 2026, 09:14 hrs</div>
+        </div>
+        <div class="info-card" style="border-left-color: #14b8a6;">
+          <div class="label">Discharge</div>
+          <div class="value">30 Apr 2026, 11:30 hrs</div>
+        </div>
+        <div class="info-card" style="border-left-color: #14b8a6;">
+          <div class="label">Length of Stay</div>
+          <div class="value">8 Days</div>
+        </div>
+        <div class="info-card" style="border-left-color: #14b8a6;">
+          <div class="label">Ward / Bed</div>
+          <div class="value">General Ward — Block B2, Bed 14</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="grid-2">
+        <div>
+          <span class="label">Admission Diagnosis</span>
+          <div style="margin-top:4px; font-weight:700;">Dengue Fever with Thrombocytopenia</div>
+        </div>
+        <div>
+          <span class="label">Discharge Diagnosis</span>
+          <div style="margin-top:4px; font-weight:700;">Dengue Fever — Recovered. Thrombocytopenia — Resolving.</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="grid-3">
+        <div class="info-card" style="border-left-color: #f59e0b;">
+          <div class="label">Insurance</div>
+          <div class="value" style="font-size:9pt;">Star Health — SH-MH-2024-112233</div>
+        </div>
+        <div class="info-card" style="border-left-color: #f59e0b;">
+          <div class="label">TPA / Claim</div>
+          <div class="value" style="font-size:9pt;">Medi Assist — MA-2026-48912</div>
+        </div>
+        <div class="info-card" style="border-left-color: #f59e0b;">
+          <div class="label">Emergency Contact</div>
+          <div class="value" style="font-size:9pt;">Priya Sharma (Spouse) — +91-98765-43210</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Allergies -->
+  <div class="section">
+    <div class="section-header g-coral">Section 1A — Allergies (Drug, Food & Environmental)</div>
+    <div class="section-body">
+      <table>
+        <thead>
+          <tr><th>Allergen</th><th>Category</th><th>Reaction</th><th>Severity</th><th>Verification</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Penicillin / Amoxicillin</td><td>Drug</td><td>Skin rash, urticaria</td><td class="flag-high">Moderate</td><td>RAST confirmed 2019</td></tr>
+          <tr><td>Aspirin (Acetylsalicylic Acid)</td><td>Drug</td><td>GI upset, epigastric pain</td><td class="flag-border">Mild</td><td>Clinical history</td></tr>
+          <tr><td>Ibuprofen / NSAIDs</td><td>Drug</td><td>GI bleed risk — dengue context</td><td class="flag-critical">HIGH — Contraindicated</td><td>Clinical protocol</td></tr>
+          <tr><td>Shellfish (Prawns, Crab)</td><td>Food</td><td>Urticaria, lip swelling</td><td class="flag-high">Moderate</td><td>Self-reported</td></tr>
+          <tr><td>Groundnuts / Peanuts</td><td>Food</td><td>Mild oral tingling</td><td class="flag-normal">Mild</td><td>Self-reported</td></tr>
+          <tr><td>Dust mites</td><td>Environmental</td><td>Rhinitis, sneezing</td><td class="flag-normal">Mild</td><td>Self-reported</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Diet -->
+  <div class="section">
+    <div class="section-header g-mint">Section 1B — Dietary Protocol</div>
+    <div class="section-body">
+      <div class="grid-2">
+        <ul style="margin-left:16px; color:#374151;">
+          <li>Low glycaemic index diet — Diabetic protocol (Type 2 DM)</li>
+          <li>Low sodium diet — &lt;2g sodium/day (Hypertension)</li>
+          <li>High fluid intake — minimum 3 litres/day (Dengue recovery)</li>
+          <li>Avoid raw or undercooked food during recovery</li>
+        </ul>
+        <ul style="margin-left:16px; color:#374151;">
+          <li>Complete alcohol abstinence for minimum 4 weeks post-discharge</li>
+          <li>Avoid Aspirin and NSAIDs — use Paracetamol only</li>
+          <li>Dietitian: Ms. Sneha Patwardhan, CGH Dietetics</li>
+          <li>Review Date: 25 April 2026</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>Confidential Medical Record — CGH-DR-2026-04891-0430</span>
+    <span>Page 1 of 8</span>
+  </div>
+</div>
+
+<!-- =========================================================
+     PAGE 2 — SYMPTOMS + PHYSICAL EXAM
+     ========================================================= -->
+<div class="page">
+  <div class="section">
+    <div class="section-header g-coral">Section 2 — Presenting Symptoms & Clinical Examination</div>
+    <div class="section-body">
+      <div class="grid-2">
+        <div>
+          <h3 style="margin-bottom:8px; color:#9a3412;">Chief Complaint</h3>
+          <p>High-grade continuous fever × 5 days, severe body ache, headache behind eyes.</p>
+          <div class="divider"></div>
+          <table>
+            <tbody>
+              <tr><td style="padding:5px 0;"><strong>Onset</strong></td><td>17 April 2026</td></tr>
+              <tr><td style="padding:5px 0;"><strong>Fever</strong></td><td>103–104°F, continuous, not responding fully to OTC Paracetamol</td></tr>
+              <tr><td style="padding:5px 0;"><strong>Headache</strong></td><td>Severe, retro-orbital, 8/10 severity</td></tr>
+              <tr><td style="padding:5px 0;"><strong>Myalgia / Arthralgia</strong></td><td>Severe generalised — 'breakbone fever' pattern</td></tr>
+              <tr><td style="padding:5px 0;"><strong>Nausea / Vomiting</strong></td><td>Present — 3–4 episodes/day for first 3 days</td></tr>
+              <tr><td style="padding:5px 0;"><strong>Rash</strong></td><td>Maculopapular rash noted on trunk and upper limbs from Day 3</td></tr>
+              <tr><td style="padding:5px 0;"><strong>Bleeding</strong></td><td>Nil reported</td></tr>
+              <tr><td style="padding:5px 0;"><strong>Respiratory</strong></td><td>No cough, no breathlessness</td></tr>
+              <tr><td style="padding:5px 0;"><strong>Neurological</strong></td><td>No altered sensorium, no seizures</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 style="margin-bottom:8px; color:#9a3412;">Physical Examination (Admission)</h3>
+          <div class="grid-2" style="gap:8px;">
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Temperature</div><div class="value">103.8°F (39.9°C)</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Pulse</div><div class="value">98/min, regular, low volume</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Blood Pressure</div><div class="value">118/76 mmHg</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Respiratory Rate</div><div class="value">18/min, SpO₂ 97% (Room air)</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Icterus</div><div class="value">Mild — scleral icterus noted</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Lymphadenopathy</div><div class="value">Mild bilateral cervical</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Skin</div><div class="value">Maculopapular rash — trunk & upper limbs. Tourniquet test: Positive (22 petechiae)</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Abdominal</div><div class="value">Mild hepatomegaly (2 cm), mild splenomegaly, RHC tenderness</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Respiratory</div><div class="value">Air entry bilaterally equal. Mild dullness right base — early pleural effusion.</div></div>
+            <div class="info-card" style="border-left-color:#ed8936;"><div class="label">Neurological</div><div class="value">GCS 15/15. No focal deficit.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-sage">Section 3 — Vital Signs Trends (Full Admission Period)</div>
+    <div class="section-body">
+      <div class="vitals-grid">
+        <!-- Temperature -->
+        <div class="vital-box" style="--accent:#ef4444;">
+          <div class="label">Temperature</div>
+          <div class="vital-value">98.4 <span class="vital-unit">°F</span></div>
+          <div class="small">Discharge value | Trend: declining</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#ef4444" stroke-width="2" points="0,5 15,4 30,6 45,12 60,18 75,22 90,23 100,24"/>
+            <circle cx="100" cy="24" r="2.5" fill="#ef4444"/>
+          </svg>
+        </div>
+        <!-- Systolic BP -->
+        <div class="vital-box" style="--accent:#3b82f6;">
+          <div class="label">Systolic BP</div>
+          <div class="vital-value">120 <span class="vital-unit">mmHg</span></div>
+          <div class="small">Discharge value | Trend: stabilising</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="0,20 15,15 30,22 45,18 60,12 75,8 90,14 100,12"/>
+            <circle cx="100" cy="12" r="2.5" fill="#3b82f6"/>
+          </svg>
+        </div>
+        <!-- Diastolic BP -->
+        <div class="vital-box" style="--accent:#10b981;">
+          <div class="label">Diastolic BP</div>
+          <div class="vital-value">78 <span class="vital-unit">mmHg</span></div>
+          <div class="small">Discharge value | Trend: normalising</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#10b981" stroke-width="2" points="0,18 15,12 30,20 45,16 60,10 75,14 90,18 100,16"/>
+            <circle cx="100" cy="16" r="2.5" fill="#10b981"/>
+          </svg>
+        </div>
+        <!-- Pulse -->
+        <div class="vital-box" style="--accent:#8b5cf6;">
+          <div class="label">Pulse Rate</div>
+          <div class="vital-value">76 <span class="vital-unit">bpm</span></div>
+          <div class="small">Discharge value | Trend: improving</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#8b5cf6" stroke-width="2" points="0,8 15,6 30,10 45,14 60,16 75,20 90,22 100,24"/>
+            <circle cx="100" cy="24" r="2.5" fill="#8b5cf6"/>
+          </svg>
+        </div>
+        <!-- SpO2 -->
+        <div class="vital-box" style="--accent:#06b6d4;">
+          <div class="label">SpO₂</div>
+          <div class="vital-value">99 <span class="vital-unit">%</span></div>
+          <div class="small">Discharge value | Trend: excellent</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#06b6d4" stroke-width="2" points="0,22 15,24 30,22 45,20 60,18 75,16 90,14 100,12"/>
+            <circle cx="100" cy="12" r="2.5" fill="#06b6d4"/>
+          </svg>
+        </div>
+        <!-- Respiratory -->
+        <div class="vital-box" style="--accent:#f59e0b;">
+          <div class="label">Respiratory Rate</div>
+          <div class="vital-value">15 <span class="vital-unit">/min</span></div>
+          <div class="small">Discharge value | Trend: normalising</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#f59e0b" stroke-width="2" points="0,8 15,4 30,10 45,14 60,18 75,22 90,24 100,26"/>
+            <circle cx="100" cy="26" r="2.5" fill="#f59e0b"/>
+          </svg>
+        </div>
+        <!-- Platelets -->
+        <div class="vital-box" style="--accent:#ec4899;">
+          <div class="label">Platelet Count</div>
+          <div class="vital-value">0.92 <span class="vital-unit">lakhs/μL</span></div>
+          <div class="small">Discharge value | Trend: recovering</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#ec4899" stroke-width="2" points="0,10 15,14 30,22 45,18 60,14 75,10 90,6 100,4"/>
+            <circle cx="100" cy="4" r="2.5" fill="#ec4899"/>
+          </svg>
+        </div>
+        <!-- Blood Sugar -->
+        <div class="vital-box" style="--accent:#14b8a6;">
+          <div class="label">Blood Sugar (RBS)</div>
+          <div class="vital-value">134 <span class="vital-unit">mg/dL</span></div>
+          <div class="small">Discharge value | Trend: improving</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#14b8a6" stroke-width="2" points="0,6 15,8 30,10 45,14 60,16 75,20 90,22 100,24"/>
+            <circle cx="100" cy="24" r="2.5" fill="#14b8a6"/>
+          </svg>
+        </div>
+        <!-- NEWS2 -->
+        <div class="vital-box" style="--accent:#64748b;">
+          <div class="label">NEWS2 Score</div>
+          <div class="vital-value">0 <span class="vital-unit">/20</span></div>
+          <div class="small">Discharge value | Trend: resolved</div>
+          <svg class="sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#64748b" stroke-width="2" points="0,4 15,4 30,6 45,10 60,14 75,18 90,22 100,26"/>
+            <circle cx="100" cy="26" r="2.5" fill="#64748b"/>
+          </svg>
+        </div>
+      </div>
+      <div style="margin-top:10px; font-size:7.5pt; color:#64748b; text-align:center;">
+        NEWS2 Key: 0–2 Low Risk (Green) | 3–4 Medium Risk (Amber) | 5+ High Risk (Red)
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>Confidential Medical Record — CGH-DR-2026-04891-0430</span>
+    <span>Page 2 of 8</span>
+  </div>
+</div>
+
+<!-- =========================================================
+     PAGE 3 — LABORATORY INVESTIGATIONS
+     ========================================================= -->
+<div class="page">
+  <div class="section">
+    <div class="section-header g-cobalt">Section 4 — Laboratory Investigations — Standard Panel</div>
+    <div class="section-body">
+      <p class="small" style="margin-bottom:10px;">Day 1 = 22 Apr (Admission) | Day 4 = 25 Apr | Day 8 = 30 Apr (Discharge). Reference ranges per CGH Pathology Lab (NABL Accredited).</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Investigation</th><th>Unit</th><th>Day 1</th><th>Day 4</th><th>Day 8</th><th>Reference Range</th><th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Haemoglobin (Hb)</td><td>g/dL</td><td>13.2</td><td>12.8</td><td>13.1</td><td>13.0–17.0</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Total WBC Count</td><td>cells/µL</td><td>3,200</td><td>2,800</td><td>4,100</td><td>4,000–11,000</td><td class="flag-border">LOW → RECOVERING</td></tr>
+          <tr style="background:#fff7ed;"><td><strong>Platelet Count</strong></td><td>lakhs/µL</td><td class="flag-high">0.65</td><td class="flag-critical">0.38</td><td class="flag-border">0.92</td><td>1.50–4.00</td><td class="flag-critical">CRITICAL LOW → RECOVERING</td></tr>
+          <tr><td>Random Blood Sugar</td><td>mg/dL</td><td class="flag-border">162</td><td class="flag-border">148</td><td class="flag-normal">134</td><td>70–140</td><td class="flag-normal">ELEVATED → IMPROVING</td></tr>
+          <tr><td>Fasting Blood Sugar</td><td>mg/dL</td><td class="flag-high">118</td><td class="flag-high">112</td><td class="flag-normal">106</td><td>70–110</td><td class="flag-normal">ELEVATED → IMPROVING</td></tr>
+          <tr style="background:#fff7ed;"><td><strong>HbA1c</strong></td><td>%</td><td class="flag-high">7.2</td><td>—</td><td>—</td><td>&lt;5.7 Normal; &gt;6.4 DM</td><td class="flag-high">ELEVATED — DM DIAGNOSED</td></tr>
+          <tr><td>Blood Urea Nitrogen</td><td>mg/dL</td><td>22</td><td>20</td><td>18</td><td>7–25</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Serum Creatinine</td><td>mg/dL</td><td>1.1</td><td>1.0</td><td>0.9</td><td>0.6–1.2</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>eGFR</td><td>ml/min/1.73m²</td><td>71</td><td>74</td><td>78</td><td>&gt;60</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>SGPT / ALT</td><td>U/L</td><td class="flag-high">88</td><td class="flag-high">72</td><td class="flag-high">54</td><td>0–45</td><td class="flag-normal">HIGH → IMPROVING</td></tr>
+          <tr><td>SGOT / AST</td><td>U/L</td><td class="flag-high">102</td><td class="flag-high">84</td><td class="flag-high">61</td><td>0–40</td><td class="flag-normal">HIGH → IMPROVING</td></tr>
+          <tr><td>Serum Bilirubin (Total)</td><td>mg/dL</td><td class="flag-high">2.1</td><td class="flag-high">1.8</td><td class="flag-high">1.3</td><td>0.2–1.2</td><td class="flag-normal">HIGH → IMPROVING</td></tr>
+          <tr><td>Serum Bilirubin (Direct)</td><td>mg/dL</td><td class="flag-high">0.9</td><td class="flag-high">0.7</td><td class="flag-high">0.5</td><td>&lt;0.3</td><td class="flag-normal">HIGH → IMPROVING</td></tr>
+          <tr><td>Alkaline Phosphatase</td><td>U/L</td><td class="flag-border">142</td><td class="flag-border">128</td><td class="flag-border">118</td><td>44–147</td><td class="flag-normal">HIGH → IMPROVING</td></tr>
+          <tr><td>Serum Albumin</td><td>g/dL</td><td class="flag-low">3.2</td><td class="flag-low">3.4</td><td class="flag-normal">3.6</td><td>3.5–5.0</td><td class="flag-normal">LOW → RECOVERING</td></tr>
+          <tr><td>Serum Sodium (Na+)</td><td>mEq/L</td><td>136</td><td>138</td><td>139</td><td>136–145</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Serum Potassium (K+)</td><td>mEq/L</td><td>3.6</td><td>3.8</td><td>4.0</td><td>3.5–5.1</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Plasma Fibrinogen</td><td>mg/dL</td><td>210</td><td class="flag-low">195</td><td>240</td><td>200–400</td><td class="flag-normal">LOW (D4) → NORMAL</td></tr>
+          <tr><td>D-Dimer</td><td>µg/mL FEU</td><td class="flag-high">0.8</td><td class="flag-high">1.1</td><td class="flag-high">0.6</td><td>&lt;0.5</td><td class="flag-border">ELEVATED — DENGUE RELATED</td></tr>
+          <tr><td>PT / INR</td><td>sec / ratio</td><td>13.2/1.1</td><td>13.8/1.15</td><td>12.9/1.08</td><td>11–13 / &lt;1.2</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>CRP</td><td>mg/L</td><td class="flag-high">48</td><td class="flag-high">36</td><td class="flag-high">12</td><td>&lt;5.0</td><td class="flag-normal">HIGH → IMPROVING</td></tr>
+          <tr><td>ESR</td><td>mm/hr</td><td class="flag-high">42</td><td class="flag-high">38</td><td class="flag-high">22</td><td>0–15</td><td class="flag-normal">HIGH → IMPROVING</td></tr>
+          <tr><td>Serum LDH</td><td>U/L</td><td class="flag-high">420</td><td class="flag-high">380</td><td class="flag-high">290</td><td>120–246</td><td class="flag-normal">HIGH → IMPROVING</td></tr>
+          <tr><td>Serum Ferritin</td><td>ng/mL</td><td class="flag-high">680</td><td class="flag-high">520</td><td class="flag-high">310</td><td>12–300</td><td class="flag-high">HIGH — DENGUE MARKER</td></tr>
+          <tr><td>Serum Uric Acid</td><td>mg/dL</td><td>6.8</td><td>6.4</td><td>6.0</td><td>3.4–7.0</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Triglycerides</td><td>mg/dL</td><td class="flag-border">168</td><td>—</td><td class="flag-border">152</td><td>&lt;150</td><td class="flag-border">BORDERLINE</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-cobalt" style="background:linear-gradient(90deg, #1e3a8a, #2563eb);">Section 4A — Serology & Microbiology</div>
+    <div class="section-body">
+      <table>
+        <thead><tr><th>Investigation</th><th>Day 1</th><th>Day 4</th><th>Day 8</th><th>Reference</th><th>Remarks</th></tr></thead>
+        <tbody>
+          <tr><td>NS1 Antigen — Dengue</td><td class="flag-high">POSITIVE</td><td>—</td><td class="flag-normal">NEGATIVE</td><td>Negative</td><td class="flag-high">POSITIVE</td></tr>
+          <tr><td>Dengue IgG / IgM</td><td>—</td><td class="flag-high">POS / POS</td><td class="flag-high">POS / NEG</td><td>Negative</td><td class="flag-high">POSITIVE</td></tr>
+          <tr><td>Serum Dengue PCR (RT-PCR)</td><td class="flag-high">DETECTED (DENV-2)</td><td>—</td><td>—</td><td>Not detected</td><td class="flag-high">POSITIVE — DENV-2</td></tr>
+          <tr><td>HIV I & II Screen</td><td class="flag-normal">Non-reactive</td><td>—</td><td>—</td><td>Non-reactive</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>HBsAg (Hepatitis B)</td><td class="flag-normal">Negative</td><td>—</td><td>—</td><td>Negative</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Anti-HCV (Hepatitis C)</td><td class="flag-normal">Negative</td><td>—</td><td>—</td><td>Negative</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Urine Routine & Microscopy</td><td>Trace protein, RBC 2–3/hpf</td><td>—</td><td class="flag-normal">Normal</td><td>Normal</td><td class="flag-border">Mild proteinuria (D1)</td></tr>
+          <tr><td>Urine Culture & Sensitivity</td><td class="flag-normal">No growth</td><td>—</td><td>—</td><td>No growth</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Blood Culture × 2</td><td>—</td><td>—</td><td class="flag-normal">No growth after 5 days</td><td>No growth</td><td class="flag-normal">Normal</td></tr>
+          <tr><td>Stool for Occult Blood</td><td class="flag-normal">Negative</td><td>—</td><td>—</td><td>Negative</td><td class="flag-normal">Normal</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>Confidential Medical Record — CGH-DR-2026-04891-0430</span>
+    <span>Page 3 of 8</span>
+  </div>
+</div>
+
+<!-- =========================================================
+     PAGE 4 — TOXICOLOGY + IMAGING
+     ========================================================= -->
+<div class="page">
+  <div class="section">
+    <div class="section-header g-slate">Section 5 — Toxicology Screen, Drug of Abuse Panel & Heavy Metals</div>
+    <div class="section-body">
+      <p class="small" style="margin-bottom:10px;">Sample: 22 April 2026, 09:45 hrs | Urine (random) + Venous blood | Requested by: Dr. Suresh Nair | Lab: CGH Toxicology & Clinical Chemistry (NABL Accredited)</p>
+      
+      <h3 style="margin:12px 0 6px; color:#4c1d95;">5A — Blood Alcohol Content (BAC)</h3>
+      <div class="grid-3">
+        <div class="info-card" style="border-left-color:#7c3aed;"><div class="label">BAC — Blood</div><div class="value">&lt;10 mg/dL (Not detected)</div></div>
+        <div class="info-card" style="border-left-color:#7c3aed;"><div class="label">BAC — Urine</div><div class="value">Not detected</div></div>
+        <div class="info-card" style="border-left-color:#7c3aed;"><div class="label">Method</div><div class="value">Gas Chromatography (GC-FID)</div></div>
+      </div>
+
+      <h3 style="margin:14px 0 6px; color:#4c1d95;">5B — Drugs of Abuse Screening (10-Panel)</h3>
+      <table>
+        <thead><tr><th>Drug / Substance</th><th>Result</th><th>Method</th><th>Flag</th></tr></thead>
+        <tbody>
+          <tr><td>Opioids (Morphine / Codeine / Heroin metabolites)</td><td class="flag-normal">Not Detected</td><td>GC-MS / ELISA</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Cannabis / THC</td><td class="flag-normal">Not Detected</td><td>ELISA confirmed GC-MS</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Cocaine / Benzoylecgonine</td><td class="flag-normal">Not Detected</td><td>GC-MS</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Amphetamines / Methamphetamine</td><td class="flag-normal">Not Detected</td><td>GC-MS</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Benzodiazepines</td><td class="flag-normal">Not Detected</td><td>ELISA</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Barbiturates</td><td class="flag-normal">Not Detected</td><td>ELISA</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Phencyclidine (PCP)</td><td class="flag-normal">Not Detected</td><td>ELISA</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Tricyclic Antidepressants</td><td class="flag-normal">Not Detected</td><td>ELISA</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Methadone</td><td class="flag-normal">Not Detected</td><td>ELISA</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Buprenorphine</td><td class="flag-normal">Not Detected</td><td>ELISA</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>MDMA / Ecstasy</td><td class="flag-normal">Not Detected</td><td>GC-MS</td><td class="flag-normal">NEG</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin:14px 0 6px; color:#4c1d95;">5C — Poison, Toxin & Venom Screen</h3>
+      <table>
+        <thead><tr><th>Substance / Test</th><th>Result</th><th>Method</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Organophosphates — Cholinesterase</td><td>98% activity</td><td>Colorimetric</td><td class="flag-normal">NORMAL</td></tr>
+          <tr><td>Carbamates</td><td class="flag-normal">Not Detected</td><td>GC-MS</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Carbon Monoxide (COHb%)</td><td>1.2%</td><td>Co-oximetry</td><td class="flag-normal">NORMAL</td></tr>
+          <tr><td>Cyanide (Whole Blood)</td><td class="flag-normal">Not Detected</td><td>Microdiffusion</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Methanol</td><td class="flag-normal">Not Detected</td><td>GC-FID</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Paracetamol Level</td><td>12 mg/L (Therapeutic)</td><td>Immunoassay</td><td class="flag-normal">NORMAL</td></tr>
+          <tr><td>Salicylate Level</td><td class="flag-normal">Not Detected</td><td>Trinder Rxn</td><td class="flag-normal">NEG</td></tr>
+          <tr><td>Rat Poison / Brodifacoum</td><td class="flag-normal">Not Detected</td><td>HPLC</td><td class="flag-normal">NEG</td></tr>
+        </tbody>
+      </table>
+      <p class="small" style="margin-top:6px;">No evidence of envenomation. Snake bite / scorpion sting / insect venom panel — Not Indicated.</p>
+
+      <h3 style="margin:14px 0 6px; color:#4c1d95;">5D — Heavy Metals Panel (ICP-MS — 12 Element)</h3>
+      <table>
+        <thead><tr><th>Metal</th><th>Result</th><th>Status</th><th>Reference Range</th></tr></thead>
+        <tbody>
+          <tr><td>Lead (Pb)</td><td>18 µg/dL</td><td class="flag-normal">NORMAL</td><td>&lt;25 µg/dL</td></tr>
+          <tr><td>Mercury (Hg)</td><td>4.2 µg/L</td><td class="flag-normal">NORMAL</td><td>&lt;10 µg/L</td></tr>
+          <tr><td>Arsenic (As)</td><td>12 µg/L</td><td class="flag-normal">NORMAL</td><td>&lt;35 µg/L</td></tr>
+          <tr><td>Cadmium (Cd)</td><td>0.8 µg/L</td><td class="flag-normal">NORMAL</td><td>&lt;5 µg/L</td></tr>
+          <tr><td>Chromium (Cr)</td><td>1.1 µg/L</td><td class="flag-normal">NORMAL</td><td>&lt;5 µg/L</td></tr>
+          <tr><td>Copper (Cu)</td><td>112 µg/dL</td><td class="flag-normal">NORMAL</td><td>70–140 µg/dL</td></tr>
+          <tr style="background:#fffbeb;"><td><strong>Zinc (Zn)</strong></td><td><strong>68 µg/dL</strong></td><td class="flag-border"><strong>LOW</strong></td><td>70–120 µg/dL</td></tr>
+          <tr><td>Iron (Fe)</td><td>78 µg/dL</td><td class="flag-normal">NORMAL</td><td>60–170 µg/dL</td></tr>
+          <tr><td>Selenium (Se)</td><td>98 µg/L</td><td class="flag-normal">NORMAL</td><td>70–150 µg/L</td></tr>
+        </tbody>
+      </table>
+      <p class="small" style="margin-top:6px;">Mild zinc deficiency noted — oral supplementation commenced.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-steel">Section 6 — Imaging, Machine Tests & Procedural Investigations</div>
+    <div class="section-body">
+      <table>
+        <thead><tr><th>Investigation</th><th>Date(s)</th><th>Equipment / Tech</th><th>Findings / Result</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>12-Lead ECG</strong></td>
+            <td>22 Apr, 30 Apr</td>
+            <td>Mortara Eli 250 12-Channel — Auto + Physician review</td>
+            <td>
+              <strong>22 Apr:</strong> Sinus tachycardia 98 bpm. PR 162 ms, QRS 88 ms, QTc 420 ms. Normal axis (+45°).<br>
+              <strong>30 Apr:</strong> Normal sinus rhythm 72 bpm. All intervals normal. QTc 410 ms.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Chest X-Ray (PA)</strong></td>
+            <td>22 Apr, 29 Apr</td>
+            <td>Siemens Multix Impact DR — 120 kVp / 20 mAs</td>
+            <td>
+              <strong>22 Apr:</strong> Mild homogeneous opacity right costophrenic angle — small pleural effusion. CTR 0.48.<br>
+              <strong>29 Apr:</strong> Right costophrenic angle cleared. No effusion.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Abdominal USG</strong></td>
+            <td>22 Apr</td>
+            <td>Samsung Medison RS85 — 3.5 MHz Convex</td>
+            <td>Liver mildly enlarged (16.2 cm). Spleen mildly enlarged (13.8 cm). Mild free fluid (~120 ml). GB wall thickened (4.2 mm). Kidneys normal.</td>
+          </tr>
+          <tr>
+            <td><strong>CT Scan</strong></td>
+            <td>N/A</td>
+            <td>Not Performed</td>
+            <td>Not clinically indicated. Conservative management successful.</td>
+          </tr>
+          <tr>
+            <td><strong>MRI</strong></td>
+            <td>N/A</td>
+            <td>Not Performed</td>
+            <td>Not clinically indicated. No neurological deficit or CNS involvement.</td>
+          </tr>
+          <tr>
+            <td><strong>Echocardiogram (2D Echo)</strong></td>
+            <td>N/A</td>
+            <td>Not Performed</td>
+            <td>Not indicated. ECG limited to sinus tachycardia with normalisation. No cardiac symptoms.</td>
+          </tr>
+          <tr>
+            <td><strong>PFT (Spirometry)</strong></td>
+            <td>N/A</td>
+            <td>Not Performed</td>
+            <td>Not indicated. SpO₂ maintained &gt;96% throughout on room air.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>Confidential Medical Record — CGH-DR-2026-04891-0430</span>
+    <span>Page 4 of 8</span>
+  </div>
+</div>
+
+<!-- =========================================================
+     PAGE 5 — PROCEDURES + BILLING
+     ========================================================= -->
+<div class="page">
+  <div class="section">
+    <div class="section-header g-amber">Section 7 — Procedures & Interventions Log</div>
+    <div class="section-body">
+      <table>
+        <thead><tr><th>Date</th><th>Procedure</th><th>Performed By</th><th>Outcome / Notes</th></tr></thead>
+        <tbody>
+          <tr><td>22 Apr</td><td>IV Cannulation — 18G Right forearm</td><td>Dr. Rahul Patil / Nr. Deepa Thorat</td><td>No complications</td></tr>
+          <tr><td>22 Apr</td><td>IV Fluid therapy — NS 0.9% 75 ml/hr</td><td>Nr. Deepa Thorat</td><td>Rate adjusted per clinical response</td></tr>
+          <tr><td>22 Apr</td><td>Blood sampling × 5 tubes (baseline)</td><td>Nr. Deepa Thorat</td><td>No complications</td></tr>
+          <tr><td>22 Apr</td><td>Tourniquet test (Rumpel-Leede)</td><td>Dr. Suresh Nair</td><td>Positive — 22 petechiae</td></tr>
+          <tr><td>25 Apr</td><td>Platelet concentrate transfusion — 1 ATD</td><td>Nr. Swati Jadhav / Dr. Rahul Patil</td><td>No adverse reaction. Post-transfusion vitals stable.</td></tr>
+          <tr><td>25 Apr</td><td>IV cannula re-site — left forearm 18G</td><td>Nr. Deepa Thorat</td><td>Previous site removed due to mild phlebitis. New site patent.</td></tr>
+          <tr><td>26 Apr</td><td>IV fluid rate de-escalated to 40 ml/hr</td><td>Dr. Suresh Nair</td><td>Patient tolerating oral fluids well</td></tr>
+          <tr><td>28 Apr</td><td>IV access removed — fully oral</td><td>Nr. Lalitha Bai</td><td>Site clean, no signs of infection</td></tr>
+        </tbody>
+      </table>
+      <p class="small" style="margin-top:8px;">All procedures performed with informed verbal consent. Procedure notes available in clinical file.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-forest">Section 8 — Itemised Billing Statement</div>
+    <div class="section-body">
+      <p class="small" style="margin-bottom:8px;">Patient: Rajesh Kumar Sharma | ID: CGH-2024-04891 | Period: 22 Apr – 30 Apr 2026 | Insurance: Star Health — SH-MH-2024-112233</p>
+      <table>
+        <thead><tr><th>Category</th><th>Item Description</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th>Period</th><th>Amount (₹)</th></tr></thead>
+        <tbody>
+          <tr><td>Accommodation</td><td>General Ward Bed Charges (B2)</td><td>8</td><td>Days</td><td>800</td><td>22–30 Apr</td><td style="text-align:right;">6,400</td></tr>
+          <tr><td>Nursing</td><td>Nursing Care & Monitoring</td><td>8</td><td>Days</td><td>400</td><td>22–30 Apr</td><td style="text-align:right;">3,200</td></tr>
+          <tr><td rowspan="5">Consultation</td><td>Physician — Dr. Suresh Nair</td><td>6</td><td>Visits</td><td>600</td><td>22,23,24,26,28,30 Apr</td><td style="text-align:right;">3,600</td></tr>
+          <tr><td>Haematologist — Dr. Kulkarni</td><td>2</td><td>Visits</td><td>800</td><td>24, 27 Apr</td><td style="text-align:right;">1,600</td></tr>
+          <tr><td>Radiologist — Dr. Joshi</td><td>2</td><td>Reports</td><td>500</td><td>22, 29 Apr</td><td style="text-align:right;">1,000</td></tr>
+          <tr><td>Dietitian — Ms. Patwardhan</td><td>1</td><td>Visit</td><td>300</td><td>25 Apr</td><td style="text-align:right;">300</td></tr>
+          <tr><td colspan="5" style="text-align:right;"><strong>Consultation Subtotal</strong></td><td style="text-align:right;"><strong>6,500</strong></td></tr>
+          <tr><td rowspan="8">Pharmacy</td><td>IV Fluid — NS 0.9% 500 ml</td><td>18</td><td>Bottles</td><td>85</td><td>22–28 Apr</td><td style="text-align:right;">1,530</td></tr>
+          <tr><td>IV Fluid — RL 500 ml</td><td>12</td><td>Bottles</td><td>90</td><td>25–29 Apr</td><td style="text-align:right;">1,080</td></tr>
+          <tr><td>Paracetamol IV 1g / 100 ml</td><td>24</td><td>Vials</td><td>65</td><td>22–27 Apr</td><td style="text-align:right;">1,560</td></tr>
+          <tr><td>Pantoprazole 40 mg IV</td><td>8</td><td>Vials</td><td>45</td><td>22–30 Apr</td><td style="text-align:right;">360</td></tr>
+          <tr><td>Ondansetron 4 mg IV</td><td>6</td><td>Ampoules</td><td>35</td><td>22–26 Apr</td><td style="text-align:right;">210</td></tr>
+          <tr><td>Metformin 500 mg Tab</td><td>16</td><td>Tablets</td><td>4</td><td>22–30 Apr [BD]</td><td style="text-align:right;">64</td></tr>
+          <tr><td>Amlodipine 5 mg Tab</td><td>8</td><td>Tablets</td><td>6</td><td>22–30 Apr [OD]</td><td style="text-align:right;">48</td></tr>
+          <tr><td>Platelet Concentrate — 1 ATD</td><td>1</td><td>Unit</td><td>3,200</td><td>25 Apr</td><td style="text-align:right;">3,200</td></tr>
+          <tr><td rowspan="10">Diagnostics</td><td>CBC with Differential</td><td>5</td><td>Tests</td><td>280</td><td>22,24,26,28,30 Apr</td><td style="text-align:right;">1,400</td></tr>
+          <tr><td>LFT Panel (SGPT, SGOT, Bili)</td><td>3</td><td>Tests</td><td>450</td><td>22,25,29 Apr</td><td style="text-align:right;">1,350</td></tr>
+          <tr><td>KFT Panel (BUN, Creat, eGFR)</td><td>3</td><td>Tests</td><td>380</td><td>22,25,29 Apr</td><td style="text-align:right;">1,140</td></tr>
+          <tr><td>RBS / FBS</td><td>5</td><td>Tests</td><td>120</td><td>22,24,26,28,30 Apr</td><td style="text-align:right;">600</td></tr>
+          <tr><td>HbA1c</td><td>1</td><td>Test</td><td>480</td><td>22 Apr</td><td style="text-align:right;">480</td></tr>
+          <tr><td>NS1 Antigen Dengue</td><td>2</td><td>Tests</td><td>800</td><td>22, 30 Apr</td><td style="text-align:right;">1,600</td></tr>
+          <tr><td>Dengue Serology IgG/IgM</td><td>2</td><td>Tests</td><td>950</td><td>24, 29 Apr</td><td style="text-align:right;">1,900</td></tr>
+          <tr><td>Dengue PCR (RT-PCR)</td><td>1</td><td>Test</td><td>2,200</td><td>22 Apr</td><td style="text-align:right;">2,200</td></tr>
+          <tr><td>Toxicology Screen (DOA/Alcohol)</td><td>1</td><td>Panel</td><td>1,800</td><td>22 Apr</td><td style="text-align:right;">1,800</td></tr>
+          <tr><td>Heavy Metals Panel (12-element)</td><td>1</td><td>Panel</td><td>3,200</td><td>22 Apr</td><td style="text-align:right;">3,200</td></tr>
+          <tr><td rowspan="3">Imaging</td><td>Chest X-Ray PA (Digital)</td><td>2</td><td>Films</td><td>350</td><td>22, 29 Apr</td><td style="text-align:right;">700</td></tr>
+          <tr><td>Abdominal USG</td><td>1</td><td>Test</td><td>900</td><td>22 Apr</td><td style="text-align:right;">900</td></tr>
+          <tr><td>12-Lead ECG</td><td>2</td><td>Tests</td><td>200</td><td>22, 29 Apr</td><td style="text-align:right;">400</td></tr>
+          <tr><td>Procedures</td><td>IV Cannulation (×2) + Transfusion Admin</td><td>3</td><td>Procedures</td><td>—</td><td>22, 25 Apr</td><td style="text-align:right;">800</td></tr>
+          <tr><td rowspan="3">Miscellaneous</td><td>Admission & Registration</td><td>1</td><td>—</td><td>500</td><td>22 Apr</td><td style="text-align:right;">500</td></tr>
+          <tr><td>Nursing Consumables & Disposables</td><td>1</td><td>Lot</td><td>750</td><td>22–30 Apr</td><td style="text-align:right;">750</td></tr>
+          <tr><td>Discharge Report Generation</td><td>1</td><td>—</td><td>200</td><td>30 Apr</td><td style="text-align:right;">200</td></tr>
+        </tbody>
+      </table>
+      <div class="bill-total">
+        <span>TOTAL AMOUNT PAYABLE</span>
+        <span>₹ 48,244</span>
+      </div>
+      <p class="small" style="margin-top:8px;">GST exempted for healthcare services as per CGST Act 2017, Schedule II, Entry 74. | All amounts in Indian Rupees (INR). | Insurance claim submitted to Medi Assist TPA.</p>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>Confidential Medical Record — CGH-DR-2026-04891-0430</span>
+    <span>Page 5 of 8</span>
+  </div>
+</div>
+
+<!-- =========================================================
+     PAGE 6 — CLINICAL TEAM + REMARKS
+     ========================================================= -->
+<div class="page">
+  <div class="section">
+    <div class="section-header g-indigo">Section 9 — Clinical Team</div>
+    <div class="section-body">
+      <div class="grid-2">
+        <div class="team-card">
+          <div class="team-avatar">AM</div>
+          <div class="team-info">
+            <h4>Dr. Anjali Mehta — HOD, General Medicine</h4>
+            <p>MCI-123456 | MD (Medicine), MRCP (UK) | anjali.mehta@cgph.in</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg, #3b82f6, #06b6d4);">SN</div>
+          <div class="team-info">
+            <h4>Dr. Suresh Nair — Treating Physician</h4>
+            <p>MCI-234567 | MD (Medicine), DNB | suresh.nair@cgph.in</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg, #ec4899, #f43f5e);">PK</div>
+          <div class="team-info">
+            <h4>Dr. Priya Kulkarni — Haematologist (Consultant)</h4>
+            <p>MCI-345678 | MD (Pathology), DM (Haematology) | priya.kulkarni@cgph.in</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);">VJ</div>
+          <div class="team-info">
+            <h4>Dr. Vikram Joshi — Radiologist (Consultant)</h4>
+            <p>MCI-456789 | MD (Radiology), FRCR | vikram.joshi@cgph.in</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg, #10b981, #34d399);">SP</div>
+          <div class="team-info">
+            <h4>Ms. Sneha Patwardhan — Dietitian</h4>
+            <p>IDAI-78901 | B.Sc. Nutrition, Certified Dietitian | sneha.patwardhan@cgph.in</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);">LB</div>
+          <div class="team-info">
+            <h4>Sr. Lalitha Bai — Nursing In-charge (B2)</h4>
+            <p>MSNC-78901 | B.Sc. Nursing, 12 yrs | lalitha.bai@cgph.in</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg, #64748b, #94a3b8);">DT</div>
+          <div class="team-info">
+            <h4>Nr. Deepa Thorat — Staff Nurse</h4>
+            <p>MSNC-89012 | GNM | deepa.thorat@cgph.in</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg, #64748b, #94a3b8);">SJ</div>
+          <div class="team-info">
+            <h4>Nr. Swati Jadhav — Staff Nurse</h4>
+            <p>MSNC-90123 | GNM | swati.jadhav@cgph.in</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg, #475569, #64748b);">RP</div>
+          <div class="team-info">
+            <h4>Dr. Rahul Patil — Resident Medical Officer</h4>
+            <p>MCI-567890 | MBBS (Intern — Yr 2) | rmo@cgph.in</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-rose">Section 10 — Clinical Remarks by Treating Professionals</div>
+    <div class="section-body">
+      <div class="remark-box clinical">
+        <h3>Dr. Suresh Nair — Treating Physician | 30 Apr 2026</h3>
+        <p>Patient admitted with classical Dengue fever — high-grade fever, myalgia, retro-orbital headache, thrombocytopenia (nadir 38,000/μL on Day 4). Managed conservatively with IV fluid resuscitation, antipyretics, and strict 4-hourly platelet monitoring. One episode of prophylactic platelet transfusion administered on Day 4 without adverse event. Fever subsided by Day 7. Platelets recovering (92,000 at discharge). No haemorrhagic manifestations. Transaminitis consistent with dengue — expected to normalise over 4–6 weeks. Blood glucose was elevated — baseline OHA continued. Patient and family fully counselled on dengue recovery, warning signs, and follow-up. <strong>Prognosis: Good.</strong></p>
+      </div>
+      <div class="remark-box">
+        <h3>Dr. Priya Kulkarni — Haematologist | 27 Apr 2026</h3>
+        <p>Reviewed on Day 6 post-admission. Dengue-associated thrombocytopenia with consumptive pattern — consistent with secondary dengue (DENV-2 serotype confirmed). No evidence of secondary haematological pathology. Single-donor platelet transfusion on Day 4 was clinically appropriate. Bone marrow recovery expected to be complete within 14–21 days post-fever resolution. Recommend serial CBCs at Day 7 and Day 14 post-discharge. If platelet count falls below 50,000 at any point post-discharge, patient must present to emergency immediately.</p>
+      </div>
+      <div class="remark-box clinical">
+        <h3>Dr. Vikram Joshi — Radiologist | 22 Apr 2026</h3>
+        <p>Admission CXR and USG reviewed. Right-sided pleural effusion (mild) and mild ascites are consistent with dengue haemorrhagic fever — likely capillary leak syndrome. No pulmonary consolidation. Hepatosplenomegaly and pericholecystic oedema noted on USG — classic dengue findings. Repeat CXR on Day 8 shows complete resolution of pleural effusion. No further imaging required unless clinical deterioration.</p>
+      </div>
+      <div class="remark-box nursing">
+        <h3>Sr. Lalitha Bai — Nursing In-charge | 30 Apr 2026</h3>
+        <p>Patient was compliant with nursing care throughout admission. IV access maintained without major complications (one re-site on Day 4 due to mild phlebitis — managed conservatively). Strict 4-hourly vital monitoring maintained as per dengue protocol. Patient and spouse given 30-minute structured discharge education session covering: warning signs, fluid intake, medications, follow-up. Patient verbally confirmed understanding. Written discharge card provided.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>Confidential Medical Record — CGH-DR-2026-04891-0430</span>
+    <span>Page 6 of 8</span>
+  </div>
+</div>
+
+<!-- =========================================================
+     PAGE 7 — MEDICATIONS + INSTRUCTIONS + FOLLOW-UP
+     ========================================================= -->
+<div class="page">
+  <div class="section">
+    <div class="section-header g-sky">Section 11 — Discharge Medication Prescription</div>
+    <div class="section-body">
+      <p class="small" style="margin-bottom:10px;">Prescribed by: Dr. Suresh Nair (MCI-234567) | Date: 30 April 2026 | Present this sheet to your pharmacist. Do not share medications.</p>
+      <table>
+        <thead><tr><th>Medicine</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
+        <tbody>
+          <tr><td>Tab. Paracetamol 500mg</td><td>SOS if temp &gt;100°F only</td><td>5 days</td><td>Do NOT exceed 4g/day. Do NOT use Aspirin or Ibuprofen.</td></tr>
+          <tr><td>Tab. Metformin 500mg</td><td>BD — after breakfast & dinner</td><td>Continue indefinitely</td><td>For Type 2 DM. Do not stop without physician advice.</td></tr>
+          <tr><td>Tab. Amlodipine 5mg</td><td>OD — after breakfast</td><td>Continue indefinitely</td><td>For hypertension. Monitor BP daily.</td></tr>
+          <tr><td>Tab. Vitamin C 500mg</td><td>BD — after meals</td><td>14 days</td><td>Immune recovery support.</td></tr>
+          <tr><td>Tab. Pantoprazole 40mg</td><td>OD — before breakfast</td><td>14 days</td><td>Gastric protection during recovery.</td></tr>
+          <tr><td>Tab. Zinc Sulfate 20mg</td><td>OD — after food</td><td>30 days</td><td>Mild zinc deficiency detected on heavy metals panel.</td></tr>
+          <tr><td>Syp. Papaya Leaf Extract</td><td>As per pharmacist label</td><td>14 days</td><td>Standardised formulation from pharmacy only — not raw leaves.</td></tr>
+          <tr><td>ORS Sachets</td><td>1 sachet in 1L water — PRN</td><td>14 days</td><td>For rehydration. Use if fluid intake is inadequate.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-orange">Section 12 — Patient Discharge Instructions</div>
+    <div class="section-body">
+      <ol class="instruction-list">
+        <li><strong>REST:</strong> Take complete rest for 7–10 days. No physical exertion, exercise, or strenuous activity until cleared by your doctor at Day 7 review.</li>
+        <li><strong>HYDRATION:</strong> Drink minimum 3–4 litres of fluid daily — water, coconut water, ORS, or fresh juice. You may feel thirsty or tired — this is normal during dengue recovery.</li>
+        <li><strong>DIET:</strong> Eat light, easily digestible, high-nutrition meals. Diabetic diet (low sugar, low oil). Papaya and papaya leaf extract encouraged. Avoid spicy, oily, and fried food for 2 weeks.</li>
+        <li><strong>BLOOD SUGAR:</strong> Monitor fasting and post-meal blood sugar daily. Keep a written log. Target: Fasting &lt;110 mg/dL. Continue Metformin as prescribed — do not stop.</li>
+        <li><strong>BLOOD PRESSURE:</strong> Monitor BP every morning. Target: &lt;130/80 mmHg. Continue Amlodipine daily. If BP &gt;160/100 or severe headache, go to emergency.</li>
+        <li><strong>MEDICINES:</strong> Take ALL prescribed medicines as directed. Do NOT take Aspirin, Ibuprofen, Diclofenac, or Naproxen — these worsen bleeding risk and damage the stomach during dengue recovery. Paracetamol ONLY for fever/pain.</li>
+        <li><strong>ALCOHOL:</strong> Complete abstinence from alcohol for minimum 4 weeks. Your liver enzymes are elevated — alcohol will cause additional liver damage during recovery.</li>
+        <li><strong>MOSQUITO PREVENTION:</strong> Use mosquito repellent (DEET-based) on exposed skin. Sleep under a mosquito net. Wear full-sleeved clothing. Remove all standing water from around your home.</li>
+      </ol>
+      <div class="warning-box">
+        <h4>⚠ DENGUE WARNING SIGNS — GO TO EMERGENCY IMMEDIATELY</h4>
+        <p>Bleeding from gums, nose, skin (petechiae), urine (pink/red), or stool (black/tarry). Severe abdominal pain. Persistent vomiting. Platelet count below 50,000 on any home report. Sudden fever returning after 2–3 days of being afebrile. Difficulty breathing. Severe fatigue or fainting. Cold/clammy skin.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-mint">Section 13 — Follow-Up Schedule</div>
+    <div class="section-body">
+      <table>
+        <thead><tr><th>Appointment</th><th>Tests Required</th><th>Location</th><th>Timing</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>07 May 2026 — Day 7</strong></td>
+            <td>CBC (Platelet, WBC, Hb) — Mandatory</td>
+            <td>Dr. Suresh Nair OPD, Room 12, CGH</td>
+            <td>09:00–11:00 AM</td>
+          </tr>
+          <tr>
+            <td><strong>14 May 2026 — Day 14</strong></td>
+            <td>CBC + LFT (SGPT, SGOT, Bilirubin) + RBS Fasting</td>
+            <td>Dr. Suresh Nair OPD, Room 12, CGH</td>
+            <td>09:00–11:00 AM</td>
+          </tr>
+          <tr>
+            <td><strong>30 May 2026 — Day 30</strong></td>
+            <td>HbA1c + Fasting Lipid Profile + Physician Review</td>
+            <td>Dr. Suresh Nair OPD, Room 12, CGH</td>
+            <td>09:00–11:00 AM</td>
+          </tr>
+          <tr style="background:#fef2f2;">
+            <td><strong>If Symptoms Recur</strong></td>
+            <td colspan="2"><strong>IMMEDIATE Emergency Department Visit — CGH Emergency (24×7) Ground Floor</strong></td>
+            <td><strong>Any time</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="small" style="margin-top:8px; color:#b91c1c; font-weight:700;">DO NOT miss Day 7 and Day 14 blood tests. These confirm your platelet and liver recovery. Missing these tests puts you at serious risk.</p>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>Confidential Medical Record — CGH-DR-2026-04891-0430</span>
+    <span>Page 7 of 8</span>
+  </div>
+</div>
+
+<!-- =========================================================
+     PAGE 8 — HANDOVER + SIGNATURES + QR + DISCLAIMERS
+     ========================================================= -->
+<div class="page">
+  <div class="section">
+    <div class="section-header g-lav">Section 14 — Clinical Handover Notes (Day-by-Day Narrative)</div>
+    <div class="section-body">
+      <div class="grid-2">
+        <div class="info-card" style="border-left-color:#a855f7; margin-bottom:8px;">
+          <div class="label">DAY 1 — 22 Apr 2026</div>
+          <p style="margin-top:4px; font-size:8.5pt;">Admitted via OPD. 5-day history of fever, retro-orbital headache, myalgia. NS1 positive. CBC: WBC 3,200; Platelets 65,000. IV NS commenced @ 75 ml/hr. Dengue protocol activated. CXR: mild right pleural effusion. USG: hepatosplenomegaly, mild ascites. ECG: Sinus tachycardia.</p>
+        </div>
+        <div class="info-card" style="border-left-color:#a855f7; margin-bottom:8px;">
+          <div class="label">DAY 2 — 23 Apr 2026</div>
+          <p style="margin-top:4px; font-size:8.5pt;">Platelet 52,000 — continuing to fall. Patient tolerating small amounts of oral fluid. LFT: SGPT 88, SGOT 102 — transaminitis consistent with dengue. Diabetic diet commenced. Metformin continued.</p>
+        </div>
+        <div class="info-card" style="border-left-color:#a855f7; margin-bottom:8px;">
+          <div class="label">DAY 3 — 24 Apr 2026</div>
+          <p style="margin-top:4px; font-size:8.5pt;">Fever spiking to 104.1°F. Platelet falling to 60,000. IV fluid continued. Patient nauseous — oral intake poor. IV Ondansetron 4mg commenced. Family counselled on dengue progression.</p>
+        </div>
+        <div class="info-card" style="border-left-color:#a855f7; margin-bottom:8px;">
+          <div class="label">DAY 4 — 25 Apr 2026</div>
+          <p style="margin-top:4px; font-size:8.5pt;"><strong>Platelet nadir — 38,000/µL.</strong> Haematologist reviewed. Prophylactic single-donor platelet concentrate administered over 60 min without adverse reaction. Mild phlebitis at IV site — cannula re-sited. Dengue IgG/IgM positive — confirms secondary dengue (DENV-2).</p>
+        </div>
+        <div class="info-card" style="border-left-color:#a855f7; margin-bottom:8px;">
+          <div class="label">DAY 5 — 26 Apr 2026</div>
+          <p style="margin-top:4px; font-size:8.5pt;">Post-transfusion platelet response — 54,000. Fever reducing (101°F). IV fluids de-escalated to 40 ml/hr. Oral intake improving. Rash fading. Appetite improving.</p>
+        </div>
+        <div class="info-card" style="border-left-color:#a855f7; margin-bottom:8px;">
+          <div class="label">DAY 6 — 27 Apr 2026</div>
+          <p style="margin-top:4px; font-size:8.5pt;">Platelet 68,000. Afebrile episodes. Temperature 99.6°F. IV Ondansetron discontinued. Haematologist signed off. Dietitian reviewed — diabetic soft diet reinforced. Zinc deficiency noted — supplementation started.</p>
+        </div>
+        <div class="info-card" style="border-left-color:#a855f7; margin-bottom:8px;">
+          <div class="label">DAY 7 — 28 Apr 2026</div>
+          <p style="margin-top:4px; font-size:8.5pt;">Afebrile 98.9°F. Platelet 80,000. IV access removed. Fully on oral medications. Patient ambulatory, independent for all ADLs.</p>
+        </div>
+        <div class="info-card" style="border-left-color:#a855f7; margin-bottom:8px;">
+          <div class="label">DAY 8 / DISCHARGE — 30 Apr 2026</div>
+          <p style="margin-top:4px; font-size:8.5pt;">Afebrile for 48 hrs. Platelet 92,000 — satisfactory recovery. Repeat CXR: pleural effusion resolved. ECG: Normal sinus rhythm 72 bpm. Discharge criteria met. Structured 30-min discharge education given. Prescription written and explained. Patient discharged ambulatory, stable.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-gold">Section 15 — Declarations, E-Signatures & Document Certification</div>
+    <div class="section-body">
+      <div style="background:#fffbeb; border-left:4px solid #eab308; padding:12px; border-radius:0 8px 8px 0; margin-bottom:12px;">
+        <h3 style="font-size:9pt; color:#78350f; margin-bottom:6px;">15A — Declaration by Treating Physician</h3>
+        <p style="font-size:8.5pt; color:#92400e;">I, Dr. Suresh Nair (MCI-234567), hereby declare that I have personally examined and treated the above-named patient throughout this admission. All clinical information, investigations, procedures, and medications recorded are accurate and true to the best of my knowledge. The discharge diagnosis and medications are clinically appropriate. The patient has been fully informed of warning signs and follow-up requirements.</p>
+        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:8pt; color:#78350f;"><strong>Digital Signature:</strong> [Dr. Suresh Nair] | Date: 30 Apr 2026, 11:15 hrs</span>
+          <div class="qr-placeholder">E-SIG<br>QR</div>
+        </div>
+      </div>
+
+      <div style="background:#eff6ff; border-left:4px solid #3b82f6; padding:12px; border-radius:0 8px 8px 0; margin-bottom:12px;">
+        <h3 style="font-size:9pt; color:#1e3a8a; margin-bottom:6px;">15B — Declaration & Countersignature by HOD</h3>
+        <p style="font-size:8.5pt; color:#1e40af;">I, Dr. Anjali Mehta (MCI-123456), Head of Department — General Medicine, countersign this discharge record and confirm that clinical management is in accordance with accepted standards of medical practice and CGH protocols.</p>
+        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:8pt; color:#1e3a8a;"><strong>Digital Signature:</strong> [Dr. Anjali Mehta] | Date: 30 Apr 2026, 11:45 hrs</span>
+          <div class="qr-placeholder">E-SIG<br>QR</div>
+        </div>
+      </div>
+
+      <div style="background:#f0fdf4; border-left:4px solid #22c55e; padding:12px; border-radius:0 8px 8px 0; margin-bottom:12px;">
+        <h3 style="font-size:9pt; color:#14532d; margin-bottom:6px;">15C — Hospital Certification</h3>
+        <p style="font-size:8.5pt; color:#166534;">City General Hospital (Reg. No. MH/HOS/2008/00341) certifies that this record has been generated by the certified Ward Management Information System. Information is drawn from the electronic medical record. Digital signatures constitute a legally valid medical record under the IT Act, 2000 and DPDPA, 2023.</p>
+        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:8pt; color:#14532d;"><strong>Medical Superintendent:</strong> [Digital Seal] | Date: 30 Apr 2026</span>
+          <div class="qr-placeholder">HOSPITAL<br>SEAL QR</div>
+        </div>
+      </div>
+
+      <div class="sig-grid">
+        <div class="sig-box">
+          <div style="font-weight:700; color:#374151; margin-bottom:20px;">Patient / Guardian Acknowledgement</div>
+          <p style="font-size:8pt; color:#64748b; text-align:left; margin-bottom:20px;">I acknowledge receipt of discharge instructions, medications, warning signs, and follow-up schedule. I understand this is a confidential computer-generated document.</p>
+          <div class="sig-line">Patient Signature / Thumbprint</div>
+          <div style="margin-top:4px; font-size:7.5pt; color:#94a3b8;">Rajesh Kumar Sharma / Priya Sharma (Spouse)</div>
+        </div>
+        <div class="sig-box">
+          <div style="font-weight:700; color:#374151; margin-bottom:20px;">Witness</div>
+          <p style="font-size:8pt; color:#64748b; text-align:left; margin-bottom:20px;">I confirm that the discharge counselling was provided and the patient/guardian has acknowledged understanding of all instructions.</p>
+          <div class="sig-line">Witness Signature</div>
+          <div style="margin-top:4px; font-size:7.5pt; color:#94a3b8;">Sr. Lalitha Bai (MSNC-78901)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-silver">Section 16 — Document Verification & QR Code</div>
+    <div class="section-body" style="display:flex; gap:20px; align-items:center;">
+      <div class="qr-placeholder" style="width:90px; height:90px; font-size:8pt;">INTEGRITY<br>QR CODE<br>SCAN TO VERIFY</div>
+      <div style="flex:1;">
+        <p style="font-size:9pt; font-weight:700; color:#334155; margin-bottom:6px;">Report Integrity Verification</p>
+        <p class="small">Report ID: CGH-DR-2026-04891-0430 | Patient ID: CGH-2024-04891 | UHID: UHID-MH-2024-948271</p>
+        <p class="small">Discharge Date: 30 April 2026 | Generated: 09 May 2026, 08:24 hrs | Initiated by: Dr. Suresh Nair, MCI-234567</p>
+        <p class="small" style="margin-top:6px;">Scan this QR code to verify authenticity via the hospital's secure document verification portal. Any alteration to the printed document will cause verification to fail. Compliant with IT Act 2000 (as amended) and DPDPA 2023.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header g-stone">Section 17 — Disclaimer & Legal Notice</div>
+    <div class="section-body">
+      <div class="grid-2" style="gap:12px; font-size:8pt; color:#57534e;">
+        <div>
+          <p style="margin-bottom:6px;"><strong>CONFIDENTIALITY:</strong> This document is a confidential medical record intended solely for the named patient, authorised representatives, and healthcare professionals directly involved in ongoing care.</p>
+          <p style="margin-bottom:6px;"><strong>CLINICAL ACCURACY:</strong> All information has been recorded in good faith based on observations, investigations, and professional assessments during the admission period.</p>
+          <p style="margin-bottom:6px;"><strong>TOXICOLOGY & SENSITIVE RESULTS:</strong> Disclosed only to the treating physician and patient. Disclosure to third parties requires written consent or valid court order.</p>
+        </div>
+        <div>
+          <p style="margin-bottom:6px;"><strong>LABORATORY & IMAGING:</strong> Reference ranges are those used by CGH Pathology Laboratory (NABL Accredited). Imaging reports represent the professional opinion of CGH radiologists at the time of reporting.</p>
+          <p style="margin-bottom:6px;"><strong>BILLING:</strong> All charges are per the hospital tariff applicable at time of service. GST exempted for healthcare services as per CGST Act 2017. Billing queries must be raised within 30 days of discharge.</p>
+          <p style="margin-bottom:6px;"><strong>DATA PROTECTION:</strong> Retained per National Medical Commission guidelines (minimum 3 years) and DPDPA 2023. Patient may request access via Medical Records Department.</p>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <p style="font-size:7.5pt; color:#78716c; text-align:center; margin-top:4px;"><strong>EMERGENCY:</strong> This document does not substitute for emergency medical care. If any warning symptoms are experienced, attend the nearest emergency facility immediately.</p>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>Confidential Medical Record — CGH-DR-2026-04891-0430</span>
+    <span>Page 8 of 8 — END OF RECORD</span>
+  </div>
+</div>
+
+</body>
+</html>
