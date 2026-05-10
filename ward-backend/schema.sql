@@ -370,3 +370,12 @@ CREATE INDEX IF NOT EXISTS idx_patientreports_hash
 
 -- Migration for admittedAt
 ALTER TABLE Patients ADD COLUMN admittedAt DATETIME;
+
+-- Migration: Users email, employeeCode, tokenVersion
+ALTER TABLE Users ADD COLUMN email TEXT;
+ALTER TABLE Users ADD COLUMN employeeCode TEXT;
+ALTER TABLE Users ADD COLUMN tokenVersion INTEGER DEFAULT 0;
+
+-- Migration: Tenants code
+ALTER TABLE Tenants ADD COLUMN code TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tenants_code ON Tenants(code) WHERE code IS NOT NULL;

@@ -31,6 +31,9 @@ const initDb = (db) => {
           )
         `);
 
+        runIgnoreDuplicateColumn(`ALTER TABLE Tenants ADD COLUMN code TEXT`);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_tenants_code ON Tenants(code) WHERE code IS NOT NULL`);
+
         // Ensure there's always a default tenant for legacy/backfill rows.
         db.run(`INSERT OR IGNORE INTO Tenants (id, name) VALUES (?, ?)`, [DEFAULT_TENANT_ID, 'Default Tenant']);
 
@@ -108,6 +111,7 @@ const initDb = (db) => {
         runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN email TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN tokenVersion INTEGER NOT NULL DEFAULT 0`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Users ADD COLUMN employeeCode TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN tenantId TEXT`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN admittedAt DATETIME`);
         runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN gender TEXT`);

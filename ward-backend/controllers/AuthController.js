@@ -81,12 +81,13 @@ const signupLimiter = process.env.NODE_ENV === 'test'
 
 router.post('/signup', signupLimiter, async (req, res) => {
   try {
-    const { hospitalName, hospitalCode, adminName, email, password } = req.body || {};
+    const { hospitalName, hospitalCode, adminName, email, employeeCode, password } = req.body || {};
     const result = await authService.registerHospital({
       hospitalName,
       hospitalCode,
       adminName,
       email,
+      employeeCode,
       password,
     });
     res.cookie('ward_token', result.token, getCookieOptions());

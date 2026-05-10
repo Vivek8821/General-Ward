@@ -9,7 +9,7 @@ class AuthRepository {
     return dbAdapter.get(`SELECT * FROM Tenants WHERE id = ?`, [tenantId]);
   }
 
-  async createTenantAndAdmin({ tenantId, tenantName, userId, name, email, passwordHash }) {
+  async createTenantAndAdmin({ tenantId, tenantName, tenantCode, userId, name, email, employeeCode, passwordHash }) {
     return dbAdapter.withTransaction(async (tx) => {
       const existing = await tx.get(`SELECT id FROM Tenants WHERE id = ?`, [tenantId]);
       if (existing) {
@@ -18,7 +18,7 @@ class AuthRepository {
         throw err;
       }
 
-      await tx.run(`INSERT INTO Tenants (id, name) VALUES (?, ?)`, [tenantId, tenantName]);
+      await tx.run(`INSERT INTO Tenants (id, name, code) VALUES (?, ?, ?)`, [tenantId, tenantName, tenantCode || null]);
 
       const existingUser = await tx.get(`SELECT id FROM Users WHERE name = ?`, [name]);
       if (existingUser) {
@@ -28,14 +28,14 @@ class AuthRepository {
       }
 
       await tx.run(
-        `INSERT INTO Users (id, name, role, tenantId, passwordHash, email)
-         VALUES (?, ?, 'admin', ?, ?, ?)`,
-        [userId, name, tenantId, passwordHash, email || null]
+        `INSERT INTO Users (id, name, role, tenantId, passwordHash, email, employeeCode)
+         VALUES (?, ?, 'admin', ?, ?, ?, ?)`,
+        [userId, name, tenantId, passwordHash, email || null, employeeCode || null]
       );
     });
   }
 
-  async createUser({ userId, tenantId, name, role, email, passwordHash }) {
+  async createUser({ userId, tenantId, name, role, email, employeeCode, passwordHash }) {
     return dbAdapter.withTransaction(async (tx) => {
       const existing = await tx.get(`SELECT id FROM Users WHERE name = ?`, [name]);
       if (existing) {
@@ -44,8 +44,8 @@ class AuthRepository {
         throw err;
       }
       await tx.run(
-        `INSERT INTO Users (id, name, role, tenantId, passwordHash, email) VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, name, role, tenantId, passwordHash, email || null]
+        `INSERT INTO Users (id, name, role, tenantId, passwordHash, email, employeeCode) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [userId, name, role, tenantId, passwordHash, email || null, employeeCode || null]
       );
     });
   }

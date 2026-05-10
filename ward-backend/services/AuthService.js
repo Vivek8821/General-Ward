@@ -35,7 +35,7 @@ class AuthService {
     };
   }
 
-  async registerHospital({ hospitalName, hospitalCode, adminName, email, password }) {
+  async registerHospital({ hospitalName, hospitalCode, adminName, email, employeeCode, password }) {
     if (!hospitalName || !String(hospitalName).trim()) {
       throw new Error('Hospital name is required');
     }
@@ -59,9 +59,11 @@ class AuthService {
     await authRepository.createTenantAndAdmin({
       tenantId,
       tenantName,
+      tenantCode: String(hospitalCode).trim(),
       userId,
       name,
       email: email ? String(email).trim().toLowerCase() : null,
+      employeeCode: employeeCode ? String(employeeCode).trim() : null,
       passwordHash,
     });
 
