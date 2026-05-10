@@ -14,7 +14,6 @@ jest.mock('../../middleware/auth', () => {
       next();
     },
     requireRole: actual.requireRole,
-    JWT_SECRET: actual.JWT_SECRET,
   };
 });
 

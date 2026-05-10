@@ -35,24 +35,26 @@ router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]), a
 });
 
 // Get all patients
-router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
+router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const patients = await patientService.getAllPatients(tenantId);
         res.json(patients);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        error.status = 500;
+        next(error);
     }
 });
 
 // Get archived (discharged) patients
-router.get('/archives', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
+router.get('/archives', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const patients = await patientService.getArchivedPatients(tenantId);
         res.json(patients);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        error.status = 500;
+        next(error);
     }
 });
 
@@ -66,12 +68,13 @@ router.get('/archives/:archiveId', authenticateToken, authorize(PERMISSIONS.READ
         if (error.message === 'Archive not found') {
             return res.status(404).json({ error: error.message });
         }
-        res.status(500).json({ error: error.message });
+        error.status = 500;
+        next(error);
     }
 });
 
 // Get patient by ID
-router.get('/:id', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'), async (req, res) => {
+router.get('/:id', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const patient = await patientService.getPatientById(req.params.id, tenantId);
@@ -80,12 +83,13 @@ router.get('/:id', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requi
         if (error.message === 'Patient not found') {
             return res.status(404).json({ error: error.message });
         }
-        res.status(500).json({ error: error.message });
+        error.status = 500;
+        next(error);
     }
 });
 
 // Get discharge summary
-router.get('/:id/discharge-summary', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'), async (req, res) => {
+router.get('/:id/discharge-summary', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const summary = await patientService.getDischargeSummary(req.params.id, tenantId);
@@ -94,7 +98,8 @@ router.get('/:id/discharge-summary', authenticateToken, authorize(PERMISSIONS.RE
         if (error.message === 'Summary not found') {
             return res.status(404).json({ error: error.message });
         }
-        res.status(500).json({ error: error.message });
+        error.status = 500;
+        next(error);
     }
 });
 

@@ -23,8 +23,12 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('ward_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = sessionStorage.getItem('ward_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [loading, setLoading] = useState(true);
 
@@ -37,8 +41,7 @@ export const AuthProvider = ({ children }) => {
       // ignore
     }
 
-    localStorage.removeItem('ward_token');
-    localStorage.removeItem('ward_user');
+    sessionStorage.removeItem('ward_user');
     setCsrfToken(null);
     setUser(null);
   };
@@ -59,7 +62,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error('Login failed');
     }
     if (data.csrfToken) setCsrfToken(data.csrfToken);
-    localStorage.setItem('ward_user', JSON.stringify(data.user));
+    sessionStorage.setItem('ward_user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
   };
@@ -73,7 +76,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error('Signup failed');
     }
     if (data.csrfToken) setCsrfToken(data.csrfToken);
-    localStorage.setItem('ward_user', JSON.stringify(data.user));
+    sessionStorage.setItem('ward_user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
   };
@@ -92,14 +95,14 @@ export const AuthProvider = ({ children }) => {
       .then((data) => {
         if (data?.user) {
           setUser(data.user);
-          localStorage.setItem('ward_user', JSON.stringify(data.user));
+          sessionStorage.setItem('ward_user', JSON.stringify(data.user));
           if (data?.csrfToken) setCsrfToken(data.csrfToken);
         } else {
           setUser(null);
         }
       })
       .catch(() => {
-        localStorage.removeItem('ward_user');
+        sessionStorage.removeItem('ward_user');
         setUser(null);
       })
       .finally(() => setLoading(false));

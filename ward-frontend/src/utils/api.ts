@@ -89,8 +89,6 @@ export const api = {
 
       if (window.location.pathname !== '/login') {
         toast.error(msg);
-        localStorage.removeItem('ward_token');
-        localStorage.removeItem('ward_user');
         setCsrfToken(null);
         window.location.href = '/login';
         return;

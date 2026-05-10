@@ -21,7 +21,7 @@ function requireTenantPatient(paramName = 'patientId') {
       if (!row) return res.status(403).json({ error: 'Access denied by tenant scope.' });
       next();
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   };
 }
@@ -39,7 +39,7 @@ function requireTenantTask(taskIdParam = 'taskId') {
       if (row.tenantId !== tenantId) return res.status(403).json({ error: 'Access denied by tenant scope.' });
       next();
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   };
 }
@@ -63,7 +63,7 @@ function requireTenantMedication(medIdParam = 'medId', patientIdParam = 'patient
       if (row.tenantId !== tenantId) return res.status(403).json({ error: 'Access denied by tenant scope.' });
       next();
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   };
 }
@@ -87,7 +87,7 @@ function requireTenantMedicationAdministration(adminIdParam = 'adminId', patient
       if (row.tenantId !== tenantId) return res.status(403).json({ error: 'Access denied by tenant scope.' });
       next();
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   };
 }
@@ -105,7 +105,7 @@ function requireTenantEscalation(escalationIdParam = 'escalationId') {
       if (row.tenantId !== tenantId) return res.status(403).json({ error: 'Access denied by tenant scope.' });
       next();
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   };
 }
@@ -123,7 +123,7 @@ function requireTenantPharmacyStock(stockIdParam = 'id') {
       if (row.tenantId !== tenantId) return res.status(403).json({ error: 'Access denied by tenant scope.' });
       next();
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   };
 }
@@ -141,7 +141,7 @@ function requireTenantPharmacyBatch(batchIdParam = 'batchId') {
       if (row.tenantId !== tenantId) return res.status(403).json({ error: 'Access denied by tenant scope.' });
       next();
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   };
 }

@@ -51,7 +51,7 @@ router.post('/login', loginLimiter, async (req, res) => {
   try {
     reservation = await authLockoutRepository.tryAttempt(username, ipAddress);
   } catch (_) {
-    reservation = { locked: false };
+    return res.status(503).json({ error: 'Authentication temporarily unavailable. Please try again later.' });
   }
   if (reservation.locked) {
     return res.status(429).json({ error: LOGIN_LOCKOUT_MESSAGE });

@@ -40,13 +40,14 @@ const validateAdministrationPayload = (payload) => {
 };
 
 // GET /api/patients/:patientId/medications
-router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res) => {
+router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await medicationService.getMedications(req.params.patientId, tenantId);
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        err.status = 500;
+        next(err);
     }
 });
 
@@ -60,18 +61,20 @@ router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_MEDICATIONS]
         const result = await medicationService.prescribeMedication(req.params.patientId, tenantId, req.user, req.body);
         res.status(201).json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        err.status = 500;
+        next(err);
     }
 });
 
 // GET /api/patients/:patientId/medications/administrations
-router.get('/administrations', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res) => {
+router.get('/administrations', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await medicationService.getAdministrations(req.params.patientId, tenantId, req.query);
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        err.status = 500;
+        next(err);
     }
 });
 
@@ -85,12 +88,13 @@ router.post('/:medId/administer', authenticateToken, authorizeAny([PERMISSIONS.A
         const result = await medicationService.administerMedication(req.params.medId, req.params.patientId, tenantId, req.user, req.body);
         res.status(201).json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        err.status = 500;
+        next(err);
     }
 });
 
 // PUT /api/patients/:patientId/medications/administrations/:adminId
-router.put('/administrations/:adminId', authenticateToken, authorizeAny([PERMISSIONS.ADMINISTER_MEDS]), requireTenantMedicationAdministration('adminId', 'patientId'), async (req, res) => {
+router.put('/administrations/:adminId', authenticateToken, authorizeAny([PERMISSIONS.ADMINISTER_MEDS]), requireTenantMedicationAdministration('adminId', 'patientId'), async (req, res, next) => {
     if (!validateAdministrationPayload(req.body)) {
         return res.status(400).json({ error: 'Invalid administration payload', code: 'VALIDATION_ERROR' });
     }
@@ -99,29 +103,32 @@ router.put('/administrations/:adminId', authenticateToken, authorizeAny([PERMISS
         const result = await medicationService.updateAdministration(req.params.adminId, req.params.patientId, tenantId, req.user, req.body);
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        err.status = 500;
+        next(err);
     }
 });
 
 // DELETE /api/patients/:patientId/medications/administrations/:adminId
-router.delete('/administrations/:adminId', authenticateToken, authorizeAny([PERMISSIONS.ADMINISTER_MEDS]), requireTenantMedicationAdministration('adminId', 'patientId'), async (req, res) => {
+router.delete('/administrations/:adminId', authenticateToken, authorizeAny([PERMISSIONS.ADMINISTER_MEDS]), requireTenantMedicationAdministration('adminId', 'patientId'), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await medicationService.deleteAdministration(req.params.adminId, req.params.patientId, tenantId, req.user);
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        err.status = 500;
+        next(err);
     }
 });
 
 // PUT /api/patients/:patientId/medications/:medId
-router.put('/:medId', authenticateToken, authorizeAny([PERMISSIONS.WRITE_MEDICATIONS]), requireTenantMedication('medId', 'patientId'), async (req, res) => {
+router.put('/:medId', authenticateToken, authorizeAny([PERMISSIONS.WRITE_MEDICATIONS]), requireTenantMedication('medId', 'patientId'), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await medicationService.updateMedicationStatus(req.params.medId, req.params.patientId, tenantId, req.user, req.body.status);
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        err.status = 500;
+        next(err);
     }
 });
 

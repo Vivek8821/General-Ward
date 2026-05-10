@@ -128,10 +128,10 @@ app.get('/api/health/detail', authenticateToken, async (req, res) => {
             postgres: { enabled: true, ok: true },
         });
     } catch (err) {
-        res.json({
-            status: 'ok',
-            postgres: { enabled: true, ok: false, error: err.message },
-        });
+      res.json({
+        status: 'ok',
+        postgres: { enabled: true, ok: false, error: 'Postgres health check failed' },
+      });
     }
 });
 

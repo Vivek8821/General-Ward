@@ -38,7 +38,7 @@ class ObservationService {
 
     const rows = await observationRepository.findAllByPatientId(patientId, tenantId, {
       type,
-      limit: limit ? Number(limit) : 200,
+      limit: limit ? Math.min(Number(limit), 1000) : 200,
       cursorTs,
       cursorId
     });

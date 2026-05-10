@@ -4,7 +4,8 @@ const { initDb } = require('../../db');
 const dbAdapter = require('../../db-adapter');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../../middleware/auth');
+const config = require('../../config');
+const JWT_SECRET = config.jwtSecret;
 
 describe('Pharmacy Automated Reorder Integration', () => {
   const tenantId = 'tenant-reorder-test';

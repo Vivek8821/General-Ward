@@ -71,7 +71,10 @@ class ReportDataService {
    */
   computeReportHash(aggregatedData) {
     const tenantId = aggregatedData.patient?.tenantId || 'tenant-default';
-    const globalSecret = config.jwtSecret || 'default-secret';
+    if (!config.jwtSecret) {
+      throw new Error('[ReportDataService] JWT_SECRET is required for report HMAC signing');
+    }
+    const globalSecret = config.jwtSecret;
     
     // Derive a unique secret per tenant for reporting signatures.
     // This ensures that even if one tenant's report signatures are leaked/cracked,

@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 
 const authRoutes = require('../../controllers/AuthController');
 const { initDb } = require('../../db');
-const { JWT_SECRET } = require('../../middleware/auth');
+const config = require('../../config');
+const JWT_SECRET = config.jwtSecret;
 
 describe('Cookie-based auth (Phase C.2)', () => {
   beforeAll(async () => {

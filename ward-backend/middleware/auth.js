@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const dbAdapter = require('../db-adapter');
+
 const JWT_SECRET = config.jwtSecret;
 
 function extractToken(req) {
@@ -76,4 +77,4 @@ function requireRole(roles) {
     };
 }
 
-module.exports = { authenticateToken, attachUserIfPresent, extractToken, requireRole, JWT_SECRET };
+module.exports = { authenticateToken, attachUserIfPresent, extractToken, requireRole };

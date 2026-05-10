@@ -238,7 +238,7 @@ router.get('/analytics/replenishment', authenticateToken, authorize(PERMISSIONS.
 const reorderService = require('../services/PharmacyReorderService');
 
 // GET /api/pharmacy/orders - List POs
-router.get('/orders', authenticateToken, async (req, res) => {
+router.get('/orders', authenticateToken, authorize(PERMISSIONS.READ_PHARMACY), async (req, res) => {
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const orders = await reorderService.getOrders(tenantId);
@@ -249,7 +249,7 @@ router.get('/orders', authenticateToken, async (req, res) => {
 });
 
 // PATCH /api/pharmacy/orders/:id/status - Update PO status
-router.patch('/orders/:id/status', authenticateToken, async (req, res) => {
+router.patch('/orders/:id/status', authenticateToken, authorize(PERMISSIONS.MANAGE_PHARMACY), async (req, res) => {
   try {
     const { status } = req.body;
     const tenantId = req.user.tenantId || 'tenant-default';

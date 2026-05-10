@@ -2,6 +2,20 @@ const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 
 class PDFReportService {
+  _sanitizeText(value, maxLength = 200) {
+    if (value === null || value === undefined) return '-';
+    const s = String(value).replace(/[\x00-\x1F\x7F]/g, '');
+    if (s.length > maxLength) return s.slice(0, maxLength - 1) + '\u2026';
+    return s;
+  }
+
+  _sanitizeNote(value, maxLength = 500) {
+    if (value === null || value === undefined) return '-';
+    const s = String(value).replace(/[\x00-\x1F\x7F]/g, '');
+    if (s.length > maxLength) return s.slice(0, maxLength - 1) + '\u2026';
+    return s;
+  }
+
   /**
    * Generates a PDF buffer for the patient treatment report.
    */
@@ -83,10 +97,10 @@ class PDFReportService {
     doc.fontSize(18).text('Patient Treatment Record', { align: 'center', underline: true });
     doc.moveDown(2);
 
-    doc.fontSize(12).text(`Report ID: ${reportId}`);
-    doc.text(`Patient Name: ${data.patient.name}`);
-    doc.text(`Patient ID: ${data.patient.mrn}`);
-    doc.text(`Bed Number: ${data.patient.bedNumber}`);
+    doc.fontSize(12).text(`Report ID: ${this._sanitizeText(reportId, 50)}`);
+    doc.text(`Patient Name: ${this._sanitizeText(data.patient.name)}`);
+    doc.text(`Patient ID: ${this._sanitizeText(data.patient.mrn, 30)}`);
+    doc.text(`Bed Number: ${this._sanitizeText(data.patient.bedNumber, 20)}`);
     doc.moveDown();
     
     const admissionDate = data.patient.admissionDate || 'N/A';
@@ -122,13 +136,13 @@ class PDFReportService {
 
   _drawDemographics(doc, patient) {
     const startY = doc.y;
-    doc.text(`MRN: ${patient.mrn}`, 50, startY);
-    doc.text(`DOB: ${patient.dob}`, 200, startY);
-    doc.text(`Gender: ${patient.gender || '-'}`, 350, startY);
+    doc.text(`MRN: ${this._sanitizeText(patient.mrn, 30)}`, 50, startY);
+    doc.text(`DOB: ${this._sanitizeText(patient.dob, 15)}`, 200, startY);
+    doc.text(`Gender: ${this._sanitizeText(patient.gender, 20)}`, 350, startY);
     
     doc.moveDown();
-    doc.text(`Diagnosis: ${patient.diagnosis || 'None recorded'}`);
-    doc.text(`Allergies: ${patient.allergies || 'No known allergies'}`);
+    doc.text(`Diagnosis: ${this._sanitizeNote(patient.diagnosis, 500)}`);
+    doc.text(`Allergies: ${this._sanitizeNote(patient.allergies, 500)}`);
   }
 
   _drawObservationsTable(doc, vitals, scoring) {
@@ -172,11 +186,11 @@ class PDFReportService {
     admins.slice(0, 30).forEach(a => {
       if (doc.y > doc.page.height - 50) doc.addPage();
       this._drawTableRow(doc, doc.y, [
-        a.medName,
-        a.doseActuallyGiven || a.dosage,
-        a.route,
+        this._sanitizeText(a.medName, 60),
+        this._sanitizeText(a.doseActuallyGiven || a.dosage, 30),
+        this._sanitizeText(a.route, 20),
         a.timestamp.substring(5, 16),
-        a.administeredBy,
+        this._sanitizeText(a.administeredBy, 40),
         a.status.toUpperCase()
       ]);
     });
@@ -197,8 +211,8 @@ class PDFReportService {
   _drawNotes(doc, notes) {
     notes.slice(0, 15).forEach(n => {
       if (doc.y > doc.page.height - 60) doc.addPage();
-      doc.font('Helvetica-Bold').text(`${n.timestamp} - ${n.shift.toUpperCase()} (${n.createdBy})`);
-      doc.font('Helvetica').text(n.note);
+      doc.font('Helvetica-Bold').text(`${n.timestamp} - ${this._sanitizeText(n.shift, 20).toUpperCase()} (${this._sanitizeText(n.createdBy, 40)})`);
+      doc.font('Helvetica').text(this._sanitizeNote(n.note));
       doc.moveDown(0.5);
     });
   }
@@ -210,19 +224,19 @@ class PDFReportService {
     }
     escalations.forEach(e => {
       if (doc.y > doc.page.height - 50) doc.addPage();
-      doc.text(`${e.timestamp}: ${e.reason} (Status: ${e.status})`);
+      doc.text(`${e.timestamp}: ${this._sanitizeNote(e.reason)} (Status: ${this._sanitizeText(e.status, 20)})`);
     });
   }
 
   _drawDischargeSummary(doc, ds) {
     doc.text(`Discharge Date: ${ds.dischargeDate}`);
-    doc.text(`Condition: ${ds.conditionAtDischarge}`);
+    doc.text(`Condition: ${this._sanitizeNote(ds.conditionAtDischarge)}`);
     doc.moveDown();
     doc.font('Helvetica-Bold').text('Instructions:');
-    doc.font('Helvetica').text(ds.dischargeInstructions);
+    doc.font('Helvetica').text(this._sanitizeNote(ds.dischargeInstructions, 1000));
     doc.moveDown();
     doc.font('Helvetica-Bold').text('Follow-up:');
-    doc.font('Helvetica').text(ds.followUpPlan);
+    doc.font('Helvetica').text(this._sanitizeNote(ds.followUpPlan, 1000));
   }
 
   _drawTableRow(doc, y, columns) {

@@ -2,7 +2,8 @@ const crypto = require('crypto');
 const authRepository = require('../repositories/AuthRepository');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../middleware/auth');
+const config = require('../config');
+const JWT_SECRET = config.jwtSecret;
 
 class AuthService {
   async authenticateUser(username, password) {

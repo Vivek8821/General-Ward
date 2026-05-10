@@ -4,7 +4,8 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../middleware/auth');
+const config = require('../config');
+const JWT_SECRET = config.jwtSecret;
 
 const API_BASE = process.env.WARD_API_BASE || 'http://localhost:3001/api';
 const DB_PATH = process.env.WARD_DB_PATH || path.resolve(__dirname, 'ward.db');

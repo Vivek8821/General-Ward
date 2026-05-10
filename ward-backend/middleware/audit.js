@@ -21,7 +21,7 @@ function auditLog(req, res, next) {
     const userId = req.user.id || 'unknown';
     const userRole = req.user.role || 'unknown';
     const action = req.method;
-    const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+    const ipAddress = req.ip || req.socket?.remoteAddress || 'unknown';
     const statusCode = res.statusCode;
     const success = statusCode >= 200 && statusCode < 400 ? 1 : 0;
     const tenantId = req.user.tenantId || 'tenant-default';
