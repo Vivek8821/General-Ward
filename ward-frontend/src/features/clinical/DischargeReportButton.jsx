@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FileDown, Loader2 } from 'lucide-react';
 import { api, API_BASE } from '../../utils/api';
-import { toast } from 'sonner';
+import { toast } from 'react-hot-toast';
 
 export default function DischargeReportButton({ patientId, mrn }) {
   const [loading, setLoading] = useState(false);

@@ -1,5 +1,3 @@
-import { FileText } from 'lucide-react';
-
 const DISCHARGE_MODES = ['home', 'ama', 'transferred', 'lama', 'expired'];
 
 export default function DischargeModal({ isOpen, onClose, onSubmit, form, setForm, patientName }) {
@@ -11,14 +9,8 @@ export default function DischargeModal({ isOpen, onClose, onSubmit, form, setFor
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="discharge-dialog-title">
-      <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-2xl border border-border my-8">
-        <div className="p-6 border-b border-border bg-bg-tertiary rounded-t-2xl">
-          <h2 id="discharge-dialog-title" className="text-2xl font-bold text-text-primary flex items-center gap-3">
-            <FileText className="w-6 h-6 text-slate-600 dark:text-slate-400" aria-hidden /> Official Patient Discharge
-          </h2>
-          <p className="text-text-muted text-sm mt-1">Please completely fill out the clinical discharge summary for {patientName}.</p>
-        </div>
-        <form onSubmit={onSubmit} className="p-6 space-y-6">
+      <div className="bg-bg-primary w-full max-w-3xl rounded-2xl shadow-2xl border border-border my-8 flex flex-col max-h-[90vh]">
+        <form onSubmit={onSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
 
           {/* Core fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

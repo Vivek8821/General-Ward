@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../utils/api';
 import { queryKeys } from '../../utils/queryKeys';
-import { toast } from 'sonner';
+import { toast } from 'react-hot-toast';
 import { Plus, Trash2 } from 'lucide-react';
 
 const BLANK = { role: '', name: '', registrationNo: '', qualification: '', clinicalRemarks: '', remarksDate: '' };
