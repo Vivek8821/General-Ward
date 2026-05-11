@@ -175,8 +175,8 @@ class StatisticsReportService {
   }
 
   _executiveSummary(doc, data) {
-    const page = this._currentPage(doc);
     doc.addPage();
+    const startPage = this._currentPage(doc);
     const s = data.summary || {};
     this._h1(doc, '1. Executive Summary');
     this._kv(doc, 'Total Patients', s.totalPatients);
@@ -188,11 +188,12 @@ class StatisticsReportService {
       this._kv(doc, 'Top Disease Category', `${s.topDisease.category} (${s.topDisease.count} patients)`);
     }
     doc.moveDown(1);
-    return this._currentPage(doc);
+    return startPage;
   }
 
   _diseaseDistribution(doc, data) {
     doc.addPage();
+    const startPage = this._currentPage(doc);
     this._h1(doc, '2. Disease Distribution by Category');
     const cats = data.diseases?.categories || [];
     if (cats.length > 0) {
@@ -212,11 +213,12 @@ class StatisticsReportService {
     if (!cats.length && !topDiags.length) {
       doc.text('No disease data available for this period.');
     }
-    return this._currentPage(doc);
+    return startPage;
   }
 
   _demographics(doc, data) {
     doc.addPage();
+    const startPage = this._currentPage(doc);
     this._h1(doc, '3. Demographic Breakdown');
     const d = data.demographics || {};
     const total = d.total || 1;
@@ -245,11 +247,12 @@ class StatisticsReportService {
         sorted.map(a => [a.group, String(a.male || 0), String(a.female || 0), String((a.male || 0) + (a.female || 0))]),
         [120, 80, 80, 80]);
     }
-    return this._currentPage(doc);
+    return startPage;
   }
 
   _medicationUtilization(doc, data) {
     doc.addPage();
+    const startPage = this._currentPage(doc);
     this._h1(doc, '4. Medication Utilization');
     const meds = data.medications?.medications || [];
     const totalAdm = data.medications?.totalAdministrations || 0;
@@ -265,11 +268,12 @@ class StatisticsReportService {
     } else {
       doc.text('No medication administration data available.');
     }
-    return this._currentPage(doc);
+    return startPage;
   }
 
   _admissionTrends(doc, data) {
     doc.addPage();
+    const startPage = this._currentPage(doc);
     this._h1(doc, '5. Admission & Discharge Trends');
     const a = data.admissions || {};
 
@@ -285,11 +289,12 @@ class StatisticsReportService {
     } else {
       doc.fontSize(10).fillColor('#9ca3af').text('No admission or discharge events in this period.');
     }
-    return this._currentPage(doc);
+    return startPage;
   }
 
   _clinicalOutcomes(doc, data) {
-    doc.moveDown(1);
+    doc.addPage();
+    const startPage = this._currentPage(doc);
     this._h1(doc, '6. Clinical Outcomes');
     const o = data.outcomes || {};
 
@@ -303,7 +308,7 @@ class StatisticsReportService {
     doc.moveDown(2);
     doc.fontSize(9).fillColor('#9ca3af');
     doc.text('— End of Report —', { align: 'center' });
-    return this._currentPage(doc);
+    return startPage;
   }
 }
 

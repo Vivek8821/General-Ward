@@ -13,22 +13,51 @@ const statsLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-function parseFilters(query) {
+const VALID_PERIODS = ['week', 'month', 'quarter', 'year'];
+
+function validateFilters(query) {
   const filters = {};
-  if (query.residence) filters.residence = query.residence;
-  if (query.gender) filters.gender = query.gender;
-  if (query.ageMin != null && query.ageMin !== '') filters.ageMin = query.ageMin;
-  if (query.ageMax != null && query.ageMax !== '') filters.ageMax = query.ageMax;
-  if (query.disease) filters.disease = query.disease;
-  if (query.from) filters.from = query.from;
-  if (query.to) filters.to = query.to;
-  return filters;
+
+  if (query.period !== undefined && !VALID_PERIODS.includes(query.period)) {
+    return { error: `Invalid period. Must be one of: ${VALID_PERIODS.join(', ')}` };
+  }
+
+  if (query.ageMin !== undefined && query.ageMin !== '') {
+    const v = parseInt(query.ageMin, 10);
+    if (isNaN(v) || v < 0 || v > 150) return { error: 'ageMin must be an integer between 0 and 150' };
+    filters.ageMin = v;
+  }
+  if (query.ageMax !== undefined && query.ageMax !== '') {
+    const v = parseInt(query.ageMax, 10);
+    if (isNaN(v) || v < 0 || v > 150) return { error: 'ageMax must be an integer between 0 and 150' };
+    filters.ageMax = v;
+  }
+  if (filters.ageMin !== undefined && filters.ageMax !== undefined && filters.ageMin > filters.ageMax) {
+    return { error: 'ageMin must not be greater than ageMax' };
+  }
+
+  if (query.from) {
+    if (isNaN(new Date(query.from).getTime())) return { error: 'Invalid from date' };
+    filters.from = query.from;
+  }
+  if (query.to) {
+    if (isNaN(new Date(query.to).getTime())) return { error: 'Invalid to date' };
+    filters.to = query.to;
+  }
+
+  if (query.residence) filters.residence = String(query.residence).slice(0, 100);
+  if (query.gender) filters.gender = String(query.gender).slice(0, 50);
+  if (query.disease) filters.disease = String(query.disease).slice(0, 100);
+
+  return { filters };
 }
 
 router.get('/summary', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS), statsLimiter, async (req, res, next) => {
+  const { filters, error } = validateFilters(req.query);
+  if (error) return res.status(400).json({ error });
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await statisticsService.getSummary(tenantId, req.query.period, parseFilters(req.query));
+    const result = await statisticsService.getSummary(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
     err.status = 500;
@@ -37,9 +66,11 @@ router.get('/summary', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS)
 });
 
 router.get('/diseases', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS), statsLimiter, async (req, res, next) => {
+  const { filters, error } = validateFilters(req.query);
+  if (error) return res.status(400).json({ error });
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await statisticsService.getDiseaseDistribution(tenantId, req.query.period, parseFilters(req.query));
+    const result = await statisticsService.getDiseaseDistribution(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
     err.status = 500;
@@ -48,9 +79,11 @@ router.get('/diseases', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS
 });
 
 router.get('/demographics', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS), statsLimiter, async (req, res, next) => {
+  const { filters, error } = validateFilters(req.query);
+  if (error) return res.status(400).json({ error });
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await statisticsService.getDemographicBreakdown(tenantId, req.query.period, parseFilters(req.query));
+    const result = await statisticsService.getDemographicBreakdown(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
     err.status = 500;
@@ -59,9 +92,11 @@ router.get('/demographics', authenticateToken, authorize(PERMISSIONS.VIEW_STATIS
 });
 
 router.get('/medications', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS), statsLimiter, async (req, res, next) => {
+  const { filters, error } = validateFilters(req.query);
+  if (error) return res.status(400).json({ error });
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await statisticsService.getMedicationStats(tenantId, req.query.period, parseFilters(req.query));
+    const result = await statisticsService.getMedicationStats(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
     err.status = 500;
@@ -70,9 +105,11 @@ router.get('/medications', authenticateToken, authorize(PERMISSIONS.VIEW_STATIST
 });
 
 router.get('/admissions', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS), statsLimiter, async (req, res, next) => {
+  const { filters, error } = validateFilters(req.query);
+  if (error) return res.status(400).json({ error });
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await statisticsService.getAdmissionTrend(tenantId, req.query.period, parseFilters(req.query));
+    const result = await statisticsService.getAdmissionTrend(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
     err.status = 500;
@@ -81,9 +118,11 @@ router.get('/admissions', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTI
 });
 
 router.get('/outcomes', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS), statsLimiter, async (req, res, next) => {
+  const { filters, error } = validateFilters(req.query);
+  if (error) return res.status(400).json({ error });
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const result = await statisticsService.getClinicalOutcomes(tenantId, req.query.period, parseFilters(req.query));
+    const result = await statisticsService.getClinicalOutcomes(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
     err.status = 500;
@@ -94,10 +133,12 @@ router.get('/outcomes', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS
 const statisticsReportService = require('../services/StatisticsReportService');
 
 router.post('/report', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS), statsLimiter, async (req, res, next) => {
+  const body = req.body || {};
+  const period = VALID_PERIODS.includes(body.period) ? body.period : 'month';
+  const { filters, error } = validateFilters(body);
+  if (error) return res.status(400).json({ error });
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
-    const period = req.body?.period || 'month';
-    const filters = parseFilters(req.body || {});
     const pdfBuffer = await statisticsReportService.generateReport(tenantId, period, filters);
     const periodLabel = period === 'week' ? 'Weekly' : period === 'month' ? 'Monthly' : period === 'quarter' ? 'Quarterly' : 'Yearly';
     res.setHeader('Content-Type', 'application/pdf');

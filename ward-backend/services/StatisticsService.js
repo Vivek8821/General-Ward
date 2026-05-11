@@ -94,41 +94,58 @@ class StatisticsService {
     });
   }
 
+  _chunk(arr, size) {
+    const out = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  }
+
   async _fetchMeds(tenantId, patientIds, { from, to }) {
     if (!patientIds.length) return { administrations: [], prescriptions: [] };
-    const placeholders = patientIds.map(() => '?').join(',');
     const sqlFrom = new Date(from).toISOString().replace('T', ' ').slice(0, 19);
     const sqlTo = new Date(to).toISOString().replace('T', ' ').slice(0, 19);
-    const [administrations, prescriptions] = await Promise.all([
-      dbAdapter.all(
-        `SELECT m.name, m.dosage, ma.status, ma.timestamp, ma.patientId, m.id
-         FROM Medications m
-         JOIN MedicationAdministrations ma ON ma.medicationId = m.id
-         WHERE m.tenantId = ? AND m.patientId IN (${placeholders})
-           AND ma.timestamp >= ? AND ma.timestamp <= ?
-         ORDER BY ma.timestamp`,
-        [tenantId, ...patientIds, sqlFrom, sqlTo]
-      ),
-      dbAdapter.all(
-        `SELECT m.name, m.dosage, m.status AS prescriptionStatus, m.startDate, m.patientId, m.id
-         FROM Medications m
-         WHERE m.tenantId = ? AND m.patientId IN (${placeholders})
-         ORDER BY m.startDate`,
-        [tenantId, ...patientIds]
-      )
-    ]);
-    return { administrations, prescriptions };
+    const allAdministrations = [];
+    const allPrescriptions = [];
+    for (const batch of this._chunk(patientIds, 500)) {
+      const placeholders = batch.map(() => '?').join(',');
+      const [admins, rxs] = await Promise.all([
+        dbAdapter.all(
+          `SELECT m.name, m.dosage, ma.status, ma.timestamp, ma.patientId, m.id
+           FROM Medications m
+           JOIN MedicationAdministrations ma ON ma.medicationId = m.id
+           WHERE m.tenantId = ? AND m.patientId IN (${placeholders})
+             AND ma.timestamp >= ? AND ma.timestamp <= ?
+           ORDER BY ma.timestamp`,
+          [tenantId, ...batch, sqlFrom, sqlTo]
+        ),
+        dbAdapter.all(
+          `SELECT m.name, m.dosage, m.status AS prescriptionStatus, m.startDate, m.patientId, m.id
+           FROM Medications m
+           WHERE m.tenantId = ? AND m.patientId IN (${placeholders})
+           ORDER BY m.startDate`,
+          [tenantId, ...batch]
+        )
+      ]);
+      allAdministrations.push(...admins);
+      allPrescriptions.push(...rxs);
+    }
+    return { administrations: allAdministrations, prescriptions: allPrescriptions };
   }
 
   async _fetchEscalations(tenantId, patientIds) {
     if (!patientIds.length) return [];
-    const placeholders = patientIds.map(() => '?').join(',');
-    return dbAdapter.all(
-      `SELECT patientId, reason, status, timestamp
-       FROM Escalations
-       WHERE tenantId = ? AND patientId IN (${placeholders})`,
-      [tenantId, ...patientIds]
-    );
+    const allRows = [];
+    for (const batch of this._chunk(patientIds, 500)) {
+      const placeholders = batch.map(() => '?').join(',');
+      const rows = await dbAdapter.all(
+        `SELECT patientId, reason, status, timestamp
+         FROM Escalations
+         WHERE tenantId = ? AND patientId IN (${placeholders})`,
+        [tenantId, ...batch]
+      );
+      allRows.push(...rows);
+    }
+    return allRows;
   }
 
   async getDiseaseDistribution(tenantId, period, filters = {}) {
@@ -216,18 +233,12 @@ class StatisticsService {
       byName[name][m.status] = (byName[name][m.status] || 0) + 1;
       byName[name].total += 1;
     }
-    for (const p of prescriptions) {
-      const name = p.name || 'Unknown';
-      if (!byName[name]) byName[name] = { name, given: 0, refused: 0, missed: 0, total: 0 };
-      byName[name].total += 0.5;
-      byName[name].given += 0.5;
-    }
 
     const medications = Object.values(byName)
       .sort((a, b) => b.total - a.total)
       .slice(0, 25);
 
-    return { medications, totalPatients: patientIds.length, totalAdministrations: administrations.length + prescriptions.length, period: range };
+    return { medications, totalPatients: patientIds.length, totalAdministrations: administrations.length, period: range };
   }
 
   async getAdmissionTrend(tenantId, period, filters = {}) {
@@ -278,7 +289,7 @@ class StatisticsService {
       return !isNaN(t) && t >= periodFrom && t <= periodTo;
     }).length;
 
-    return { timeline, totalAdmissions, totalDischarges: archived.length, period: range };
+    return { timeline, totalAdmissions, totalDischarges: filtered.filter(p => p.status === 'discharged').length, period: range };
   }
 
   async getClinicalOutcomes(tenantId, period, filters = {}) {
@@ -288,11 +299,12 @@ class StatisticsService {
       this._fetchArchivedPatients(tenantId, range)
     ]);
     const filtered = this._applyFilters([...active, ...archived], filters);
+    const filteredArchived = this._applyFilters(archived, filters);
     const patientIds = filtered.map(p => p.id).filter(Boolean);
 
     let totalLOS = 0;
     let losCount = 0;
-    for (const p of archived) {
+    for (const p of filteredArchived) {
       if (p.admittedAt && p.archivedAt) {
         const admit = new Date(p.admittedAt);
         const arch = new Date(p.archivedAt);
@@ -311,10 +323,10 @@ class StatisticsService {
     }
 
     const totalPatients = filtered.length || 1;
-    const dischargeRate = Math.round((archived.length / totalPatients) * 100);
+    const dischargeRate = Math.round((filteredArchived.length / totalPatients) * 100);
     const escalationRate = Math.round((escalationCount / totalPatients) * 100);
 
-    const criticalCount = archived.filter(p => (p.careIntensity || 1) >= 3 || p.diagnosis?.toLowerCase().includes('sepsis')).length;
+    const criticalCount = filteredArchived.filter(p => (p.careIntensity || 1) >= 3 || p.diagnosis?.toLowerCase().includes('sepsis')).length;
     const criticalRate = Math.round((criticalCount / totalPatients) * 100);
 
     return {
@@ -323,7 +335,7 @@ class StatisticsService {
       escalationRate,
       criticalRate,
       totalPatients,
-      totalDischarges: archived.length,
+      totalDischarges: filteredArchived.length,
       totalEscalations: escalationCount,
       period: range
     };
@@ -336,6 +348,7 @@ class StatisticsService {
       this._fetchArchivedPatients(tenantId, range)
     ]);
     const filtered = this._applyFilters([...active, ...archived], filters);
+    const filteredArchived = this._applyFilters(archived, filters);
     const patientIds = filtered.map(p => p.id).filter(Boolean);
 
     const totalPatients = filtered.length;
@@ -352,11 +365,11 @@ class StatisticsService {
     let totalMeds = 0;
     if (patientIds.length) {
       const medsData = await this._fetchMeds(tenantId, patientIds, range);
-      totalMeds = medsData.administrations.length + medsData.prescriptions.length;
+      totalMeds = medsData.administrations.length;
     }
 
     let totalLOS = 0; let losCount = 0;
-    for (const p of archived) {
+    for (const p of filteredArchived) {
       if (p.admittedAt && p.archivedAt) {
         const admit = new Date(p.admittedAt), arch = new Date(p.archivedAt);
         if (!isNaN(admit) && !isNaN(arch)) { totalLOS += (arch - admit) / 86400000; losCount++; }
@@ -366,7 +379,7 @@ class StatisticsService {
     return {
       totalPatients,
       currentlyActive,
-      totalDischarged: archived.length,
+      totalDischarged: filteredArchived.length,
       topDisease: topCategory ? { category: topCategory[0], count: topCategory[1] } : null,
       totalMedicationAdministrations: totalMeds,
       avgLengthOfStay: losCount > 0 ? Math.round(totalLOS / losCount * 10) / 10 : 0,
