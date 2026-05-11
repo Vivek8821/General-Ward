@@ -2,12 +2,16 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const handoverNotesService = require('../services/HandoverNotesService');
 const taskService = require('../services/TaskService');
+const { validateHandoverNote, validateTask, bad } = require('../utils/validation');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
 
 // POST /api/patients/:patientId/notes
 router.post('/notes', authenticateToken, authorizeAny([PERMISSIONS.WRITE_NOTES]), requireTenantPatient('patientId'), async (req, res) => {
+  const errors = validateHandoverNote(req.body || {});
+  if (errors.length > 0) return bad(res, errors);
+
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const result = await handoverNotesService.createNote(req.params.patientId, req.body, req.user.name, tenantId);
@@ -30,6 +34,9 @@ router.get('/notes', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), req
 
 // POST /api/patients/:patientId/tasks
 router.post('/tasks', authenticateToken, authorizeAny([PERMISSIONS.WRITE_TASKS]), requireTenantPatient('patientId'), async (req, res) => {
+  const errors = validateTask(req.body || {});
+  if (errors.length > 0) return bad(res, errors);
+
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const result = await taskService.createTask(req.params.patientId, req.body, req.user.name, tenantId);

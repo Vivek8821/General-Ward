@@ -5,6 +5,7 @@ const config = require('../config');
 const { authenticateToken } = require('../middleware/auth');
 const authService = require('../services/AuthService');
 const authLockoutRepository = require('../repositories/AuthLockoutRepository');
+const { validateSignupPayload, bad } = require('../utils/validation');
 
 const LOGIN_LOCKOUT_MESSAGE = 'Too many login attempts from this IP, please try again after 15 minutes';
 
@@ -80,8 +81,12 @@ const signupLimiter = process.env.NODE_ENV === 'test'
     });
 
 router.post('/signup', signupLimiter, async (req, res) => {
+  const body = req.body || {};
+  const errors = validateSignupPayload(body);
+  if (errors.length > 0) return bad(res, errors);
+
   try {
-    const { hospitalName, hospitalCode, adminName, email, employeeCode, password } = req.body || {};
+    const { hospitalName, hospitalCode, adminName, email, employeeCode, password } = body;
     const result = await authService.registerHospital({
       hospitalName,
       hospitalCode,

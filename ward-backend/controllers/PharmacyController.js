@@ -11,6 +11,7 @@ const {
     requireTenantPharmacyStock,
     requireTenantPharmacyBatch,
 } = require('../middleware/tenant');
+const { validateInventoryPayload, validateWastePayload, bad } = require('../utils/validation');
 
 // ── Input Validators ────────────────────────────────────────────────
 
@@ -60,6 +61,9 @@ router.get('/history', authenticateToken, authorize(PERMISSIONS.READ_PHARMACY), 
 
 // POST /api/pharmacy/inventory
 router.post('/inventory', authenticateToken, authorize(PERMISSIONS.MANAGE_PHARMACY), async (req, res) => {
+  const errors = validateInventoryPayload(req.body || {});
+  if (errors.length > 0) return bad(res, errors);
+
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const result = await stockService.addMedication(tenantId, req.body);
@@ -277,6 +281,9 @@ const wasteService = require('../services/WasteService');
 
 // POST /api/pharmacy/waste
 router.post('/waste', authenticateToken, authorize(PERMISSIONS.MANAGE_PHARMACY), async (req, res) => {
+  const errors = validateWastePayload(req.body || {});
+  if (errors.length > 0) return bad(res, errors);
+
   try {
     const tenantId = req.user.tenantId || 'tenant-default';
     const result = await wasteService.initiateWaste(tenantId, req.body, req.user);

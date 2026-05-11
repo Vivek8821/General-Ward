@@ -5,6 +5,7 @@ const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
 const patientService = require('../services/PatientService');
 const clinicalAuditService = require('../services/ClinicalAuditService');
+const { validatePatientCreate, validatePatientUpdate, validateDischargePayload, bad } = require('../utils/validation');
 const medicationRoutes = require('./MedicationController');
 const observationRoutes = require('./ObservationController');
 const escalationRoutes = require('./EscalationController');
@@ -19,6 +20,9 @@ router.use('/:patientId', handoverRoutes);
 
 // Create a patient (Doctor or Nurse)
 router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]), async (req, res) => {
+    const errors = validatePatientCreate(req.body || {});
+    if (errors.length > 0) return bad(res, errors);
+
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await patientService.createPatient({ ...req.body, tenantId });
@@ -105,6 +109,9 @@ router.get('/:id/discharge-summary', authenticateToken, authorize(PERMISSIONS.RE
 
 // Update patient
 router.put('/:id', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]), requireTenantPatient('id'), async (req, res) => {
+    const errors = validatePatientUpdate(req.body || {}, req.user.role);
+    if (errors.length > 0) return bad(res, errors);
+
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await patientService.updatePatient(req.params.id, req.body, tenantId);
@@ -129,6 +136,9 @@ router.put('/:id', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]),
 
 // Discharge patient (Doctor only)
 router.post('/:id/discharge', authenticateToken, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'), async (req, res) => {
+    const errors = validateDischargePayload(req.body || {});
+    if (errors.length > 0) return bad(res, errors);
+
     try {
         const dischargedBy = req.user.name || 'Doctor';
         const tenantId = req.user.tenantId || 'tenant-default';

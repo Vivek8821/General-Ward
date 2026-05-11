@@ -257,7 +257,7 @@ router.get('/dpdpa/breach-report', authenticateToken, authorize(PERMISSIONS.VIEW
     const auditParams = [tenantId, sqlFrom, sqlTo];
     let patientFilter = '';
     if (patientIds && typeof patientIds === 'string') {
-      const ids = patientIds.split(',').map(s => s.trim()).filter(Boolean);
+      const ids = patientIds.split(',').map(s => s.trim()).filter(Boolean).slice(0, 50);
       if (ids.length > 0) {
         patientFilter = ` AND patientId IN (${ids.map(() => '?').join(',')})`;
         auditParams.push(...ids);
@@ -419,6 +419,15 @@ router.post('/dpdpa/correction-requests', authenticateToken, authorize(PERMISSIO
     if (!['correction', 'erasure'].includes(requestType)) {
       return res.status(400).json({ error: 'requestType must be "correction" or "erasure"' });
     }
+    if (typeof description !== 'string' || description.length > 5000) {
+      return res.status(400).json({ error: 'description must be a string of 5000 characters or fewer' });
+    }
+    if (typeof requestedBy !== 'string' || requestedBy.length > 300) {
+      return res.status(400).json({ error: 'requestedBy must be a string of 300 characters or fewer' });
+    }
+    if (fieldsAffected !== undefined && (typeof fieldsAffected !== 'string' || fieldsAffected.length > 500)) {
+      return res.status(400).json({ error: 'fieldsAffected must be a string of 500 characters or fewer' });
+    }
     const result = await dpdpaRepository.createCorrectionRequest({ tenantId, patientId, requestedBy, requestType, fieldsAffected, description });
     res.status(201).json(result);
   } catch (err) {
@@ -461,6 +470,15 @@ router.post('/dpdpa/grievances', authenticateToken, authorize(PERMISSIONS.VIEW_A
     const { patientId, complainantName, complainantContact, description, category } = req.body || {};
     if (!complainantName || !description) {
       return res.status(400).json({ error: 'complainantName and description are required' });
+    }
+    if (typeof complainantName !== 'string' || complainantName.length > 300) {
+      return res.status(400).json({ error: 'complainantName must be a string of 300 characters or fewer' });
+    }
+    if (typeof description !== 'string' || description.length > 5000) {
+      return res.status(400).json({ error: 'description must be a string of 5000 characters or fewer' });
+    }
+    if (complainantContact !== undefined && (typeof complainantContact !== 'string' || complainantContact.length > 200)) {
+      return res.status(400).json({ error: 'complainantContact must be a string of 200 characters or fewer' });
     }
     const validCategories = ['data_access', 'correction_delay', 'breach', 'other'];
     if (category && !validCategories.includes(category)) {
@@ -508,6 +526,18 @@ router.post('/dpdpa/data-sharing', authenticateToken, authorize(PERMISSIONS.VIEW
     const { patientId, sharedWith, purposeOfSharing, dataCategories, legalBasis, consentReference } = req.body || {};
     if (!patientId || !sharedWith || !purposeOfSharing || !dataCategories) {
       return res.status(400).json({ error: 'patientId, sharedWith, purposeOfSharing, and dataCategories are required' });
+    }
+    if (typeof sharedWith !== 'string' || sharedWith.length > 300) {
+      return res.status(400).json({ error: 'sharedWith must be a string of 300 characters or fewer' });
+    }
+    if (typeof purposeOfSharing !== 'string' || purposeOfSharing.length > 1000) {
+      return res.status(400).json({ error: 'purposeOfSharing must be a string of 1000 characters or fewer' });
+    }
+    if (typeof dataCategories !== 'string' || dataCategories.length > 1000) {
+      return res.status(400).json({ error: 'dataCategories must be a string of 1000 characters or fewer' });
+    }
+    if (consentReference !== undefined && (typeof consentReference !== 'string' || consentReference.length > 200)) {
+      return res.status(400).json({ error: 'consentReference must be a string of 200 characters or fewer' });
     }
     const validBases = ['care_referral', 'legal_obligation', 'consent', 'other'];
     if (legalBasis && !validBases.includes(legalBasis)) {

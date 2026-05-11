@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const barcodeService = require('../services/BarcodeService');
+const { validateBarcodeRegister, bad } = require('../utils/validation');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const rateLimit = require('express-rate-limit');
@@ -22,6 +23,9 @@ router.get('/scan/:barcode', authenticateToken, authorize(PERMISSIONS.READ_PHARM
 });
 
 router.post('/register', authenticateToken, authorize(PERMISSIONS.MANAGE_PHARMACY), async (req, res, next) => {
+  const errors = validateBarcodeRegister(req.body || {});
+  if (errors.length > 0) return bad(res, errors);
+
   try {
     const result = await barcodeService.registerBarcode(req.user.tenantId, req.body, req.user);
     res.status(201).json(result);

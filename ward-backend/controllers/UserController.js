@@ -4,6 +4,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const authService = require('../services/AuthService');
 const dbAdapter = require('../db-adapter');
+const { validateUserPayload, bad } = require('../utils/validation');
 
 // GET /api/admin/users — list all staff in tenant
 router.get('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res) => {
@@ -21,6 +22,9 @@ router.get('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (r
 
 // POST /api/admin/users — create a doctor, nurse, or pharmacist
 router.post('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res) => {
+  const errors = validateUserPayload(req.body || {});
+  if (errors.length > 0) return bad(res, errors);
+
   try {
     const { name, role, email, password } = req.body || {};
     const user = await authService.createStaffMember({

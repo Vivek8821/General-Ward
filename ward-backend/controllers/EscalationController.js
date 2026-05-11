@@ -4,12 +4,16 @@ const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantPatient, requireTenantEscalation } = require('../middleware/tenant');
 const escalationService = require('../services/EscalationService');
+const { validateEscalationReason, bad } = require('../utils/validation');
 
 // POST /api/patients/:patientId/escalations (Nurse or Doctor)
 router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT, PERMISSIONS.WRITE_VITALS]), requireTenantPatient('patientId'), async (req, res) => {
+    const err = validateEscalationReason((req.body || {}).reason);
+    if (err) return bad(res, [err]);
+
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
-        const result = await escalationService.createEscalation(req.params.patientId, req.body.reason, req.user.name, tenantId);
+        const result = await escalationService.createEscalation(req.params.patientId, req.body.reason.trim(), req.user.name, tenantId);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
