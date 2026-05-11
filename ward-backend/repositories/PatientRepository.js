@@ -11,6 +11,14 @@ async function collectFullPatientSnapshot(db, patientId, tenantId, dischargeSumm
     tasks,
     handoverNotes,
     dischargeSummaries,
+    medicalHistory,
+    structuredAllergies,
+    clinicalPresentation,
+    labInvestigations,
+    imagingReports,
+    clinicalProcedures,
+    clinicalTeam,
+    toxicologyScreen,
   ] = await Promise.all([
     db.all(
       `SELECT * FROM DailyStats WHERE patientId = ? AND tenantId = ? ORDER BY timestamp ASC`,
@@ -28,12 +36,20 @@ async function collectFullPatientSnapshot(db, patientId, tenantId, dischargeSumm
       `SELECT * FROM DischargeSummaries WHERE patientId = ? AND tenantId = ? ORDER BY timestamp ASC`,
       [patientId, tenantId]
     ),
+    db.get(`SELECT * FROM MedicalHistory WHERE patientId = ? AND tenantId = ?`, [patientId, tenantId]),
+    db.all(`SELECT * FROM StructuredAllergies WHERE patientId = ? AND tenantId = ? ORDER BY recordedAt ASC`, [patientId, tenantId]),
+    db.get(`SELECT * FROM ClinicalPresentation WHERE patientId = ? AND tenantId = ?`, [patientId, tenantId]),
+    db.all(`SELECT * FROM LabInvestigations WHERE patientId = ? AND tenantId = ? ORDER BY investigationDate ASC`, [patientId, tenantId]),
+    db.all(`SELECT * FROM ImagingReports WHERE patientId = ? AND tenantId = ? ORDER BY investigationDate ASC`, [patientId, tenantId]),
+    db.all(`SELECT * FROM ClinicalProcedures WHERE patientId = ? AND tenantId = ? ORDER BY procedureDate ASC`, [patientId, tenantId]),
+    db.all(`SELECT * FROM ClinicalTeam WHERE patientId = ? AND tenantId = ? ORDER BY timestamp ASC`, [patientId, tenantId]),
+    db.get(`SELECT * FROM ToxicologyScreens WHERE patientId = ? AND tenantId = ?`, [patientId, tenantId]),
   ]);
 
   const dischargeSummary = dischargeSummaries.find((s) => s.id === dischargeSummaryId) || null;
 
   return {
-    version: 1,
+    version: 2,
     collectedAt: new Date().toISOString(),
     dischargedBy,
     patient,
@@ -45,6 +61,14 @@ async function collectFullPatientSnapshot(db, patientId, tenantId, dischargeSumm
     escalations,
     tasks,
     handoverNotes,
+    medicalHistory: medicalHistory || null,
+    structuredAllergies: structuredAllergies || [],
+    clinicalPresentation: clinicalPresentation || null,
+    labInvestigations: labInvestigations || [],
+    imagingReports: imagingReports || [],
+    clinicalProcedures: clinicalProcedures || [],
+    clinicalTeam: clinicalTeam || [],
+    toxicologyScreen: toxicologyScreen || null,
   };
 }
 
@@ -56,8 +80,10 @@ class PatientRepository {
         id, tenantId, name, mrn, bedNumber, dob, diagnosis, allergies, careIntensity, status, admittedAt,
         gender, bloodGroup, contactNumber, emergencyContact,
         is_minor, notice_given_at, notice_given_by, guardian_name, guardian_contact, guardian_notice_at,
-        data_nominee, data_nominee_relationship, retention_due_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        data_nominee, data_nominee_relationship, retention_due_at,
+        uhid, nationality, occupation, maritalStatus, codeStatus,
+        insuranceProvider, insurancePolicyNo, tpaName, tpaClaimNo
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         patientData.id,
         tenantId,
@@ -82,6 +108,15 @@ class PatientRepository {
         patientData.data_nominee || null,
         patientData.data_nominee_relationship || null,
         patientData.retention_due_at || null,
+        patientData.uhid || null,
+        patientData.nationality || null,
+        patientData.occupation || null,
+        patientData.maritalStatus || null,
+        patientData.codeStatus || 'full_code',
+        patientData.insuranceProvider || null,
+        patientData.insurancePolicyNo || null,
+        patientData.tpaName || null,
+        patientData.tpaClaimNo || null,
       ]
     );
     return { ...patientData, status: 'active' };
@@ -207,16 +242,27 @@ class PatientRepository {
 
     const result = await dbAdapter.run(
       `UPDATE Patients
-           SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ?, admittedAt = ?
+           SET name = ?, bedNumber = ?, dob = ?, diagnosis = ?, allergies = ?, careIntensity = ?, admittedAt = ?,
+               uhid = ?, nationality = ?, occupation = ?, maritalStatus = ?, codeStatus = ?,
+               insuranceProvider = ?, insurancePolicyNo = ?, tpaName = ?, tpaClaimNo = ?
            WHERE id = ? AND tenantId = ?`,
       [
         patientData.name || existing.name,
         patientData.bedNumber || existing.bedNumber,
         patientData.dob || existing.dob,
         patientData.diagnosis || existing.diagnosis,
-        patientData.allergies || existing.allergies,
+        patientData.allergies !== undefined ? patientData.allergies : existing.allergies,
         patientData.careIntensity !== undefined ? patientData.careIntensity : existing.careIntensity,
         admittedAt,
+        patientData.uhid !== undefined ? patientData.uhid : existing.uhid,
+        patientData.nationality !== undefined ? patientData.nationality : existing.nationality,
+        patientData.occupation !== undefined ? patientData.occupation : existing.occupation,
+        patientData.maritalStatus !== undefined ? patientData.maritalStatus : existing.maritalStatus,
+        patientData.codeStatus !== undefined ? patientData.codeStatus : existing.codeStatus,
+        patientData.insuranceProvider !== undefined ? patientData.insuranceProvider : existing.insuranceProvider,
+        patientData.insurancePolicyNo !== undefined ? patientData.insurancePolicyNo : existing.insurancePolicyNo,
+        patientData.tpaName !== undefined ? patientData.tpaName : existing.tpaName,
+        patientData.tpaClaimNo !== undefined ? patientData.tpaClaimNo : existing.tpaClaimNo,
         id,
         tenant,
       ]
@@ -250,13 +296,18 @@ class PatientRepository {
       const summaryId = crypto.randomUUID();
       const vitals = data.dischargeVitals ? JSON.stringify(data.dischargeVitals) : '{}';
 
+      const serializeJson = (v) =>
+        v == null ? null : typeof v === 'string' ? v : JSON.stringify(v);
+
       await run(
         `
                 INSERT INTO DischargeSummaries (
                     id, tenantId, patientId, reasonForAdmission, duration,
                     medicationsDuringAdmission, dischargeVitals,
-                    dischargeRecommendations, dischargedBy
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    dischargeRecommendations, dischargedBy,
+                    admissionDiagnosis, dischargeDiagnosis, conditionAtDischarge, dischargeMode,
+                    dischargePrescription, followUpSchedule, dischargeInstructions, dietaryRestrictions
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
         [
           summaryId,
@@ -268,6 +319,14 @@ class PatientRepository {
           vitals,
           data.dischargeRecommendations,
           dischargedBy,
+          data.admissionDiagnosis || null,
+          data.dischargeDiagnosis || null,
+          data.conditionAtDischarge || null,
+          data.dischargeMode || null,
+          serializeJson(data.dischargePrescription),
+          serializeJson(data.followUpSchedule),
+          data.dischargeInstructions || null,
+          serializeJson(data.dietaryRestrictions),
         ]
       );
 

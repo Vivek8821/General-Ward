@@ -1,13 +1,12 @@
 import { FileText } from 'lucide-react';
 
+const DISCHARGE_MODES = ['home', 'ama', 'transferred', 'lama', 'expired'];
+
 export default function DischargeModal({ isOpen, onClose, onSubmit, form, setForm, patientName }) {
   if (!isOpen) return null;
 
   const updateVitals = (key, val) => {
-    setForm({
-      ...form,
-      dischargeVitals: { ...form.dischargeVitals, [key]: val }
-    });
+    setForm({ ...form, dischargeVitals: { ...form.dischargeVitals, [key]: val } });
   };
 
   return (
@@ -20,6 +19,8 @@ export default function DischargeModal({ isOpen, onClose, onSubmit, form, setFor
           <p className="text-text-muted text-sm mt-1">Please completely fill out the clinical discharge summary for {patientName}.</p>
         </div>
         <form onSubmit={onSubmit} className="p-6 space-y-6">
+
+          {/* Core fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-bold mb-1 text-text-secondary">Reason for Admission</label>
@@ -29,12 +30,39 @@ export default function DischargeModal({ isOpen, onClose, onSubmit, form, setFor
               <label className="block text-sm font-bold mb-1 text-text-secondary">Duration of Stay</label>
               <input type="text" className="input-field" placeholder="e.g. 5 days" value={form.duration} onChange={e => setForm({...form, duration: e.target.value})} required />
             </div>
+            <div>
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Discharge Mode</label>
+              <select className="input-field" value={form.dischargeMode || ''} onChange={e => setForm({...form, dischargeMode: e.target.value})}>
+                <option value="">— Select —</option>
+                {DISCHARGE_MODES.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+              </select>
+            </div>
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-bold mb-1 text-text-secondary">Medication History during Admission</label>
               <textarea className="input-field min-h-[80px]" placeholder="Summary of administered meds..." value={form.medicationsDuringAdmission} onChange={e => setForm({...form, medicationsDuringAdmission: e.target.value})} required />
             </div>
           </div>
 
+          {/* Extended clinical diagnosis fields */}
+          <div className="bg-bg-tertiary p-5 rounded-xl border border-border space-y-4">
+            <h4 className="font-bold text-sm uppercase tracking-wider text-text-muted">Clinical Diagnosis</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold mb-1 text-text-secondary">Admission Diagnosis</label>
+                <input type="text" className="input-field !text-sm" value={form.admissionDiagnosis || ''} onChange={e => setForm({...form, admissionDiagnosis: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1 text-text-secondary">Discharge Diagnosis</label>
+                <input type="text" className="input-field !text-sm" value={form.dischargeDiagnosis || ''} onChange={e => setForm({...form, dischargeDiagnosis: e.target.value})} />
+              </div>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-bold mb-1 text-text-secondary">Condition at Discharge</label>
+                <input type="text" className="input-field !text-sm" placeholder="e.g. Stable, Improved" value={form.conditionAtDischarge || ''} onChange={e => setForm({...form, conditionAtDischarge: e.target.value})} />
+              </div>
+            </div>
+          </div>
+
+          {/* Vitals */}
           <div className="bg-bg-tertiary p-5 rounded-xl border border-border">
             <h4 className="font-bold text-sm uppercase tracking-wider text-text-muted mb-4">Vitals at Time of Discharge</h4>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -61,9 +89,42 @@ export default function DischargeModal({ isOpen, onClose, onSubmit, form, setFor
             </div>
           </div>
 
-          <div className="col-span-1 md:col-span-2">
-            <label className="block text-sm font-bold mb-1 text-text-secondary">Medications & Health Recommendations</label>
-            <textarea className="input-field min-h-[100px]" placeholder="Post-discharge care, prescriptions, follow-up dates..." value={form.dischargeRecommendations} onChange={e => setForm({...form, dischargeRecommendations: e.target.value})} required />
+          {/* Prescription & follow-up */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Medications & Health Recommendations</label>
+              <textarea className="input-field min-h-[100px]" placeholder="Post-discharge care, prescriptions, follow-up dates..." value={form.dischargeRecommendations} onChange={e => setForm({...form, dischargeRecommendations: e.target.value})} required />
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-1 text-text-secondary">
+                Discharge Prescription <span className="text-text-muted font-normal text-xs">(JSON array or free text)</span>
+              </label>
+              <textarea
+                className="input-field min-h-[80px] font-mono !text-xs"
+                placeholder='[{"name":"Metformin","dose":"500mg","route":"oral","frequency":"BD","duration":"30 days"}]'
+                value={form.dischargePrescription || ''}
+                onChange={e => setForm({...form, dischargePrescription: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-1 text-text-secondary">
+                Follow-Up Schedule <span className="text-text-muted font-normal text-xs">(JSON array or free text)</span>
+              </label>
+              <textarea
+                className="input-field min-h-[60px] font-mono !text-xs"
+                placeholder='[{"date":"2026-06-01","department":"Cardiology","notes":"Review ECG"}]'
+                value={form.followUpSchedule || ''}
+                onChange={e => setForm({...form, followUpSchedule: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Patient Discharge Instructions</label>
+              <textarea className="input-field min-h-[80px]" placeholder="Instructions for patient on discharge…" value={form.dischargeInstructions || ''} onChange={e => setForm({...form, dischargeInstructions: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-1 text-text-secondary">Dietary Restrictions</label>
+              <textarea className="input-field min-h-[60px]" placeholder="e.g. Low sodium diet, avoid grapefruit…" value={form.dietaryRestrictions || ''} onChange={e => setForm({...form, dietaryRestrictions: e.target.value})} />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

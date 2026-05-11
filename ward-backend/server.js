@@ -106,6 +106,14 @@ app.use('/api/admin', adminAuditRoutes);
 app.use('/api/admin/users', require('./controllers/UserController'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/statistics', require('./controllers/StatisticsController'));
+app.use('/api/patients', require('./controllers/MedicalHistoryController'));
+app.use('/api/patients', require('./controllers/AllergiesController'));
+app.use('/api/patients', require('./controllers/ClinicalPresentationController'));
+app.use('/api/patients', require('./controllers/LabInvestigationsController'));
+app.use('/api/patients', require('./controllers/ImagingController'));
+app.use('/api/patients', require('./controllers/ProceduresController'));
+app.use('/api/patients', require('./controllers/ClinicalTeamController'));
+app.use('/api/patients', require('./controllers/ToxicologyController'));
 
 // Health check
 app.get('/', (req, res) => {

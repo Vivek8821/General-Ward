@@ -20,6 +20,15 @@ import { allergiesHasRisk, formatAllergiesMutedLabel } from '../utils/patientDis
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import MedicalHistoryForm from '../features/clinical/MedicalHistoryForm';
+import StructuredAllergiesForm from '../features/clinical/StructuredAllergiesForm';
+import ClinicalPresentationForm from '../features/clinical/ClinicalPresentationForm';
+import LabInvestigationsForm from '../features/clinical/LabInvestigationsForm';
+import ImagingReportsForm from '../features/clinical/ImagingReportsForm';
+import ProceduresLog from '../features/clinical/ProceduresLog';
+import ToxicologyForm from '../features/clinical/ToxicologyForm';
+import ClinicalTeamForm from '../features/clinical/ClinicalTeamForm';
+import DischargeReportButton from '../features/clinical/DischargeReportButton';
 
 function errMsg(err) {
   return err?.message || 'Unknown error';
@@ -40,7 +49,15 @@ export default function PatientDetail() {
       duration: '',
       medicationsDuringAdmission: '',
       dischargeVitals: { hr: '', bp: '', o2: '', temp: '', lipids: '' },
-      dischargeRecommendations: ''
+      dischargeRecommendations: '',
+      admissionDiagnosis: '',
+      dischargeDiagnosis: '',
+      conditionAtDischarge: '',
+      dischargeMode: '',
+      dischargePrescription: '',
+      followUpSchedule: '',
+      dischargeInstructions: '',
+      dietaryRestrictions: '',
   });
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
   const [escalateReason, setEscalateReason] = useState('');
@@ -403,10 +420,20 @@ export default function PatientDetail() {
             <TabsTrigger value="meds">
               <ClipboardList size={18} aria-hidden /> Medications
             </TabsTrigger>
+            <TabsTrigger value="clinical">
+              <ClipboardList size={18} aria-hidden /> Clinical Records
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="discharge">
-            {patient.status === 'discharged' && <DischargeSummaryTab patientId={id} />}
+            {patient.status === 'discharged' && (
+              <div className="space-y-4">
+                <DischargeSummaryTab patientId={id} />
+                <div className="px-4 pb-4">
+                  <DischargeReportButton patientId={id} mrn={patient.mrn} />
+                </div>
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="history">
             <HistoryTab patientId={id} readOnly={patient.status === 'discharged'} admittedAt={patient.admittedAt} />
@@ -423,6 +450,20 @@ export default function PatientDetail() {
           </TabsContent>
           <TabsContent value="meds">
             <MedsTab patientId={id} readOnly={patient.status === 'discharged'} />
+          </TabsContent>
+          <TabsContent value="clinical">
+            <div className="divide-y divide-border">
+              <MedicalHistoryForm patientId={id} readOnly={patient.status === 'discharged'} />
+              <StructuredAllergiesForm patientId={id} readOnly={patient.status === 'discharged'} />
+              <ClinicalPresentationForm patientId={id} readOnly={patient.status === 'discharged'} />
+              <LabInvestigationsForm patientId={id} readOnly={patient.status === 'discharged'} />
+              <ImagingReportsForm patientId={id} readOnly={patient.status === 'discharged'} />
+              <ProceduresLog patientId={id} readOnly={patient.status === 'discharged'} />
+              <ToxicologyForm patientId={id} readOnly={patient.status === 'discharged'} />
+              {(user?.role === 'doctor' || patient.status === 'discharged') && (
+                <ClinicalTeamForm patientId={id} readOnly={patient.status === 'discharged'} />
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

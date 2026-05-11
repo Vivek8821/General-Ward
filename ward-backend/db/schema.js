@@ -537,7 +537,163 @@ const initDb = (db) => {
         db.run(`CREATE INDEX IF NOT EXISTS idx_grievances_tenant ON DpdpaGrievances(tenantId)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_sharing_log_tenant ON DpdpaDataSharingLog(tenantId)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_sharing_log_patient ON DpdpaDataSharingLog(patientId)`);
-        
+
+        // Migration 015: Extended patient demographics
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN uhid TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN nationality TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN occupation TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN maritalStatus TEXT CHECK(maritalStatus IS NULL OR maritalStatus IN ('single','married','widowed','divorced','other'))`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN codeStatus TEXT CHECK(codeStatus IS NULL OR codeStatus IN ('full_code','dnr','dni','comfort_only')) DEFAULT 'full_code'`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN insuranceProvider TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN insurancePolicyNo TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN tpaName TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE Patients ADD COLUMN tpaClaimNo TEXT`);
+
+        // Migration 016: Clinical discharge tables
+        db.run(`
+          CREATE TABLE IF NOT EXISTS MedicalHistory (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL UNIQUE,
+            tenantId TEXT NOT NULL,
+            comorbidities TEXT,
+            surgicalHistory TEXT,
+            familyHistory TEXT,
+            socialHistory TEXT,
+            createdBy TEXT NOT NULL,
+            updatedBy TEXT,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS StructuredAllergies (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL,
+            tenantId TEXT NOT NULL,
+            allergen TEXT NOT NULL,
+            category TEXT NOT NULL CHECK(category IN ('drug','food','environmental','other')),
+            reaction TEXT NOT NULL,
+            severity TEXT NOT NULL CHECK(severity IN ('mild','moderate','severe','high')),
+            verificationMethod TEXT,
+            recordedBy TEXT NOT NULL,
+            recordedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_allergies_patient ON StructuredAllergies(patientId, tenantId)`);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ClinicalPresentation (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL UNIQUE,
+            tenantId TEXT NOT NULL,
+            historyOfPresentingIllness TEXT,
+            physicalExamFindings TEXT,
+            examinedBy TEXT NOT NULL,
+            examinedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS LabInvestigations (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL,
+            tenantId TEXT NOT NULL,
+            investigationDate DATE NOT NULL,
+            dayLabel TEXT,
+            results TEXT NOT NULL,
+            recordedBy TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_labs_patient ON LabInvestigations(patientId, tenantId, investigationDate)`);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ImagingReports (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL,
+            tenantId TEXT NOT NULL,
+            modalityType TEXT NOT NULL CHECK(modalityType IN ('ecg','xray','usg','ct','mri','pet','echo','spirometry','other')),
+            investigationDate DATE NOT NULL,
+            equipment TEXT,
+            findings TEXT NOT NULL,
+            impression TEXT,
+            reportedBy TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_imaging_patient ON ImagingReports(patientId, tenantId)`);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ClinicalProcedures (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL,
+            tenantId TEXT NOT NULL,
+            procedureDate DATE NOT NULL,
+            procedureName TEXT NOT NULL,
+            performedBy TEXT NOT NULL,
+            outcome TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_procedures_patient ON ClinicalProcedures(patientId, tenantId)`);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ClinicalTeam (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL,
+            tenantId TEXT NOT NULL,
+            role TEXT NOT NULL,
+            name TEXT NOT NULL,
+            registrationNo TEXT,
+            qualification TEXT,
+            clinicalRemarks TEXT,
+            remarksDate DATE,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_team_patient ON ClinicalTeam(patientId, tenantId)`);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ToxicologyScreens (
+            id TEXT PRIMARY KEY,
+            patientId TEXT NOT NULL UNIQUE,
+            tenantId TEXT NOT NULL,
+            screenDate DATE NOT NULL,
+            bac TEXT,
+            drugScreen TEXT,
+            poisonScreen TEXT,
+            heavyMetals TEXT,
+            recordedBy TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+
+        // Migration 017: Extended DischargeSummaries columns
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN admissionDiagnosis TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN dischargeDiagnosis TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN conditionAtDischarge TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN dischargeMode TEXT CHECK(dischargeMode IS NULL OR dischargeMode IN ('home','ama','transferred','lama','expired'))`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN dischargePrescription TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN followUpSchedule TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN dischargeInstructions TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE DischargeSummaries ADD COLUMN dietaryRestrictions TEXT`);
+
+        // Tenant triggers for new tables
+        [
+          'MedicalHistory', 'StructuredAllergies', 'ClinicalPresentation',
+          'LabInvestigations', 'ImagingReports', 'ClinicalProcedures',
+          'ClinicalTeam', 'ToxicologyScreens'
+        ].forEach(createDefaultTenantTrigger);
+
         resolve();
       } catch (err) {
         reject(err);

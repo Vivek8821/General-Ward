@@ -12,4 +12,14 @@ export const queryKeys = {
     admissions: (period: string, filters: Record<string, string>) => ['statistics', 'admissions', period, filters] as const,
     outcomes: (period: string, filters: Record<string, string>) => ['statistics', 'outcomes', period, filters] as const,
   },
+  clinical: {
+    medicalHistory: (patientId: string | undefined) => ['clinical', patientId, 'medicalHistory'] as const,
+    structuredAllergies: (patientId: string | undefined) => ['clinical', patientId, 'structuredAllergies'] as const,
+    clinicalPresentation: (patientId: string | undefined) => ['clinical', patientId, 'clinicalPresentation'] as const,
+    labInvestigations: (patientId: string | undefined) => ['clinical', patientId, 'labInvestigations'] as const,
+    imagingReports: (patientId: string | undefined) => ['clinical', patientId, 'imagingReports'] as const,
+    clinicalProcedures: (patientId: string | undefined) => ['clinical', patientId, 'clinicalProcedures'] as const,
+    clinicalTeam: (patientId: string | undefined) => ['clinical', patientId, 'clinicalTeam'] as const,
+    toxicology: (patientId: string | undefined) => ['clinical', patientId, 'toxicology'] as const,
+  },
 };

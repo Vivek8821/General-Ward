@@ -5,6 +5,14 @@ const observationRepository = require('../repositories/ObservationRepository');
 const handoverNotesRepository = require('../repositories/HandoverNotesRepository');
 const escalationRepository = require('../repositories/EscalationRepository');
 const taskRepository = require('../repositories/TaskRepository');
+const medicalHistoryRepo = require('../repositories/MedicalHistoryRepository');
+const structuredAllergyRepo = require('../repositories/StructuredAllergyRepository');
+const clinicalPresentationRepo = require('../repositories/ClinicalPresentationRepository');
+const labInvestigationRepo = require('../repositories/LabInvestigationRepository');
+const imagingReportRepo = require('../repositories/ImagingReportRepository');
+const clinicalProcedureRepo = require('../repositories/ClinicalProcedureRepository');
+const clinicalTeamRepo = require('../repositories/ClinicalTeamRepository');
+const toxicologyScreenRepo = require('../repositories/ToxicologyScreenRepository');
 const scoringService = require('./ScoringService');
 const config = require('../config');
 
@@ -109,6 +117,50 @@ class ReportDataService {
     return '{' + keys
       .map(key => `${JSON.stringify(key)}:${this._canonicalStringify(obj[key])}`)
       .join(',') + '}';
+  }
+
+  async aggregateDischargeReportData(patientId, tenantId) {
+    const [
+      baseData,
+      medicalHistory,
+      structuredAllergies,
+      clinicalPresentation,
+      labInvestigations,
+      imagingReports,
+      clinicalProcedures,
+      clinicalTeam,
+      toxicologyScreen,
+    ] = await Promise.all([
+      this.aggregatePatientData(patientId, tenantId),
+      medicalHistoryRepo.getByPatient(patientId, tenantId),
+      structuredAllergyRepo.getByPatient(patientId, tenantId),
+      clinicalPresentationRepo.getByPatient(patientId, tenantId),
+      labInvestigationRepo.getByPatient(patientId, tenantId),
+      imagingReportRepo.getByPatient(patientId, tenantId),
+      clinicalProcedureRepo.getByPatient(patientId, tenantId),
+      clinicalTeamRepo.getByPatient(patientId, tenantId),
+      toxicologyScreenRepo.getByPatient(patientId, tenantId),
+    ]);
+
+    return {
+      ...baseData,
+      // Normalize key names for ClinicalDischargeReportService
+      dischargeSummary: baseData.discharge || null,
+      dailyStats: [
+        ...(baseData.vitals || []).map(v => ({ ...v, type: 'vital' })),
+        ...(baseData.diet || []).map(d => ({ ...d, type: 'diet' })),
+        ...(baseData.sleep || []).map(s => ({ ...s, type: 'sleep' })),
+      ],
+      handoverNotes: baseData.notes || [],
+      medicalHistory: medicalHistory || null,
+      structuredAllergies: structuredAllergies || [],
+      clinicalPresentation: clinicalPresentation || null,
+      labInvestigations: labInvestigations || [],
+      imagingReports: imagingReports || [],
+      clinicalProcedures: clinicalProcedures || [],
+      clinicalTeam: clinicalTeam || [],
+      toxicologyScreen: toxicologyScreen || null,
+    };
   }
 }
 
