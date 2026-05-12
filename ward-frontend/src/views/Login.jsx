@@ -3,9 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Hospital, Eye, EyeOff } from 'lucide-react';
 
-/** Default sign-in for dev — matches ward-backend/seed.js (Dr. Smith / 1234). */
+/** Default username hint for dev — password must always be typed manually. */
 const DEFAULT_LOGIN = import.meta.env.DEV
-  ? { username: 'Dr. Smith', password: '1234' }
+  ? { username: 'Dr. Smith', password: '' }
   : { username: '', password: '' };
 
 export default function Login() {

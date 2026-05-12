@@ -21,6 +21,7 @@ export default function DashboardView() {
   });
   const [search, setSearch] = useState('');
   const prevEscalatedRef = useRef([]);
+  const isInitialLoad = useRef(true);
   const location = useLocation();
   const viewMode = location.pathname === '/archives' ? 'archived' : 'active';
   
@@ -72,11 +73,19 @@ export default function DashboardView() {
 
   useEffect(() => {
     const prev = prevEscalatedRef.current;
-    if (escalated.length > prev.length) {
+    
+    // Only show toasts if we have already done the initial data load
+    // and there are actually more escalations than before
+    if (!isInitialLoad.current && escalated.length > prev.length) {
       escalated
         .filter(e => !prev.some(p => p.id === e.id))
         .forEach(e => toast.error(`Case Escalated: ${e.reason}`, { icon: '🚨', duration: 6000 }));
     }
+    
+    if (escalated.length > 0) {
+      isInitialLoad.current = false;
+    }
+    
     prevEscalatedRef.current = escalated;
   }, [escalated]);
 

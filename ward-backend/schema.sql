@@ -560,3 +560,7 @@ ALTER TABLE DischargeSummaries ADD COLUMN dischargePrescription TEXT;
 ALTER TABLE DischargeSummaries ADD COLUMN followUpSchedule TEXT;
 ALTER TABLE DischargeSummaries ADD COLUMN dischargeInstructions TEXT;
 ALTER TABLE DischargeSummaries ADD COLUMN dietaryRestrictions TEXT;
+
+-- Migration 018: Add IP and UA to RefreshTokens
+ALTER TABLE RefreshTokens ADD COLUMN ipAddress TEXT;
+ALTER TABLE RefreshTokens ADD COLUMN userAgent TEXT;
