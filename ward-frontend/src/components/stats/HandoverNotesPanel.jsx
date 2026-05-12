@@ -33,7 +33,7 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
 
   useEffect(() => {
     if (!patientId) { setNotes([]); setLoading(false); return; }
-    let ignore = false;
+    const controller = new AbortController();
     setLoading(true);
 
     const params = new URLSearchParams();
@@ -43,17 +43,17 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
     const qs = params.toString();
     const endpoint = qs ? `/patients/${patientId}/notes?${qs}` : `/patients/${patientId}/notes`;
 
-    api.get(endpoint)
-      .then(data => { if (!ignore) setNotes(Array.isArray(data) ? data : []); })
+    api.get(endpoint, { signal: controller.signal })
+      .then(data => setNotes(Array.isArray(data) ? data : []))
       .catch(err => {
-        if (!ignore) {
+        if (!controller.signal.aborted) {
           if (err?.status === 404) setNotes([]);
           else toast.error('Failed to load handover notes: ' + (err.message || 'unknown error'));
         }
       })
-      .finally(() => { if (!ignore) setLoading(false); });
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
 
-    return () => { ignore = true; };
+    return () => controller.abort();
   }, [patientId, shiftFilter, rangeFromIso]);
 
   const fetchNotes = async () => {

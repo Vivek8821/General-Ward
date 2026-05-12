@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { api, API_BASE, getCsrfHeaders } from '../../utils/api';
 import { Archive, HeartPulse, Pill, CalendarClock, Activity, FileText, Download, History, RefreshCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -8,21 +9,6 @@ export default function DischargeSummaryTab({ patientId }) {
     const [loading, setLoading] = useState(true);
 
     const [reports, setReports] = useState([]);
-    const [generating, setGenerating] = useState(false);
-
-    const fetchSummary = async () => {
-        try {
-            const data = await api.get(`/patients/${patientId}/discharge-summary`);
-            if (data.dischargeVitals) {
-                data.dischargeVitals = JSON.parse(data.dischargeVitals);
-            }
-            setSummary(data);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const fetchHistory = async () => {
         try {
@@ -34,26 +20,32 @@ export default function DischargeSummaryTab({ patientId }) {
     };
 
     useEffect(() => {
-        fetchSummary();
+        const controller = new AbortController();
+        api.get(`/patients/${patientId}/discharge-summary`, { signal: controller.signal })
+            .then(data => {
+                if (data.dischargeVitals) data.dischargeVitals = JSON.parse(data.dischargeVitals);
+                setSummary(data);
+            })
+            .catch(err => { if (!controller.signal.aborted) console.error(err); })
+            .finally(() => { if (!controller.signal.aborted) setLoading(false); });
         fetchHistory();
+        return () => controller.abort();
     }, [patientId]);
 
-    const handleGenerateReport = async () => {
-        setGenerating(true);
-        const tid = toast.loading('Generating comprehensive treatment report...');
-        try {
+    const reportMutation = useMutation({
+        mutationFn: async () => {
             const response = await fetch(`${API_BASE}/reports/patient/${patientId}/generate`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: getCsrfHeaders(),
             });
-
             if (!response.ok) {
                 const body = await response.json().catch(() => ({}));
                 throw new Error(body.error || 'Failed to generate report');
             }
-
-            const blob = await response.blob();
+            return response.blob();
+        },
+        onSuccess: (blob) => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -62,15 +54,11 @@ export default function DischargeSummaryTab({ patientId }) {
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-
-            toast.success('Report generated successfully', { id: tid });
+            toast.success('Report generated successfully');
             fetchHistory();
-        } catch (err) {
-            toast.error(err.message, { id: tid });
-        } finally {
-            setGenerating(false);
-        }
-    };
+        },
+        onError: (err) => toast.error(err.message),
+    });
 
     return (
         <div className="space-y-6 mt-4 animate-in fade-in duration-500">
@@ -94,13 +82,13 @@ export default function DischargeSummaryTab({ patientId }) {
                                 </h3>
                                 <p className="text-xs text-text-muted">Generate a tamper-evident clinical summary with QR verification</p>
                             </div>
-                            <button 
-                                onClick={handleGenerateReport}
-                                disabled={generating}
+                            <button
+                                onClick={() => reportMutation.mutate()}
+                                disabled={reportMutation.isPending}
                                 className="btn btn-primary flex items-center gap-2 py-3 px-6 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
                             >
-                                {generating ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                {generating ? 'Generating PDF...' : 'Generate Treatment Report'}
+                                {reportMutation.isPending ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                {reportMutation.isPending ? 'Generating PDF...' : 'Generate Treatment Report'}
                             </button>
                         </div>
 
@@ -128,10 +116,10 @@ export default function DischargeSummaryTab({ patientId }) {
                                                     {r.periodFrom} to {r.periodTo}
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
-                                                    <button 
+                                                    <button
                                                         className="p-2 text-text-muted hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
                                                         title="Re-generate this exact report"
-                                                        onClick={handleGenerateReport}
+                                                        onClick={() => reportMutation.mutate()}
                                                     >
                                                         <RefreshCcw size={16} />
                                                     </button>

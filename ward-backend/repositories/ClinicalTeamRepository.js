@@ -30,12 +30,12 @@ class ClinicalTeamRepository {
     return dbAdapter.get(`SELECT * FROM ClinicalTeam WHERE id = ?`, [id]);
   }
 
-  async update(id, tenantId, data) {
+  async update(id, patientId, tenantId, data) {
     await dbAdapter.run(
       `UPDATE ClinicalTeam
        SET role = ?, name = ?, registrationNo = ?, qualification = ?,
            clinicalRemarks = ?, remarksDate = ?
-       WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
+       WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
       [
         data.role,
         data.name,
@@ -44,16 +44,17 @@ class ClinicalTeamRepository {
         data.clinicalRemarks || null,
         data.remarksDate || null,
         id,
+        patientId,
         tenantId,
       ]
     );
-    return dbAdapter.get(`SELECT * FROM ClinicalTeam WHERE id = ? AND tenantId = ?`, [id, tenantId]);
+    return dbAdapter.get(`SELECT * FROM ClinicalTeam WHERE id = ? AND patientId = ? AND tenantId = ?`, [id, patientId, tenantId]);
   }
 
-  async delete(id, tenantId) {
+  async delete(id, patientId, tenantId) {
     return dbAdapter.run(
-      `UPDATE ClinicalTeam SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
-      [id, tenantId]
+      `UPDATE ClinicalTeam SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
+      [id, patientId, tenantId]
     );
   }
 }

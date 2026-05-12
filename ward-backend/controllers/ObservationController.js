@@ -31,7 +31,7 @@ router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_VITALS, PERM
     }
 
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const result = await observationService.recordObservation(req.params.patientId, tenantId, req.user, {
             type,
             data,
@@ -46,7 +46,7 @@ router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_VITALS, PERM
 // GET /api/patients/:patientId/stats OR /api/patients/:patientId/history
 router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const isHistoryMount = req.baseUrl.endsWith('/history');
         
         if (isHistoryMount) {
@@ -65,7 +65,7 @@ router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireT
 // GET /api/patients/:patientId/stats/ews/latest
 router.get('/ews/latest', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const result = await observationService.getLatestEws(req.params.patientId, tenantId);
         if (!result) return res.status(404).json({ error: 'No vitals found' });
         res.json(result);
@@ -77,7 +77,7 @@ router.get('/ews/latest', authenticateToken, authorize(PERMISSIONS.READ_PATIENT)
 // GET /api/patients/:patientId/stats/trends
 router.get('/trends', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const result = await observationService.getTrends(req.params.patientId, tenantId);
         res.json(result);
     } catch (err) {
@@ -92,7 +92,7 @@ router.post('/ingest', authenticateToken, ingestLimiter, authorizeAny([PERMISSIO
         return res.status(400).json({ error: 'Invalid ingestion payload', code: 'VALIDATION_ERROR' });
     }
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const idempotencyKey = req.get('Idempotency-Key');
         const { status, body } = await observationService.ingestObservation(patientId, tenantId, req.user, req.body, idempotencyKey);
         res.status(status).json(body);

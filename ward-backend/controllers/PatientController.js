@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { authenticateToken } = require('../middleware/auth');
-const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
+const { PERMISSIONS, ROLE_PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
+const { protect } = require('../middleware/protect');
+const dbAdapter = require('../db-adapter');
 const patientService = require('../services/PatientService');
 const clinicalAuditService = require('../services/ClinicalAuditService');
+const logger = require('../utils/logger');
 const { validatePatientCreate, validatePatientUpdate, validateDischargePayload, bad } = require('../utils/validation');
 const medicationRoutes = require('./MedicationController');
 const observationRoutes = require('./ObservationController');
@@ -24,7 +27,7 @@ router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]), a
     if (errors.length > 0) return bad(res, errors);
 
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const result = await patientService.createPatient({ ...req.body, tenantId });
         await clinicalAuditService.recordPatientUpdate({
             tenantId,
@@ -41,9 +44,9 @@ router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]), a
 // Get all patients
 router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res, next) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const patients = await patientService.getAllPatients(tenantId);
-        res.json(patients);
+        res.json({ data: patients });
     } catch (error) {
         error.status = 500;
         next(error);
@@ -53,9 +56,9 @@ router.get('/', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (r
 // Get archived (discharged) patients
 router.get('/archives', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res, next) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const patients = await patientService.getArchivedPatients(tenantId);
-        res.json(patients);
+        res.json({ data: patients });
     } catch (error) {
         error.status = 500;
         next(error);
@@ -65,7 +68,7 @@ router.get('/archives', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), 
 // Full immutable file for one archived admission (snapshot at discharge)
 router.get('/archives/:archiveId', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const record = await patientService.getHospitalArchive(req.params.archiveId, tenantId);
         res.json(record);
     } catch (error) {
@@ -77,25 +80,38 @@ router.get('/archives/:archiveId', authenticateToken, authorize(PERMISSIONS.READ
     }
 });
 
-// Get patient by ID
-router.get('/:id', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'), async (req, res, next) => {
-    try {
-        const tenantId = req.user.tenantId || 'tenant-default';
-        const patient = await patientService.getPatientById(req.params.id, tenantId);
-        res.json(patient);
-    } catch (error) {
-        if (error.message === 'Patient not found') {
-            return res.status(404).json({ error: error.message });
+// Get patient by ID — example using protect() to combine auth + RBAC + tenant scope in one step
+router.get('/:id',
+    protect(async (req) => {
+        // 1. RBAC: user must have READ_PATIENT permission
+        const perms = ROLE_PERMISSIONS[req.user.role] || [];
+        if (!perms.includes(PERMISSIONS.READ_PATIENT))
+            return { allowed: false, reason: `missing permission: ${PERMISSIONS.READ_PATIENT}` };
+        // 2. Tenant scope: patient must belong to the caller's hospital
+        const tenantId = req.tenantId;
+        const row = await dbAdapter.get('SELECT id FROM Patients WHERE id = ? AND tenantId = ?', [req.params.id, tenantId]);
+        if (!row) return { allowed: false, reason: 'patient not in tenant scope' };
+        return true;
+    }, { resource: 'patient' }),
+    async (req, res, next) => {
+        try {
+            const tenantId = req.tenantId;
+            const patient = await patientService.getPatientById(req.params.id, tenantId);
+            res.json(patient);
+        } catch (error) {
+            if (error.message === 'Patient not found') {
+                return res.status(404).json({ error: error.message });
+            }
+            error.status = 500;
+            next(error);
         }
-        error.status = 500;
-        next(error);
     }
-});
+);
 
 // Get discharge summary
 router.get('/:id/discharge-summary', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'), async (req, res, next) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const summary = await patientService.getDischargeSummary(req.params.id, tenantId);
         res.json(summary);
     } catch (error) {
@@ -113,7 +129,7 @@ router.put('/:id', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]),
     if (errors.length > 0) return bad(res, errors);
 
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const result = await patientService.updatePatient(req.params.id, req.body, tenantId);
         try {
             await clinicalAuditService.recordPatientUpdate({
@@ -123,7 +139,7 @@ router.put('/:id', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT]),
                 body: req.body,
             });
         } catch (auditErr) {
-            console.error('[ClinicalChangeLog] patient update', auditErr.message);
+            logger.warn('clinical_audit_write_failed', { patientId: req.params.id, error: auditErr.message });
         }
         res.json(result);
     } catch (error) {
@@ -141,7 +157,7 @@ router.post('/:id/discharge', authenticateToken, authorize(PERMISSIONS.DISCHARGE
 
     try {
         const dischargedBy = req.user.name || 'Doctor';
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const result = await patientService.dischargePatient(req.params.id, req.body, dischargedBy, tenantId);
         await clinicalAuditService.recordPatientUpdate({
             tenantId,

@@ -3,6 +3,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const dbAdapter = require('../db-adapter');
 const dpdpaRepository = require('../repositories/DpdpaRepository');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 const MAX_LIMIT = 100;
@@ -43,7 +44,7 @@ function resolveRetentionDays(body) {
  * GET /api/admin/audit-logs
  * Query: limit, cursor (timestamp|id), success (0|1), from, to (ISO date strings)
  */
-router.get('/audit-logs', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
+router.get('/audit-logs', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res, next) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const parsedLimit = parseLimit(req.query.limit);
@@ -92,8 +93,8 @@ router.get('/audit-logs', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), 
 
     res.json({ items: rows, nextCursor });
   } catch (err) {
-    console.error('[adminAudit] list', err);
-    res.status(500).json({ error: err.message || 'Failed to list audit logs' });
+    logger.error('audit_list_failed', { error: err.message, tenantId: tenantIdForUser(req.user) });
+    next(err);
   }
 });
 
@@ -101,7 +102,7 @@ router.get('/audit-logs', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), 
  * GET /api/admin/audit-logs/export.csv
  * Same query params as GET /audit-logs except no cursor pagination — capped export.
  */
-router.get('/audit-logs/export.csv', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
+router.get('/audit-logs/export.csv', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res, next) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const exportMax = Math.min(parseLimit(req.query.limit) || DEFAULT_LIMIT, MAX_LIMIT);
@@ -166,8 +167,8 @@ router.get('/audit-logs/export.csv', authenticateToken, authorize(PERMISSIONS.VI
     res.setHeader('Content-Disposition', 'attachment; filename="audit-logs.csv"');
     res.send(lines.join('\r\n'));
   } catch (err) {
-    console.error('[adminAudit] export', err);
-    res.status(500).json({ error: err.message || 'Failed to export audit logs' });
+    logger.error('audit_export_failed', { error: err.message, tenantId: tenantIdForUser(req.user) });
+    next(err);
   }
 });
 
@@ -179,7 +180,7 @@ router.get('/audit-logs/export.csv', authenticateToken, authorize(PERMISSIONS.VI
  * GET /api/admin/clinical-changes
  * Domain-level entity changes (tenant-scoped). Query: limit, cursor (timestamp|id), entityType, from, to
  */
-router.get('/clinical-changes', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
+router.get('/clinical-changes', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res, next) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const parsedLimit = parseLimit(req.query.limit);
@@ -228,8 +229,8 @@ router.get('/clinical-changes', authenticateToken, authorize(PERMISSIONS.VIEW_AU
 
     res.json({ items: rows, nextCursor });
   } catch (err) {
-    console.error('[adminAudit] clinical-changes', err);
-    res.status(500).json({ error: err.message || 'Failed to list clinical changes' });
+    logger.error('clinical_changes_list_failed', { error: err.message, tenantId: tenantIdForUser(req.user) });
+    next(err);
   }
 });
 
@@ -238,7 +239,7 @@ router.get('/clinical-changes', authenticateToken, authorize(PERMISSIONS.VIEW_AU
  * Structured breach notification report from audit + clinical logs.
  * Satisfies DPDPA Section 8 — Data Fiduciary obligations.
  */
-router.get('/dpdpa/breach-report', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
+router.get('/dpdpa/breach-report', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res, next) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const { from, to, patientIds } = req.query;
@@ -315,8 +316,8 @@ router.get('/dpdpa/breach-report', authenticateToken, authorize(PERMISSIONS.VIEW
       measuresBeingTakenPlaceholder: '[Describe the measures being taken to address the breach]',
     });
   } catch (err) {
-    console.error('[adminAudit] breach-report', err);
-    res.status(500).json({ error: err.message || 'Failed to generate breach report' });
+    logger.error('breach_report_failed', { error: err.message, tenantId: tenantIdForUser(req.user) });
+    next(err);
   }
 });
 
@@ -325,7 +326,7 @@ router.get('/dpdpa/breach-report', authenticateToken, authorize(PERMISSIONS.VIEW
  * All audit log entries that accessed a specific patient's record.
  * Satisfies DPDPA Section 11 — Right to Access (who accessed this data).
  */
-router.get('/audit-logs/patient/:patientId', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
+router.get('/audit-logs/patient/:patientId', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res, next) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const { patientId } = req.params;
@@ -364,12 +365,12 @@ router.get('/audit-logs/patient/:patientId', authenticateToken, authorize(PERMIS
 
     res.json({ patientId, items: rows, nextCursor });
   } catch (err) {
-    console.error('[adminAudit] patient-access-log', err);
-    res.status(500).json({ error: err.message || 'Failed to query patient access log' });
+    logger.error('patient_access_log_failed', { error: err.message, tenantId: tenantIdForUser(req.user) });
+    next(err);
   }
 });
 
-router.post('/audit/purge', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res) => {
+router.post('/audit/purge', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT), async (req, res, next) => {
   try {
     const tenantId = tenantIdForUser(req.user);
     const { dryRun } = req.body || {};
@@ -402,8 +403,8 @@ router.post('/audit/purge', authenticateToken, authorize(PERMISSIONS.PURGE_AUDIT
     const result = await dbAdapter.run(delSql, [tenantId, cutoffIso]);
     return res.json({ dryRun: false, deleted: result.changes, olderThanDays: days, tenantId });
   } catch (err) {
-    console.error('[adminAudit] purge', err);
-    res.status(500).json({ error: err.message || 'Failed to purge audit logs' });
+    logger.error('audit_purge_failed', { error: err.message, tenantId: tenantIdForUser(req.user) });
+    next(err);
   }
 });
 

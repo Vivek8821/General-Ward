@@ -39,7 +39,7 @@ router.post('/clinical-discharge/:patientId',
   async (req, res, next) => {
     try {
       const { patientId } = req.params;
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId || 'tenant-default';
 
       const data = await reportDataService.aggregateDischargeReportData(patientId, tenantId);
       const hash = reportDataService.computeReportHash(data);

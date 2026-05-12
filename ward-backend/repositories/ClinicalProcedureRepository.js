@@ -28,27 +28,28 @@ class ClinicalProcedureRepository {
     return dbAdapter.get(`SELECT * FROM ClinicalProcedures WHERE id = ?`, [id]);
   }
 
-  async update(id, tenantId, data) {
+  async update(id, patientId, tenantId, data) {
     await dbAdapter.run(
       `UPDATE ClinicalProcedures
        SET procedureDate = ?, procedureName = ?, performedBy = ?, outcome = ?
-       WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
+       WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
       [
         data.procedureDate,
         data.procedureName,
         data.performedBy,
         data.outcome || null,
         id,
+        patientId,
         tenantId,
       ]
     );
-    return dbAdapter.get(`SELECT * FROM ClinicalProcedures WHERE id = ? AND tenantId = ?`, [id, tenantId]);
+    return dbAdapter.get(`SELECT * FROM ClinicalProcedures WHERE id = ? AND patientId = ? AND tenantId = ?`, [id, patientId, tenantId]);
   }
 
-  async delete(id, tenantId) {
+  async delete(id, patientId, tenantId) {
     return dbAdapter.run(
-      `UPDATE ClinicalProcedures SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
-      [id, tenantId]
+      `UPDATE ClinicalProcedures SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
+      [id, patientId, tenantId]
     );
   }
 }

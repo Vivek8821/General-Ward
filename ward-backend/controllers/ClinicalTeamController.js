@@ -16,7 +16,7 @@ router.get('/:id/team',
   authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       res.json(await teamRepo.getByPatient(req.params.id, tenantId));
     } catch (err) {
       err.status = 500; next(err);
@@ -30,7 +30,7 @@ router.post('/:id/team',
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       const result = await teamRepo.create({
         ...req.body,
         patientId: req.params.id,
@@ -49,8 +49,8 @@ router.put('/:id/team/:memberId',
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
-      const result = await teamRepo.update(req.params.memberId, tenantId, req.body);
+      const tenantId = req.tenantId;
+      const result = await teamRepo.update(req.params.memberId, req.params.id, tenantId, req.body);
       if (!result) return res.status(404).json({ error: 'Team member not found' });
       res.json(result);
     } catch (err) {
@@ -63,8 +63,8 @@ router.delete('/:id/team/:memberId',
   authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
-      await teamRepo.delete(req.params.memberId, tenantId);
+      const tenantId = req.tenantId;
+      await teamRepo.delete(req.params.memberId, req.params.id, tenantId);
       res.status(204).end();
     } catch (err) {
       err.status = 500; next(err);

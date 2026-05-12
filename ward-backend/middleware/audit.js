@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const dbAdapter = require('../db-adapter');
+const logger = require('../utils/logger');
 
 function extractPatientId(urlPath) {
   const m = urlPath.match(/^\/api\/patients\/([^\/]+)(?:\/|$)/);
@@ -24,7 +25,7 @@ function auditLog(req, res, next) {
     const ipAddress = req.ip || req.socket?.remoteAddress || 'unknown';
     const statusCode = res.statusCode;
     const success = statusCode >= 200 && statusCode < 400 ? 1 : 0;
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const patientId = extractPatientId(path);
 
     dbAdapter
@@ -33,7 +34,7 @@ function auditLog(req, res, next) {
         [id, userId, userRole, tenantId, action, path, ipAddress, statusCode, success, patientId]
       )
       .catch((err) => {
-        console.error('Audit Log Error:', err.message);
+        logger.warn('audit_log_write_failed', { userId, tenantId, action, error: err.message });
       });
   });
 

@@ -21,12 +21,12 @@ export default function SleepTab({ patientId, readOnly }) {
 
   useEffect(() => {
     if (!patientId) return;
-    let ignore = false;
-    api.get(`/patients/${patientId}/stats?type=sleep&limit=50`)
-      .then(data => { if (!ignore) setSleepLogs(data); })
-      .catch(err => { if (!ignore) toast.error("Failed to load sleep records: " + err.message); })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
+    const controller = new AbortController();
+    api.get(`/patients/${patientId}/stats?type=sleep&limit=50`, { signal: controller.signal })
+      .then(data => setSleepLogs(data))
+      .catch(err => { if (!controller.signal.aborted) toast.error("Failed to load sleep records: " + err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [patientId]);
 
   const fetchSleepLogs = async () => {

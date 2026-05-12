@@ -16,7 +16,7 @@ router.get('/:id/toxicology',
   authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       res.json(await toxRepo.getByPatient(req.params.id, tenantId) || null);
     } catch (err) {
       err.status = 500; next(err);
@@ -30,7 +30,7 @@ router.put('/:id/toxicology',
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       const result = await toxRepo.upsert({
         ...req.body,
         patientId: req.params.id,

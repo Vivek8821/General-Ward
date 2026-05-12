@@ -21,17 +21,15 @@ export default function VitalsTab({ patientId, readOnly }) {
 
   useEffect(() => {
     if (!patientId) return;
-    let ignore = false;
+    const controller = new AbortController();
     Promise.all([
-      api.get(`/patients/${patientId}/stats?type=vital&limit=50`),
-      api.get(`/patients/${patientId}/stats/trends`)
+      api.get(`/patients/${patientId}/stats?type=vital&limit=50`, { signal: controller.signal }),
+      api.get(`/patients/${patientId}/stats/trends`, { signal: controller.signal })
     ])
-      .then(([data, trendData]) => {
-        if (!ignore) { setVitals(data); setTrends(trendData?.trends || {}); }
-      })
-      .catch(err => { if (!ignore) toast.error("Failed to load vitals: " + err.message); })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
+      .then(([data, trendData]) => { setVitals(data); setTrends(trendData?.trends || {}); })
+      .catch(err => { if (!controller.signal.aborted) toast.error("Failed to load vitals: " + err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [patientId]);
 
   const fetchVitals = async () => {

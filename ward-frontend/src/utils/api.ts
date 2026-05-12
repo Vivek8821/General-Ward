@@ -172,8 +172,8 @@ export const api = {
     return response.json().catch(() => ({}));
   },
 
-  get(endpoint: string) {
-    return this.request(endpoint);
+  get(endpoint: string, options: { signal?: AbortSignal } = {}) {
+    return this.request(endpoint, options);
   },
 
   post(endpoint: string, data: unknown) {

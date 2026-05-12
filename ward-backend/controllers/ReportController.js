@@ -9,7 +9,7 @@ class ReportController {
   async generateReport(req, res, next) {
     try {
       const { patientId } = req.params;
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
 
       // 1. Aggregate Data
       const data = await reportDataService.aggregatePatientData(patientId, tenantId);
@@ -57,7 +57,7 @@ class ReportController {
   async getHistory(req, res, next) {
     try {
       const { patientId } = req.params;
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       const history = await reportRepository.findAllByPatientId(patientId, tenantId);
       res.json(history);
     } catch (err) {

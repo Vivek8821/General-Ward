@@ -6,14 +6,15 @@ function errorHandler(err, req, res, next) {
   const isOperational = err.isOperational || false;
   const isServerError = statusCode >= 500;
 
-  logger.error('Unhandled Exception', {
+  const logPayload = {
     error: err.message,
-    stack: err.stack,
     url: req.originalUrl,
     method: req.method,
     userId: req.user?.id,
-    tenantId: req.user?.tenantId
-  });
+    tenantId: req.user?.tenantId,
+  };
+  if (!config.isProdLike) logPayload.stack = err.stack;
+  logger.error('Unhandled Exception', logPayload);
 
   let response = {
     error: 'Internal Server Error',

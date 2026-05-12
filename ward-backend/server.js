@@ -7,11 +7,11 @@ const { auditLog } = require('./middleware/audit');
 const { requestLogger } = require('./middleware/requestLogger');
 const { attachUserIfPresent, authenticateToken } = require('./middleware/auth');
 const { verifyCsrfForMutations } = require('./middleware/csrf');
+const { PERMISSIONS, authorize } = require('./middleware/rbac');
 
 // Import routes
 const authRoutes = require('./controllers/AuthController');
 const patientRoutes = require('./controllers/PatientController');
-const medicationRoutes = require('./controllers/MedicationController');
 const escalationRoutes = require('./controllers/EscalationController');
 const tasksRoutes = require('./controllers/TaskController');
 const observationsRoutes = require('./controllers/ObservationController');
@@ -21,6 +21,7 @@ const adminAuditRoutes = require('./routes/adminAudit');
 const errorHandler = require('./middleware/error');
 const migratorService = require('./services/MigratorService');
 const { initDb } = require('./db');
+const logger = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -89,6 +90,7 @@ app.use(
 );
 app.use(express.json({ limit: '512kb' }));
 app.use('/api', attachUserIfPresent);
+app.use('/api', require('./middleware/resolveTenant'));
 app.use('/api', verifyCsrfForMutations);
 const { detectAttackPatterns, submissionLimiter } = require('./middleware/abuseProtection');
 app.use('/api', detectAttackPatterns);
@@ -132,7 +134,7 @@ app.get('/api/version', (req, res) => {
     res.json({ backendVersion });
 });
 
-app.get('/api/health/detail', authenticateToken, async (req, res) => {
+app.get('/api/health/detail', authenticateToken, authorize(PERMISSIONS.VIEW_AUDIT), async (req, res) => {
     try {
         const { pool } = require('./db-postgres');
         await pool.query('SELECT 1');
@@ -161,13 +163,13 @@ async function startServer() {
   const dialect = process.env.DB_DIALECT || 'sqlite';
   
   try {
-    console.log(`🚀 [Protocol] Starting General Ward API [Database: ${dialect}]`);
-    
+    logger.info(`Starting General Ward API`, { dialect, startupMode });
+
     if (startupMode === 'perf') {
-      console.log('🚀 [Protocol] Starting in PERFORMANCE mode (skipping migrations)');
+      logger.info('Starting in PERFORMANCE mode (skipping migrations)');
     } else {
-      console.log('📦 [Protocol] Starting in FULL mode (running migrations)');
-      
+      logger.info('Starting in FULL mode (running migrations)');
+
       if (dialect === 'postgres') {
         const { initPostgresDb } = require('./db-postgres');
         await initPostgresDb();
@@ -180,10 +182,12 @@ async function startServer() {
     }
 
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT} [Mode: ${startupMode}]`);
+      logger.info('Server started', { port: PORT, startupMode });
+      logger.flush();
     });
   } catch (err) {
-    console.error('Critical failure during startup:', err);
+    logger.error('Critical failure during startup', { error: err.message, stack: err.stack });
+    logger.flush();
     process.exit(1);
   }
 }

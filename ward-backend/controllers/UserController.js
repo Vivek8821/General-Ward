@@ -10,12 +10,12 @@ const { adminWriteLimiter } = require('../middleware/rateLimiters');
 // GET /api/admin/users
 router.get('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenantId;
+    const tenantId = req.tenantId;
     const rows = await dbAdapter.all(
       `SELECT id, name, role, email, tenantId FROM Users WHERE tenantId = ? ORDER BY role, name`,
       [tenantId]
     );
-    res.json({ users: rows });
+    res.json({ data: rows });
   } catch (err) {
     next(err);
   }
@@ -39,7 +39,7 @@ router.post('/', authenticateToken, adminWriteLimiter, authorize(PERMISSIONS.MAN
 // DELETE /api/admin/users/:id
 router.delete('/:id', authenticateToken, adminWriteLimiter, authorize(PERMISSIONS.MANAGE_USERS), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenantId;
+    const tenantId = req.tenantId;
     const { id } = req.params;
 
     if (id === req.user.id)

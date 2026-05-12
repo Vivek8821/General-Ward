@@ -20,12 +20,12 @@ export default function DietTab({ patientId, readOnly }) {
 
   useEffect(() => {
     if (!patientId) return;
-    let ignore = false;
-    api.get(`/patients/${patientId}/stats?type=diet&limit=50`)
-      .then(data => { if (!ignore) setDiets(data); })
-      .catch(err => { if (!ignore) toast.error("Failed to load diet records: " + err.message); })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
+    const controller = new AbortController();
+    api.get(`/patients/${patientId}/stats?type=diet&limit=50`, { signal: controller.signal })
+      .then(data => setDiets(data))
+      .catch(err => { if (!controller.signal.aborted) toast.error("Failed to load diet records: " + err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [patientId]);
 
   const fetchDiets = async () => {

@@ -11,7 +11,7 @@ router.get('/:id/presentation',
   authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       res.json(await presentationRepo.getByPatient(req.params.id, tenantId) || {});
     } catch (err) {
       err.status = 500; next(err);
@@ -26,7 +26,7 @@ router.put('/:id/presentation',
     if (errors.length > 0) return bad(res, errors);
 
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       const result = await presentationRepo.upsert({
         ...req.body,
         patientId: req.params.id,

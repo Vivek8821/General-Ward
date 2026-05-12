@@ -21,7 +21,7 @@ router.get('/:id/allergies',
   authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       res.json(await allergyRepo.getByPatient(req.params.id, tenantId));
     } catch (err) {
       err.status = 500; next(err);
@@ -35,7 +35,7 @@ router.post('/:id/allergies',
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
+      const tenantId = req.tenantId;
       const result = await allergyRepo.create({
         ...req.body,
         patientId: req.params.id,
@@ -55,8 +55,8 @@ router.put('/:id/allergies/:allergyId',
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
-      const result = await allergyRepo.update(req.params.allergyId, tenantId, req.body);
+      const tenantId = req.tenantId;
+      const result = await allergyRepo.update(req.params.allergyId, req.params.id, tenantId, req.body);
       if (!result) return res.status(404).json({ error: 'Allergy record not found' });
       res.json(result);
     } catch (err) {
@@ -69,8 +69,8 @@ router.delete('/:id/allergies/:allergyId',
   authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
-      const tenantId = req.user.tenantId || 'tenant-default';
-      await allergyRepo.delete(req.params.allergyId, tenantId);
+      const tenantId = req.tenantId;
+      await allergyRepo.delete(req.params.allergyId, req.params.id, tenantId);
       res.status(204).end();
     } catch (err) {
       err.status = 500; next(err);

@@ -56,7 +56,7 @@ router.get('/summary', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS)
   const { filters, error } = validateFilters(req.query);
   if (error) return res.status(400).json({ error });
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await statisticsService.getSummary(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
@@ -69,7 +69,7 @@ router.get('/diseases', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS
   const { filters, error } = validateFilters(req.query);
   if (error) return res.status(400).json({ error });
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await statisticsService.getDiseaseDistribution(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
@@ -82,7 +82,7 @@ router.get('/demographics', authenticateToken, authorize(PERMISSIONS.VIEW_STATIS
   const { filters, error } = validateFilters(req.query);
   if (error) return res.status(400).json({ error });
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await statisticsService.getDemographicBreakdown(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
@@ -95,7 +95,7 @@ router.get('/medications', authenticateToken, authorize(PERMISSIONS.VIEW_STATIST
   const { filters, error } = validateFilters(req.query);
   if (error) return res.status(400).json({ error });
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await statisticsService.getMedicationStats(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
@@ -108,7 +108,7 @@ router.get('/admissions', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTI
   const { filters, error } = validateFilters(req.query);
   if (error) return res.status(400).json({ error });
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await statisticsService.getAdmissionTrend(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
@@ -121,7 +121,7 @@ router.get('/outcomes', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS
   const { filters, error } = validateFilters(req.query);
   if (error) return res.status(400).json({ error });
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await statisticsService.getClinicalOutcomes(tenantId, req.query.period, filters);
     res.json(result);
   } catch (err) {
@@ -138,7 +138,7 @@ router.post('/report', authenticateToken, authorize(PERMISSIONS.VIEW_STATISTICS)
   const { filters, error } = validateFilters(body);
   if (error) return res.status(400).json({ error });
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const pdfBuffer = await statisticsReportService.generateReport(tenantId, period, filters);
     const periodLabel = period === 'week' ? 'Weekly' : period === 'month' ? 'Monthly' : period === 'quarter' ? 'Quarterly' : 'Yearly';
     res.setHeader('Content-Type', 'application/pdf');

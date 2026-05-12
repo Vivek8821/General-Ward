@@ -37,15 +37,16 @@ class TransactionRepository {
   }
 
   async getDispenseHistory(tenantId, daysLookback) {
+    const cutoff = new Date(Date.now() - daysLookback * 86_400_000).toISOString();
     const sql = `
       SELECT medicationId, SUM(ABS(quantity)) as totalDispensed
       FROM PharmacyTransactions
-      WHERE tenantId = ? 
-        AND type = 'dispense' 
-        AND timestamp >= datetime('now', '-' || ? || ' days')
+      WHERE tenantId = ?
+        AND type = 'dispense'
+        AND timestamp >= ?
       GROUP BY medicationId
     `;
-    return await dbAdapter.all(sql, [tenantId, daysLookback]);
+    return await dbAdapter.all(sql, [tenantId, cutoff]);
   }
 }
 

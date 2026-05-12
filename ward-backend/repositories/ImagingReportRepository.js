@@ -30,12 +30,12 @@ class ImagingReportRepository {
     return dbAdapter.get(`SELECT * FROM ImagingReports WHERE id = ?`, [id]);
   }
 
-  async update(id, tenantId, data) {
+  async update(id, patientId, tenantId, data) {
     await dbAdapter.run(
       `UPDATE ImagingReports
        SET modalityType = ?, investigationDate = ?, equipment = ?,
            findings = ?, impression = ?, reportedBy = ?
-       WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
+       WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
       [
         data.modalityType,
         data.investigationDate,
@@ -44,16 +44,17 @@ class ImagingReportRepository {
         data.impression || null,
         data.reportedBy,
         id,
+        patientId,
         tenantId,
       ]
     );
-    return dbAdapter.get(`SELECT * FROM ImagingReports WHERE id = ? AND tenantId = ?`, [id, tenantId]);
+    return dbAdapter.get(`SELECT * FROM ImagingReports WHERE id = ? AND patientId = ? AND tenantId = ?`, [id, patientId, tenantId]);
   }
 
-  async delete(id, tenantId) {
+  async delete(id, patientId, tenantId) {
     return dbAdapter.run(
-      `UPDATE ImagingReports SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
-      [id, tenantId]
+      `UPDATE ImagingReports SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
+      [id, patientId, tenantId]
     );
   }
 }

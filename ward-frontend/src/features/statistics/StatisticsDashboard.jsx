@@ -36,37 +36,37 @@ export default function StatisticsDashboard() {
   };
 
   const { data: summary, isLoading: sLoad } = useQuery({
-    queryKey: ['statistics', 'summary', period, JSON.stringify(filters)],
+    queryKey: ['statistics', 'summary', period, filters],
     queryFn: () => api.get(`/statistics/summary?${buildParams()}`),
     staleTime: 120_000,
   });
 
   const { data: diseases, isLoading: dLoad } = useQuery({
-    queryKey: ['statistics', 'diseases', period, JSON.stringify(filters)],
+    queryKey: ['statistics', 'diseases', period, filters],
     queryFn: () => api.get(`/statistics/diseases?${buildParams()}`),
     staleTime: 120_000,
   });
 
   const { data: demographics, isLoading: dmLoad } = useQuery({
-    queryKey: ['statistics', 'demographics', period, JSON.stringify(filters)],
+    queryKey: ['statistics', 'demographics', period, filters],
     queryFn: () => api.get(`/statistics/demographics?${buildParams()}`),
     staleTime: 120_000,
   });
 
   const { data: medications, isLoading: mLoad } = useQuery({
-    queryKey: ['statistics', 'medications', period, JSON.stringify(filters)],
+    queryKey: ['statistics', 'medications', period, filters],
     queryFn: () => api.get(`/statistics/medications?${buildParams()}`),
     staleTime: 120_000,
   });
 
   const { data: admissions, isLoading: aLoad } = useQuery({
-    queryKey: ['statistics', 'admissions', period, JSON.stringify(filters)],
+    queryKey: ['statistics', 'admissions', period, filters],
     queryFn: () => api.get(`/statistics/admissions?${buildParams()}`),
     staleTime: 120_000,
   });
 
   const { data: outcomes, isLoading: oLoad } = useQuery({
-    queryKey: ['statistics', 'outcomes', period, JSON.stringify(filters)],
+    queryKey: ['statistics', 'outcomes', period, filters],
     queryFn: () => api.get(`/statistics/outcomes?${buildParams()}`),
     staleTime: 120_000,
   });

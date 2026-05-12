@@ -30,11 +30,11 @@ class StructuredAllergyRepository {
     return dbAdapter.get(`SELECT * FROM StructuredAllergies WHERE id = ?`, [id]);
   }
 
-  async update(id, tenantId, data) {
+  async update(id, patientId, tenantId, data) {
     await dbAdapter.run(
       `UPDATE StructuredAllergies
        SET allergen = ?, category = ?, reaction = ?, severity = ?, verificationMethod = ?
-       WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
+       WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
       [
         data.allergen,
         data.category,
@@ -42,16 +42,17 @@ class StructuredAllergyRepository {
         data.severity,
         data.verificationMethod || null,
         id,
+        patientId,
         tenantId,
       ]
     );
-    return dbAdapter.get(`SELECT * FROM StructuredAllergies WHERE id = ? AND tenantId = ?`, [id, tenantId]);
+    return dbAdapter.get(`SELECT * FROM StructuredAllergies WHERE id = ? AND patientId = ? AND tenantId = ?`, [id, patientId, tenantId]);
   }
 
-  async delete(id, tenantId) {
+  async delete(id, patientId, tenantId) {
     return dbAdapter.run(
-      `UPDATE StructuredAllergies SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
-      [id, tenantId]
+      `UPDATE StructuredAllergies SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
+      [id, patientId, tenantId]
     );
   }
 }

@@ -328,7 +328,7 @@ CREATE TABLE IF NOT EXISTS BarcodeRegistrations (
   targetId      TEXT    NOT NULL, -- UUID string
   barcode       TEXT    NOT NULL,
   registeredBy  TEXT    NOT NULL, -- userId
-  registeredAt  TEXT    NOT NULL DEFAULT (datetime('now')),
+  registeredAt  TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   notes         TEXT
 );
 
@@ -389,7 +389,7 @@ CREATE TABLE IF NOT EXISTS PatientReports (
                       CHECK(reportType IN ('FULL_TREATMENT','DISCHARGE_SUMMARY')),
   reportHash      TEXT    NOT NULL, -- HMAC-SHA256 of report data
   generatedByUserId TEXT  NOT NULL REFERENCES Users(id),
-  generatedAt     TEXT    NOT NULL DEFAULT (datetime('now')),
+  generatedAt     TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   periodFrom      TEXT    NOT NULL, -- admission date
   periodTo        TEXT    NOT NULL, -- discharge date or report gen date
   pdfStoredAt     TEXT,             -- local file path if persisted

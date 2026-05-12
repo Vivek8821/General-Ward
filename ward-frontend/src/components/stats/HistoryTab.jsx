@@ -20,10 +20,10 @@ export default function HistoryTab({ patientId, readOnly, admittedAt }) {
 
   useEffect(() => {
     if (!patientId) return;
-    let ignore = false;
-    api.get(`/patients/${patientId}/history`)
+    const controller = new AbortController();
+    api.get(`/patients/${patientId}/history`, { signal: controller.signal })
       .then(({ data }) => {
-        if (!ignore && data) {
+        if (data) {
           setHistory(data);
           setFormData({
             conditions: data.conditions || '',
@@ -34,9 +34,9 @@ export default function HistoryTab({ patientId, readOnly, admittedAt }) {
           });
         }
       })
-      .catch(err => { if (!ignore) toast.error("Failed to load medical history: " + err.message); })
-      .finally(() => { if (!ignore) setLoading(false); });
-    return () => { ignore = true; };
+      .catch(err => { if (!controller.signal.aborted) toast.error("Failed to load medical history: " + err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [patientId]);
 
   const fetchHistory = async () => {

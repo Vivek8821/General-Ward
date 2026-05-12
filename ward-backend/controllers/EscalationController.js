@@ -13,7 +13,7 @@ router.post('/', authenticateToken, escalationLimiter, authorizeAny([PERMISSIONS
     if (err) return bad(res, [err]);
 
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const result = await escalationService.createEscalation(req.params.patientId, req.body.reason.trim(), req.user.name, tenantId);
         res.status(201).json(result);
     } catch (error) {
@@ -24,7 +24,7 @@ router.post('/', authenticateToken, escalationLimiter, authorizeAny([PERMISSIONS
 // GET /api/escalations/all
 router.get('/all', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res, next) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const escalations = await escalationService.getPendingEscalations(tenantId);
         res.json(escalations);
     } catch (error) {
@@ -35,7 +35,7 @@ router.get('/all', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async
 // POST /api/patients/:patientId/escalations/:escalationId/review
 router.post('/:escalationId/review', authenticateToken, escalationLimiter, authorize(PERMISSIONS.WRITE_PATIENT), requireTenantEscalation('escalationId'), async (req, res, next) => {
     try {
-        const tenantId = req.user.tenantId || 'tenant-default';
+        const tenantId = req.tenantId;
         const result = await escalationService.reviewEscalation(req.params.escalationId, tenantId);
         res.json(result);
     } catch (error) {

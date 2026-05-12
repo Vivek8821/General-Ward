@@ -14,7 +14,7 @@ router.post('/notes', authenticateToken, clinicalWriteLimiter, authorizeAny([PER
   if (errors.length > 0) return bad(res, errors);
 
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await handoverNotesService.createNote(req.params.patientId, req.body, req.user.name, tenantId);
     res.status(201).json(result);
   } catch (error) {
@@ -25,7 +25,7 @@ router.post('/notes', authenticateToken, clinicalWriteLimiter, authorizeAny([PER
 // GET /api/patients/:patientId/notes
 router.get('/notes', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await handoverNotesService.listNotes(req.params.patientId, tenantId, req.query);
     res.json(result);
   } catch (error) {
@@ -39,7 +39,7 @@ router.post('/tasks', authenticateToken, clinicalWriteLimiter, authorizeAny([PER
   if (errors.length > 0) return bad(res, errors);
 
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await taskService.createTask(req.params.patientId, req.body, req.user.name, tenantId);
     res.status(201).json(result);
   } catch (error) {
@@ -51,7 +51,7 @@ router.post('/tasks', authenticateToken, clinicalWriteLimiter, authorizeAny([PER
 router.get('/tasks', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('patientId'), async (req, res, next) => {
   try {
     const { status = 'open', limit, cursor } = req.query;
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await taskService.listPatientTasks(req.params.patientId, status, tenantId, { limit, cursor });
     res.json(result);
   } catch (error) {

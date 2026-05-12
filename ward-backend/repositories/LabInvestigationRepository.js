@@ -28,27 +28,28 @@ class LabInvestigationRepository {
     return dbAdapter.get(`SELECT * FROM LabInvestigations WHERE id = ?`, [id]);
   }
 
-  async update(id, tenantId, data) {
+  async update(id, patientId, tenantId, data) {
     await dbAdapter.run(
       `UPDATE LabInvestigations
        SET investigationDate = ?, dayLabel = ?, results = ?, recordedBy = ?
-       WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
+       WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
       [
         data.investigationDate,
         data.dayLabel || null,
         typeof data.results === 'string' ? data.results : JSON.stringify(data.results),
         data.recordedBy,
         id,
+        patientId,
         tenantId,
       ]
     );
-    return dbAdapter.get(`SELECT * FROM LabInvestigations WHERE id = ? AND tenantId = ?`, [id, tenantId]);
+    return dbAdapter.get(`SELECT * FROM LabInvestigations WHERE id = ? AND patientId = ? AND tenantId = ?`, [id, patientId, tenantId]);
   }
 
-  async delete(id, tenantId) {
+  async delete(id, patientId, tenantId) {
     return dbAdapter.run(
-      `UPDATE LabInvestigations SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
-      [id, tenantId]
+      `UPDATE LabInvestigations SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
+      [id, patientId, tenantId]
     );
   }
 }

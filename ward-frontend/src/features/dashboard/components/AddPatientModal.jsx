@@ -32,74 +32,81 @@ export default function AddPatientModal({
         <form onSubmit={handleSavePatient} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold mb-1 text-text-secondary">Full Name *</label>
-              <input 
-                type="text" 
-                className="input-field" 
+              <label htmlFor="patient-name" className="block text-sm font-bold mb-1 text-text-secondary">Full Name *</label>
+              <input
+                id="patient-name"
+                type="text"
+                className="input-field"
                 placeholder="e.g. John Doe"
-                value={newPatient.name} 
-                onChange={e => setNewPatient({...newPatient, name: e.target.value})} 
-                required 
+                value={newPatient.name}
+                onChange={e => setNewPatient({...newPatient, name: e.target.value})}
+                required
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold mb-1 text-text-secondary">Bed Number *</label>
-              <input 
-                type="text" 
-                className="input-field" 
+              <label htmlFor="patient-bed" className="block text-sm font-bold mb-1 text-text-secondary">Bed Number *</label>
+              <input
+                id="patient-bed"
+                type="text"
+                className="input-field"
                 placeholder="e.g. A-12"
-                value={newPatient.bedNumber} 
-                onChange={e => setNewPatient({...newPatient, bedNumber: e.target.value})} 
-                required 
+                value={newPatient.bedNumber}
+                onChange={e => setNewPatient({...newPatient, bedNumber: e.target.value})}
+                required
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold mb-1 text-text-secondary">MRN (Medical Record Number) *</label>
-              <input 
-                type="text" 
-                className="input-field" 
+              <label htmlFor="patient-mrn" className="block text-sm font-bold mb-1 text-text-secondary">MRN (Medical Record Number) *</label>
+              <input
+                id="patient-mrn"
+                type="text"
+                className="input-field"
                 placeholder="e.g. MRN12345"
-                value={newPatient.mrn} 
-                onChange={e => setNewPatient({...newPatient, mrn: e.target.value})} 
-                required 
+                value={newPatient.mrn}
+                onChange={e => setNewPatient({...newPatient, mrn: e.target.value})}
+                required
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold mb-1 text-text-secondary">Date of Birth *</label>
-              <input 
-                type="date" 
-                className="input-field" 
-                value={newPatient.dob} 
-                onChange={e => setNewPatient({...newPatient, dob: e.target.value})} 
-                required 
+              <label htmlFor="patient-dob" className="block text-sm font-bold mb-1 text-text-secondary">Date of Birth *</label>
+              <input
+                id="patient-dob"
+                type="date"
+                className="input-field"
+                value={newPatient.dob}
+                onChange={e => setNewPatient({...newPatient, dob: e.target.value})}
+                required
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-bold mb-1 text-text-secondary">Primary Diagnosis *</label>
-              <input 
-                type="text" 
-                className="input-field" 
+              <label htmlFor="patient-diagnosis" className="block text-sm font-bold mb-1 text-text-secondary">Primary Diagnosis *</label>
+              <input
+                id="patient-diagnosis"
+                type="text"
+                className="input-field"
                 placeholder="e.g. Hypertension, Diabetes Type 2"
-                value={newPatient.diagnosis} 
-                onChange={e => setNewPatient({...newPatient, diagnosis: e.target.value})} 
-                required 
+                value={newPatient.diagnosis}
+                onChange={e => setNewPatient({...newPatient, diagnosis: e.target.value})}
+                required
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold mb-1 text-text-secondary">Allergies (if any)</label>
-              <input 
-                type="text" 
-                className="input-field" 
+              <label htmlFor="patient-allergies" className="block text-sm font-bold mb-1 text-text-secondary">Allergies (if any)</label>
+              <input
+                id="patient-allergies"
+                type="text"
+                className="input-field"
                 placeholder="e.g. Penicillin, Peanuts"
-                value={newPatient.allergies} 
-                onChange={e => setNewPatient({...newPatient, allergies: e.target.value})} 
+                value={newPatient.allergies}
+                onChange={e => setNewPatient({...newPatient, allergies: e.target.value})}
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold mb-1 text-text-secondary">Initial Care Intensity</label>
-              <select 
-                className="input-field" 
-                value={newPatient.careIntensity} 
+              <label htmlFor="patient-care-intensity" className="block text-sm font-bold mb-1 text-text-secondary">Initial Care Intensity</label>
+              <select
+                id="patient-care-intensity"
+                className="input-field"
+                value={newPatient.careIntensity}
                 onChange={e => setNewPatient({...newPatient, careIntensity: parseInt(e.target.value)})}
               >
                 <option value={1}>Level 1 (Basic Care)</option>
@@ -109,12 +116,13 @@ export default function AddPatientModal({
               </select>
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-bold mb-1 text-text-secondary">Admission Timestamp</label>
-              <input 
-                type="datetime-local" 
-                className="input-field" 
-                value={newPatient.admittedAt || ''} 
-                onChange={e => setNewPatient({...newPatient, admittedAt: e.target.value})} 
+              <label htmlFor="patient-admitted-at" className="block text-sm font-bold mb-1 text-text-secondary">Admission Timestamp</label>
+              <input
+                id="patient-admitted-at"
+                type="datetime-local"
+                className="input-field"
+                value={newPatient.admittedAt || ''}
+                onChange={e => setNewPatient({...newPatient, admittedAt: e.target.value})}
               />
               <p className="text-[10px] text-text-muted mt-1 italic">Defaults to current time if left blank.</p>
             </div>
@@ -146,8 +154,9 @@ export default function AddPatientModal({
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-bold mb-1 text-text-secondary">Guardian Name *</label>
+                    <label htmlFor="guardian-name" className="block text-sm font-bold mb-1 text-text-secondary">Guardian Name *</label>
                     <input
+                      id="guardian-name"
                       type="text"
                       className="input-field"
                       value={newPatient.guardian_name || ''}
@@ -156,8 +165,9 @@ export default function AddPatientModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold mb-1 text-text-secondary">Guardian Contact *</label>
+                    <label htmlFor="guardian-contact" className="block text-sm font-bold mb-1 text-text-secondary">Guardian Contact *</label>
                     <input
+                      id="guardian-contact"
                       type="text"
                       className="input-field"
                       value={newPatient.guardian_contact || ''}

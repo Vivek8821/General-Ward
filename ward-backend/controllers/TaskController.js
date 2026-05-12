@@ -9,7 +9,7 @@ const { adminWriteLimiter } = require('../middleware/rateLimiters');
 // GET /api/tasks/my
 router.get('/my', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const { limit, cursor } = req.query;
     const tasks = await taskService.listMyOpenTasks(req.user.name, tenantId, { limit, cursor });
     res.json(tasks);
@@ -21,7 +21,7 @@ router.get('/my', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async 
 // PUT /api/tasks/:taskId/complete
 router.put('/:taskId/complete', authenticateToken, adminWriteLimiter, authorizeAny([PERMISSIONS.WRITE_TASKS]), requireTenantTask('taskId'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenantId || 'tenant-default';
+    const tenantId = req.tenantId;
     const result = await taskService.completeTask(req.params.taskId, req.user.name, tenantId);
     res.json(result);
   } catch (error) {

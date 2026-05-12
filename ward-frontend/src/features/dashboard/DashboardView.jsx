@@ -55,7 +55,7 @@ export default function DashboardView() {
     refetch: refetchPatients,
   } = useQuery({
     queryKey: queryKeys.patients(viewMode),
-    queryFn: async () => api.get(endpoint),
+    queryFn: async () => { const res = await api.get(endpoint); return res?.data ?? []; },
     enabled: !!user,
     staleTime: 30 * 1000,
     refetchInterval: viewMode === 'active' ? 15 * 1000 : false,
