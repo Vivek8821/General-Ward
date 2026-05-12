@@ -5,6 +5,7 @@ const { validateClinicalPresentation, bad } = require('../utils/validation');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
+const { clinicalWriteLimiter } = require('../middleware/rateLimiters');
 
 router.get('/:id/presentation',
   authenticateToken, authorize(PERMISSIONS.READ_PATIENT), requireTenantPatient('id'),
@@ -19,7 +20,7 @@ router.get('/:id/presentation',
 );
 
 router.put('/:id/presentation',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     const errors = validateClinicalPresentation(req.body || {});
     if (errors.length > 0) return bad(res, errors);

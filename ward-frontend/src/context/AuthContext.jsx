@@ -32,18 +32,41 @@ export const AuthProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(true);
 
-  const logout = () => {
-    // Phase C.1 migration: best-effort backend cookie logout.
-    // Cookie clearing is handled server-side; even if it fails, we still clear local state.
+  const logout = async () => {
+    // Await so the server increments tokenVersion + deletes the refresh token
+    // before we clear local state. On failure we still clear locally — the
+    // access token expires in 15 min and the orphaned refresh token in 30 days.
     try {
-      api.post('/auth/logout', {}).catch(() => {});
+      await api.post('/auth/logout', {});
     } catch {
-      // ignore
+      // ignore — local state is cleared regardless
     }
-
     sessionStorage.removeItem('ward_user');
     setCsrfToken(null);
     setUser(null);
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    const data = await api.put('/auth/change-password', { currentPassword, newPassword });
+    // Server issues fresh tokens and returns updated CSRF — sync local state
+    if (data?.csrfToken) setCsrfToken(data.csrfToken);
+    if (data?.user) {
+      setUser(data.user);
+      sessionStorage.setItem('ward_user', JSON.stringify(data.user));
+    }
+    return data;
+  };
+
+  // Revokes all active sessions on every other device. The current session receives
+  // fresh tokens and stays signed in. Other devices get 401 on next request.
+  const logoutAll = async () => {
+    const data = await api.post('/auth/logout-all', {});
+    if (data?.csrfToken) setCsrfToken(data.csrfToken);
+    if (data?.user) {
+      setUser(data.user);
+      sessionStorage.setItem('ward_user', JSON.stringify(data.user));
+    }
+    return data;
   };
 
   useEffect(() => {
@@ -57,7 +80,7 @@ export const AuthProvider = ({ children }) => {
   }, [theme]);
 
   const login = async (username, password) => {
-    const data = await api.post('/auth/login', { username, password });
+    const data = await api.post('/auth/login', { username, password, website: '' });
     if (!data?.user) {
       throw new Error('Login failed');
     }
@@ -71,6 +94,7 @@ export const AuthProvider = ({ children }) => {
     const data = await api.post('/auth/signup', {
       ...payload,
       orgName: payload.hospitalName,
+      website: '',
     });
     if (!data?.user) {
       throw new Error('Signup failed');
@@ -109,7 +133,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, loading, theme, setTheme }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, logoutAll, changePassword, loading, theme, setTheme }}>
       {!loading && children}
     </AuthContext.Provider>
   );

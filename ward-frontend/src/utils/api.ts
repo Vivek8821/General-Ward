@@ -54,6 +54,44 @@ export function setCsrfToken(token: string | null) {
   }
 }
 
+// Guards against multiple simultaneous requests all trying to refresh at once,
+// and prevents a refresh from triggering another refresh if the retry also 401s.
+let _refreshInFlight = false;
+let _lastRefreshAt = 0;
+
+async function attemptSilentRefresh(): Promise<boolean> {
+  if (_refreshInFlight) return false;
+  // Don't hammer the refresh endpoint — if we just refreshed within 10 s, don't try again.
+  if (Date.now() - _lastRefreshAt < 10_000) return false;
+
+  _refreshInFlight = true;
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    if (data?.csrfToken) setCsrfToken(data.csrfToken);
+    _lastRefreshAt = Date.now();
+    return true;
+  } catch {
+    return false;
+  } finally {
+    _refreshInFlight = false;
+  }
+}
+
+function redirectToLogin(msg: string) {
+  setCsrfToken(null);
+  if (window.location.pathname !== '/login') {
+    toast.error(msg);
+    window.location.href = '/login';
+  }
+}
+
 export const api = {
   getHeaders(): JsonHeaders {
     return {
@@ -84,18 +122,29 @@ export const api = {
     });
 
     if (response.status === 401) {
-      const errBody = (await response.json().catch(() => ({}))) as ApiErrorResponse;
-      const msg = errBody?.error || errBody?.message || 'Session expired';
+      // For auth endpoints themselves, never try a silent refresh — it would recurse.
+      const isAuthEndpoint = endpoint.startsWith('/auth/');
 
-      if (window.location.pathname !== '/login') {
-        toast.error(msg);
-        setCsrfToken(null);
-        window.location.href = '/login';
+      if (!isAuthEndpoint) {
+        // Try to silently refresh the access token using the long-lived refresh cookie.
+        // If it succeeds, replay the original request with the new CSRF token in place.
+        const refreshed = await attemptSilentRefresh();
+        if (refreshed) {
+          return this.request(endpoint, options);
+        }
+        // Refresh token is also expired — the session is truly over.
+        const errBody = await response.json().catch(() => ({})) as ApiErrorResponse;
+        redirectToLogin(errBody?.error || errBody?.message || 'Session expired. Please log in again.');
         return;
       }
 
-      // On /login, failed POST /auth/login returns 401 — must throw so callers get an Error, not `undefined`.
-      // (We do not toast here; Login.jsx shows the message from the caught error.)
+      // On /login: a 401 means bad credentials — throw so the login form shows the error.
+      const errBody = (await response.json().catch(() => ({}))) as ApiErrorResponse;
+      const msg = errBody?.error || errBody?.message || 'Session expired';
+      if (window.location.pathname !== '/login') {
+        redirectToLogin(msg);
+        return;
+      }
       const err = new Error(msg) as Error & { status?: number };
       err.status = response.status;
       throw err;
@@ -139,4 +188,3 @@ export const api = {
     return this.request(endpoint, { method: 'DELETE' });
   },
 };
-

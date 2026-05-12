@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Local environment — contains real secrets, never commit
+.env
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Build / coverage output
+dist/
+coverage/

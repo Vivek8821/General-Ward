@@ -46,17 +46,12 @@ class StockRepository {
   }
 
   async updateStock(id, tenantId, totalUnits) {
-    // We need the quantityPerUnit to update totalQuantity correctly
-    const item = await this.findById(id, tenantId);
-    if (!item) return { changes: 0 };
-
-    const totalQuantity = totalUnits * (item.quantityPerUnit || 1);
     const sql = `
-      UPDATE PharmacyStock 
-      SET totalUnits = ?, totalQuantity = ?, lastUpdated = CURRENT_TIMESTAMP
+      UPDATE PharmacyStock
+      SET totalUnits = ?, totalQuantity = ? * quantityPerUnit, lastUpdated = CURRENT_TIMESTAMP
       WHERE id = ? AND tenantId = ?
     `;
-    return await dbAdapter.run(sql, [totalUnits, totalQuantity, id, tenantId]);
+    return await dbAdapter.run(sql, [totalUnits, totalUnits, id, tenantId]);
   }
 
   async delete(id, tenantId) {

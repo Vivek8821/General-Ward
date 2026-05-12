@@ -4,6 +4,7 @@ const labRepo = require('../repositories/LabInvestigationRepository');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
+const { clinicalWriteLimiter } = require('../middleware/rateLimiters');
 
 function validate(body) {
   if (!body.investigationDate) return 'investigationDate is required';
@@ -25,7 +26,7 @@ router.get('/:id/labs',
 );
 
 router.post('/:id/labs',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
@@ -45,7 +46,7 @@ router.post('/:id/labs',
 );
 
 router.put('/:id/labs/:labId',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
@@ -64,7 +65,7 @@ router.put('/:id/labs/:labId',
 );
 
 router.delete('/:id/labs/:labId',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
       const tenantId = req.user.tenantId || 'tenant-default';

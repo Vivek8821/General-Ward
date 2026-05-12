@@ -4,7 +4,7 @@ const dbAdapter = require('../db-adapter');
 class StructuredAllergyRepository {
   async getByPatient(patientId, tenantId) {
     return dbAdapter.all(
-      `SELECT * FROM StructuredAllergies WHERE patientId = ? AND tenantId = ? ORDER BY recordedAt ASC`,
+      `SELECT * FROM StructuredAllergies WHERE patientId = ? AND tenantId = ? AND deletedAt IS NULL ORDER BY recordedAt ASC`,
       [patientId, tenantId]
     );
   }
@@ -34,7 +34,7 @@ class StructuredAllergyRepository {
     await dbAdapter.run(
       `UPDATE StructuredAllergies
        SET allergen = ?, category = ?, reaction = ?, severity = ?, verificationMethod = ?
-       WHERE id = ? AND tenantId = ?`,
+       WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
       [
         data.allergen,
         data.category,
@@ -50,7 +50,7 @@ class StructuredAllergyRepository {
 
   async delete(id, tenantId) {
     return dbAdapter.run(
-      `DELETE FROM StructuredAllergies WHERE id = ? AND tenantId = ?`,
+      `UPDATE StructuredAllergies SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
       [id, tenantId]
     );
   }

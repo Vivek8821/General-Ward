@@ -4,6 +4,7 @@ const imagingRepo = require('../repositories/ImagingReportRepository');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
+const { clinicalWriteLimiter } = require('../middleware/rateLimiters');
 
 const VALID_MODALITIES = ['ecg', 'xray', 'usg', 'ct', 'mri', 'pet', 'echo', 'spirometry', 'other'];
 
@@ -29,7 +30,7 @@ router.get('/:id/imaging',
 );
 
 router.post('/:id/imaging',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
@@ -49,7 +50,7 @@ router.post('/:id/imaging',
 );
 
 router.put('/:id/imaging/:imagingId',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
@@ -68,7 +69,7 @@ router.put('/:id/imaging/:imagingId',
 );
 
 router.delete('/:id/imaging/:imagingId',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
       const tenantId = req.user.tenantId || 'tenant-default';

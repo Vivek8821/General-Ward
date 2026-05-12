@@ -19,7 +19,24 @@ export default function HistoryTab({ patientId, readOnly, admittedAt }) {
   });
 
   useEffect(() => {
-    fetchHistory();
+    if (!patientId) return;
+    let ignore = false;
+    api.get(`/patients/${patientId}/history`)
+      .then(({ data }) => {
+        if (!ignore && data) {
+          setHistory(data);
+          setFormData({
+            conditions: data.conditions || '',
+            familyHistory: data.familyHistory || '',
+            pastSurgeries: data.pastSurgeries || '',
+            socialHistory: data.socialHistory || '',
+            notes: data.notes || '',
+          });
+        }
+      })
+      .catch(err => { if (!ignore) toast.error("Failed to load medical history: " + err.message); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [patientId]);
 
   const fetchHistory = async () => {
@@ -28,16 +45,15 @@ export default function HistoryTab({ patientId, readOnly, admittedAt }) {
       if (data) {
         setHistory(data);
         setFormData({
-            conditions: data.conditions || '',
-            familyHistory: data.familyHistory || '',
-            pastSurgeries: data.pastSurgeries || '',
-            socialHistory: data.socialHistory || '',
-            notes: data.notes || ''
+          conditions: data.conditions || '',
+          familyHistory: data.familyHistory || '',
+          pastSurgeries: data.pastSurgeries || '',
+          socialHistory: data.socialHistory || '',
+          notes: data.notes || '',
         });
       }
     } catch (err) {
       toast.error("Failed to load medical history: " + err.message);
-      console.error(err);
     } finally {
       setLoading(false);
     }

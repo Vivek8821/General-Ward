@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS MedicationAdministrations (
   doseActuallyGiven TEXT,
   reasonCode TEXT,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  deletedAt TEXT,
   FOREIGN KEY (medicationId) REFERENCES Medications(id),
   FOREIGN KEY (patientId) REFERENCES Patients(id)
 );
@@ -255,6 +256,30 @@ CREATE TABLE IF NOT EXISTS AuthLoginAttempts (
   PRIMARY KEY (username, ipAddress)
 );
 
+CREATE TABLE IF NOT EXISTS RefreshTokens (
+  id        TEXT PRIMARY KEY,
+  userId    TEXT NOT NULL,
+  tenantId  TEXT NOT NULL,
+  expiresAt TEXT NOT NULL,
+  ipAddress TEXT,
+  userAgent TEXT,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON RefreshTokens(userId);
+
+CREATE TABLE IF NOT EXISTS PasswordResetTokens (
+  id        TEXT PRIMARY KEY,
+  userId    TEXT NOT NULL,
+  tenantId  TEXT NOT NULL,
+  tokenHash TEXT NOT NULL UNIQUE,
+  expiresAt TEXT NOT NULL,
+  usedAt    TEXT,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES Users(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_prt_user ON PasswordResetTokens(userId);
+CREATE INDEX IF NOT EXISTS idx_prt_hash ON PasswordResetTokens(tokenHash);
+
 -- Purchase Orders (Automated Procurement)
 CREATE TABLE IF NOT EXISTS PurchaseOrders (
   id TEXT PRIMARY KEY,
@@ -331,6 +356,15 @@ CREATE INDEX IF NOT EXISTS idx_batches_stock ON PharmacyBatches(stockId);
 CREATE INDEX IF NOT EXISTS idx_batches_tenant_expiry ON PharmacyBatches(tenantId, expiryDate ASC);
 CREATE INDEX IF NOT EXISTS idx_batches_lot ON PharmacyBatches(tenantId, batchNumber);
 CREATE INDEX IF NOT EXISTS idx_batches_status ON PharmacyBatches(tenantId, status);
+
+-- Missing high-traffic indexes (added migration 019)
+CREATE INDEX IF NOT EXISTS idx_med_admins_patient   ON MedicationAdministrations(patientId, tenantId);
+CREATE INDEX IF NOT EXISTS idx_med_admins_med       ON MedicationAdministrations(medicationId);
+CREATE INDEX IF NOT EXISTS idx_med_admins_timestamp ON MedicationAdministrations(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_pharmacy_tx_med    ON PharmacyTransactions(medicationId);
+CREATE INDEX IF NOT EXISTS idx_pharmacy_tx_tenant ON PharmacyTransactions(tenantId, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_waste_batch        ON WasteRecords(batchId);
+CREATE INDEX IF NOT EXISTS idx_medications_tenant ON Medications(tenantId, patientId);
 
 -- Barcode Indexes
 CREATE UNIQUE INDEX IF NOT EXISTS idx_pharmacystock_barcode
@@ -427,6 +461,7 @@ CREATE TABLE IF NOT EXISTS StructuredAllergies (
   verificationMethod TEXT,
   recordedBy TEXT NOT NULL,
   recordedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  deletedAt TEXT,
   FOREIGN KEY (patientId) REFERENCES Patients(id)
 );
 CREATE INDEX IF NOT EXISTS idx_allergies_patient ON StructuredAllergies(patientId, tenantId);
@@ -451,6 +486,7 @@ CREATE TABLE IF NOT EXISTS LabInvestigations (
   results TEXT NOT NULL,
   recordedBy TEXT NOT NULL,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  deletedAt TEXT,
   FOREIGN KEY (patientId) REFERENCES Patients(id)
 );
 CREATE INDEX IF NOT EXISTS idx_labs_patient ON LabInvestigations(patientId, tenantId, investigationDate);
@@ -466,6 +502,7 @@ CREATE TABLE IF NOT EXISTS ImagingReports (
   impression TEXT,
   reportedBy TEXT NOT NULL,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  deletedAt TEXT,
   FOREIGN KEY (patientId) REFERENCES Patients(id)
 );
 CREATE INDEX IF NOT EXISTS idx_imaging_patient ON ImagingReports(patientId, tenantId);
@@ -479,6 +516,7 @@ CREATE TABLE IF NOT EXISTS ClinicalProcedures (
   performedBy TEXT NOT NULL,
   outcome TEXT,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  deletedAt TEXT,
   FOREIGN KEY (patientId) REFERENCES Patients(id)
 );
 CREATE INDEX IF NOT EXISTS idx_procedures_patient ON ClinicalProcedures(patientId, tenantId);
@@ -494,6 +532,7 @@ CREATE TABLE IF NOT EXISTS ClinicalTeam (
   clinicalRemarks TEXT,
   remarksDate DATE,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  deletedAt TEXT,
   FOREIGN KEY (patientId) REFERENCES Patients(id)
 );
 CREATE INDEX IF NOT EXISTS idx_team_patient ON ClinicalTeam(patientId, tenantId);

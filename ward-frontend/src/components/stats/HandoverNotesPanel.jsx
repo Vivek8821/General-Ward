@@ -31,43 +31,50 @@ export default function HandoverNotesPanel({ patientId, readOnly }) {
     return new Date(Date.now() - opt.ms).toISOString();
   }, [range]);
 
+  useEffect(() => {
+    if (!patientId) { setNotes([]); setLoading(false); return; }
+    let ignore = false;
+    setLoading(true);
+
+    const params = new URLSearchParams();
+    if (shiftFilter !== 'all') params.set('shift', shiftFilter);
+    if (rangeFromIso) params.set('from', rangeFromIso);
+    params.set('limit', '50');
+    const qs = params.toString();
+    const endpoint = qs ? `/patients/${patientId}/notes?${qs}` : `/patients/${patientId}/notes`;
+
+    api.get(endpoint)
+      .then(data => { if (!ignore) setNotes(Array.isArray(data) ? data : []); })
+      .catch(err => {
+        if (!ignore) {
+          if (err?.status === 404) setNotes([]);
+          else toast.error('Failed to load handover notes: ' + (err.message || 'unknown error'));
+        }
+      })
+      .finally(() => { if (!ignore) setLoading(false); });
+
+    return () => { ignore = true; };
+  }, [patientId, shiftFilter, rangeFromIso]);
+
   const fetchNotes = async () => {
     try {
-      if (!patientId) {
-        setNotes([]);
-        setLoading(false);
-        return;
-      }
+      if (!patientId) { setNotes([]); setLoading(false); return; }
       setLoading(true);
-
       const params = new URLSearchParams();
       if (shiftFilter !== 'all') params.set('shift', shiftFilter);
       if (rangeFromIso) params.set('from', rangeFromIso);
       params.set('limit', '50');
-
       const qs = params.toString();
-      const endpoint = qs
-        ? `/patients/${patientId}/notes?${qs}`
-        : `/patients/${patientId}/notes`;
-
+      const endpoint = qs ? `/patients/${patientId}/notes?${qs}` : `/patients/${patientId}/notes`;
       const data = await api.get(endpoint);
       setNotes(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
-      if (err?.status === 404) {
-        setNotes([]);
-      } else {
-        toast.error('Failed to load handover notes: ' + (err.message || 'unknown error'));
-      }
+      if (err?.status === 404) setNotes([]);
+      else toast.error('Failed to load handover notes: ' + (err.message || 'unknown error'));
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchNotes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [patientId, shiftFilter, range]);
 
   const handleCreate = async (e) => {
     e.preventDefault();

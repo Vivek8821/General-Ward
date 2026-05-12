@@ -20,18 +20,21 @@ export default function SleepTab({ patientId, readOnly }) {
   });
 
   useEffect(() => {
-    fetchSleepLogs();
+    if (!patientId) return;
+    let ignore = false;
+    api.get(`/patients/${patientId}/stats?type=sleep&limit=50`)
+      .then(data => { if (!ignore) setSleepLogs(data); })
+      .catch(err => { if (!ignore) toast.error("Failed to load sleep records: " + err.message); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [patientId]);
 
   const fetchSleepLogs = async () => {
     try {
-      // Page windowing for enterprise-scale data sets.
-      // Backend supports `limit`; using it reduces payload size and improves perceived performance.
-      const dataLimited = await api.get(`/patients/${patientId}/stats?type=sleep&limit=50`);
-      setSleepLogs(dataLimited);
+      const data = await api.get(`/patients/${patientId}/stats?type=sleep&limit=50`);
+      setSleepLogs(data);
     } catch (err) {
       toast.error("Failed to load sleep records: " + err.message);
-      console.error(err);
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ const allergyRepo = require('../repositories/StructuredAllergyRepository');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
+const { clinicalWriteLimiter } = require('../middleware/rateLimiters');
 
 const VALID_CATEGORIES = ['drug', 'food', 'environmental', 'other'];
 const VALID_SEVERITIES = ['mild', 'moderate', 'severe', 'high'];
@@ -29,7 +30,7 @@ router.get('/:id/allergies',
 );
 
 router.post('/:id/allergies',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
@@ -49,7 +50,7 @@ router.post('/:id/allergies',
 );
 
 router.put('/:id/allergies/:allergyId',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
@@ -65,7 +66,7 @@ router.put('/:id/allergies/:allergyId',
 );
 
 router.delete('/:id/allergies/:allergyId',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
       const tenantId = req.user.tenantId || 'tenant-default';

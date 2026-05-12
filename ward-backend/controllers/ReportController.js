@@ -6,7 +6,7 @@ const patientRepository = require('../repositories/PatientRepository');
 const clinicalAuditService = require('../services/ClinicalAuditService');
 
 class ReportController {
-  async generateReport(req, res) {
+  async generateReport(req, res, next) {
     try {
       const { patientId } = req.params;
       const tenantId = req.user.tenantId || 'tenant-default';
@@ -47,22 +47,21 @@ class ReportController {
       res.send(pdfBuffer);
 
     } catch (err) {
-      console.error('[ReportController] Generation error:', err);
       if (err.message === 'Patient not found') {
         return res.status(404).json({ error: 'Patient not found or unauthorized' });
       }
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   }
 
-  async getHistory(req, res) {
+  async getHistory(req, res, next) {
     try {
       const { patientId } = req.params;
       const tenantId = req.user.tenantId || 'tenant-default';
       const history = await reportRepository.findAllByPatientId(patientId, tenantId);
       res.json(history);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      next(err);
     }
   }
 

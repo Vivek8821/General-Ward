@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../utils/api';
+import { api, API_BASE, getCsrfHeaders } from '../../utils/api';
 import { Archive, HeartPulse, Pill, CalendarClock, Activity, FileText, Download, History, RefreshCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -42,14 +42,16 @@ export default function DischargeSummaryTab({ patientId }) {
         setGenerating(true);
         const tid = toast.loading('Generating comprehensive treatment report...');
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/reports/patient/${patientId}/generate`, {
+            const response = await fetch(`${API_BASE}/reports/patient/${patientId}/generate`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                credentials: 'include',
+                headers: getCsrfHeaders(),
             });
 
-            if (!response.ok) throw new Error('Failed to generate report');
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new Error(body.error || 'Failed to generate report');
+            }
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -59,9 +61,10 @@ export default function DischargeSummaryTab({ patientId }) {
             document.body.appendChild(a);
             a.click();
             a.remove();
-            
+            window.URL.revokeObjectURL(url);
+
             toast.success('Report generated successfully', { id: tid });
-            fetchHistory(); // Refresh history
+            fetchHistory();
         } catch (err) {
             toast.error(err.message, { id: tid });
         } finally {

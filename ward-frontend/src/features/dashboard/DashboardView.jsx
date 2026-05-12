@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { api } from '../../utils/api';
@@ -20,7 +20,7 @@ export default function DashboardView() {
     try { return !localStorage.getItem(WELCOME_DISMISSED_KEY); } catch { return true; }
   });
   const [search, setSearch] = useState('');
-  const [escalated, setEscalated] = useState([]);
+  const prevEscalatedRef = useRef([]);
   const location = useLocation();
   const viewMode = location.pathname === '/archives' ? 'archived' : 'active';
   
@@ -62,49 +62,27 @@ export default function DashboardView() {
     refetchOnMount: false,
   });
 
+  const { data: escalated = [] } = useQuery({
+    queryKey: ['escalations'],
+    queryFn: () => api.get('/escalations/all'),
+    enabled: user?.role === 'doctor' && viewMode === 'active',
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+  });
+
   useEffect(() => {
-    let intervalId;
-    if (user?.role === 'doctor' && viewMode === 'active') {
-      intervalId = setInterval(async () => {
-        try {
-          const eData = await api.get('/escalations/all');
-          setEscalated(prev => {
-            if (eData.length > prev.length) {
-              const newEscalations = eData.filter(e => !prev.some(p => p.id === e.id));
-              newEscalations.forEach(e => {
-                toast.error(`Case Escalate: ${e.reason}`, {
-                  icon: '🚨',
-                  duration: 6000,
-                });
-              });
-            }
-            return eData;
-          });
-
-        } catch (err) {
-          console.error('Polling error', err);
-        }
-      }, 15000);
+    const prev = prevEscalatedRef.current;
+    if (escalated.length > prev.length) {
+      escalated
+        .filter(e => !prev.some(p => p.id === e.id))
+        .forEach(e => toast.error(`Case Escalated: ${e.reason}`, { icon: '🚨', duration: 6000 }));
     }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [user?.role, viewMode]);
+    prevEscalatedRef.current = escalated;
+  }, [escalated]);
 
   useEffect(() => {
     if (viewMode === 'archived') setIsReviewingCases(false);
   }, [viewMode]);
-
-  useEffect(() => {
-    if (user?.role === 'doctor' && viewMode === 'active') {
-      api.get('/escalations/all')
-        .then((eData) => setEscalated(eData))
-        .catch((err) => console.error(err));
-    } else {
-      setEscalated([]);
-    }
-  }, [user?.role, viewMode]);
 
   const handleSavePatient = async (e) => {
     e.preventDefault();

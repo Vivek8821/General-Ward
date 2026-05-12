@@ -33,29 +33,28 @@ class EscalationRepository {
     async reviewEscalationWithStatusUpdate(escalationId, tenantId) {
         const tenant = tenantId || 'tenant-default';
         return dbAdapter.withTransaction(async ({ runAsync, getAsync }) => {
-            const updEsc = await runAsync(
-                `UPDATE Escalations SET status = 'reviewed' WHERE id = ? AND tenantId = ?`,
-                [escalationId, tenant]
-            );
-
-            if (!updEsc || updEsc.changes === 0) {
-                throw new Error('Escalation not found');
-            }
-
             const row = await getAsync(
                 `SELECT patientId FROM Escalations WHERE id = ? AND tenantId = ?`,
                 [escalationId, tenant]
             );
 
-            if (row?.patientId) {
+            if (!row) {
+                throw new Error('Escalation not found');
+            }
+
+            await runAsync(
+                `UPDATE Escalations SET status = 'reviewed' WHERE id = ? AND tenantId = ?`,
+                [escalationId, tenant]
+            );
+
+            if (row.patientId) {
                 await runAsync(
                     `UPDATE Patients SET status = 'active' WHERE id = ? AND status = 'escalated' AND tenantId = ?`,
                     [row.patientId, tenant]
                 );
-                return { message: 'Escalation marked as reviewed' };
             }
 
-            return { message: 'Escalation marked as reviewed (Patient not found to update)' };
+            return { message: 'Escalation marked as reviewed' };
         });
     }
 

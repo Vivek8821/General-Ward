@@ -38,7 +38,7 @@ class MedicationRepository {
       SELECT ma.*, m.name as medName, m.dosage, m.route
       FROM MedicationAdministrations ma
       JOIN Medications m ON ma.medicationId = m.id AND m.tenantId = ?
-      WHERE ma.patientId = ? AND ma.tenantId = ?
+      WHERE ma.patientId = ? AND ma.tenantId = ? AND ma.deletedAt IS NULL
     `;
     const params = [tenantId, patientId, tenantId];
 
@@ -95,7 +95,7 @@ class MedicationRepository {
 
   async deleteAdministration(adminId, patientId, tenantId) {
     return dbAdapter.run(
-      `DELETE FROM MedicationAdministrations WHERE id = ? AND patientId = ? AND tenantId = ?`,
+      `UPDATE MedicationAdministrations SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND patientId = ? AND tenantId = ? AND deletedAt IS NULL`,
       [adminId, patientId, tenantId]
     );
   }

@@ -8,12 +8,18 @@ function verifyCsrfForMutations(req, res, next) {
     return next();
   }
 
-  // Endpoints that MUST be accessible without a CSRF token (e.g., initial authentication).
+  // Endpoints that MUST be accessible without a CSRF token.
+  // /refresh: the access token is expired (that's why we're refreshing), so req.user
+  //   won't be set — CSRF enforcement is skipped anyway. Listed here for clarity.
+  // /login, /signup: unauthenticated — no CSRF claim exists yet.
   const CSRF_ALLOWLIST = [
     '/api/auth/login',
     '/api/auth/signup',
+    '/api/auth/refresh',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
     '/health',
-    '/api/version'
+    '/api/version',
   ];
 
   const path = req.originalUrl.split('?')[0];

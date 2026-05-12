@@ -4,6 +4,7 @@ const toxRepo = require('../repositories/ToxicologyScreenRepository');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
+const { clinicalWriteLimiter } = require('../middleware/rateLimiters');
 
 function validate(body) {
   if (!body.screenDate) return 'screenDate is required';
@@ -24,7 +25,7 @@ router.get('/:id/toxicology',
 );
 
 router.put('/:id/toxicology',
-  authenticateToken, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.WRITE_CLINICAL_RECORDS), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });

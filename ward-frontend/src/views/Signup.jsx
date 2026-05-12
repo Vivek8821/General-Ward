@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Hospital } from 'lucide-react';
+import { Hospital, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Signup() {
@@ -197,6 +197,16 @@ export default function Signup() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 8 characters"
             />
+            {password.length > 0 && (
+              <p className={`text-xs mt-1 ${
+                password.length < 8 ? 'text-danger' :
+                password.length < 12 ? 'text-warning' : 'text-success'
+              }`}>
+                {password.length < 8  ? `Too short (${password.length}/8)` :
+                 password.length < 12 ? 'Fair — longer is stronger' :
+                 password.length < 16 ? 'Good' : 'Strong'}
+              </p>
+            )}
           </div>
 
           <div>
@@ -215,6 +225,13 @@ export default function Signup() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter password"
             />
+          </div>
+
+          <div className="sm:col-span-2 flex items-start gap-2 text-xs text-text-muted bg-bg-tertiary p-3 rounded-lg">
+            <ShieldCheck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
+            <span>
+              Your password will be checked against known data breaches. No symbols required — length is what matters.
+            </span>
           </div>
 
           <button

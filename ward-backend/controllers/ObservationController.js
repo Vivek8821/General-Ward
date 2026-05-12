@@ -86,7 +86,7 @@ router.get('/trends', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), re
 });
 
 // POST /api/observations/ingest (Note: this is mounted at /api/observations)
-router.post('/ingest', ingestLimiter, authenticateToken, authorizeAny([PERMISSIONS.WRITE_VITALS]), async (req, res) => {
+router.post('/ingest', authenticateToken, ingestLimiter, authorizeAny([PERMISSIONS.WRITE_VITALS]), async (req, res) => {
     const { patientId, measurementType, data } = req.body || {};
     if (!patientId || measurementType !== 'vital' || !validateStats('vital', data)) {
         return res.status(400).json({ error: 'Invalid ingestion payload', code: 'VALIDATION_ERROR' });

@@ -131,8 +131,9 @@ function validatePassword(val) {
     if (!val || typeof val !== 'string') return 'password is required';
     if (val.length < 8) return 'password must be at least 8 characters';
     if (val.length > 128) return 'password must be 128 characters or fewer';
-    if (!/[a-zA-Z]/.test(val)) return 'password must contain at least one letter';
-    if (!/[0-9]/.test(val)) return 'password must contain at least one digit';
+    // Character-composition rules omitted deliberately: length is the strongest
+    // predictor of resistance to brute force. Breach checking runs asynchronously
+    // in the service layer via checkPasswordSecurity().
     return null;
 }
 

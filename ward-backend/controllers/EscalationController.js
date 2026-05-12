@@ -5,9 +5,10 @@ const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantPatient, requireTenantEscalation } = require('../middleware/tenant');
 const escalationService = require('../services/EscalationService');
 const { validateEscalationReason, bad } = require('../utils/validation');
+const { escalationLimiter } = require('../middleware/rateLimiters');
 
-// POST /api/patients/:patientId/escalations (Nurse or Doctor)
-router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT, PERMISSIONS.WRITE_VITALS]), requireTenantPatient('patientId'), async (req, res) => {
+// POST /api/patients/:patientId/escalations
+router.post('/', authenticateToken, escalationLimiter, authorizeAny([PERMISSIONS.WRITE_PATIENT, PERMISSIONS.WRITE_VITALS]), requireTenantPatient('patientId'), async (req, res, next) => {
     const err = validateEscalationReason((req.body || {}).reason);
     if (err) return bad(res, [err]);
 
@@ -16,23 +17,23 @@ router.post('/', authenticateToken, authorizeAny([PERMISSIONS.WRITE_PATIENT, PER
         const result = await escalationService.createEscalation(req.params.patientId, req.body.reason.trim(), req.user.name, tenantId);
         res.status(201).json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 });
 
-// GET /api/escalations/all (Global triage endpoint)
-router.get('/all', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res) => {
+// GET /api/escalations/all
+router.get('/all', authenticateToken, authorize(PERMISSIONS.READ_PATIENT), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const escalations = await escalationService.getPendingEscalations(tenantId);
         res.json(escalations);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 });
 
-// Mark as reviewed (Doctor only)
-router.post('/:escalationId/review', authenticateToken, authorize(PERMISSIONS.WRITE_PATIENT), requireTenantEscalation('escalationId'), async (req, res) => {
+// POST /api/patients/:patientId/escalations/:escalationId/review
+router.post('/:escalationId/review', authenticateToken, escalationLimiter, authorize(PERMISSIONS.WRITE_PATIENT), requireTenantEscalation('escalationId'), async (req, res, next) => {
     try {
         const tenantId = req.user.tenantId || 'tenant-default';
         const result = await escalationService.reviewEscalation(req.params.escalationId, tenantId);
@@ -41,7 +42,7 @@ router.post('/:escalationId/review', authenticateToken, authorize(PERMISSIONS.WR
         if (error.message === 'Escalation not found') {
             return res.status(404).json({ error: error.message });
         }
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 });
 

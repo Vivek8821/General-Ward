@@ -20,7 +20,18 @@ export default function VitalsTab({ patientId, readOnly }) {
   });
 
   useEffect(() => {
-    fetchVitals();
+    if (!patientId) return;
+    let ignore = false;
+    Promise.all([
+      api.get(`/patients/${patientId}/stats?type=vital&limit=50`),
+      api.get(`/patients/${patientId}/stats/trends`)
+    ])
+      .then(([data, trendData]) => {
+        if (!ignore) { setVitals(data); setTrends(trendData?.trends || {}); }
+      })
+      .catch(err => { if (!ignore) toast.error("Failed to load vitals: " + err.message); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [patientId]);
 
   const fetchVitals = async () => {
@@ -33,7 +44,6 @@ export default function VitalsTab({ patientId, readOnly }) {
       setTrends(trendData?.trends || {});
     } catch (err) {
       toast.error("Failed to load vitals: " + err.message);
-      console.error(err);
     } finally {
       setLoading(false);
     }

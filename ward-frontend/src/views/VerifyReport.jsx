@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { API_BASE } from '../utils/api';
 import { ShieldCheck, ShieldAlert, FileText, Calendar, User, Clock, ChevronLeft, Building2 } from 'lucide-react';
 
 export default function VerifyReport() {
@@ -18,9 +19,7 @@ export default function VerifyReport() {
             }
 
             try {
-                // Use absolute URL or local proxy
-                const apiBase = import.meta.env.VITE_API_URL || '/api';
-                const response = await fetch(`${apiBase}/reports/verify?payload=${encodeURIComponent(payload)}`);
+                const response = await fetch(`${API_BASE}/reports/verify?payload=${encodeURIComponent(payload)}`);
                 if (!response.ok) throw new Error('Verification request failed');
                 const data = await response.json();
                 setResult(data);

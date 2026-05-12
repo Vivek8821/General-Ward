@@ -4,7 +4,7 @@ const dbAdapter = require('../db-adapter');
 class ClinicalTeamRepository {
   async getByPatient(patientId, tenantId) {
     return dbAdapter.all(
-      `SELECT * FROM ClinicalTeam WHERE patientId = ? AND tenantId = ? ORDER BY timestamp ASC`,
+      `SELECT * FROM ClinicalTeam WHERE patientId = ? AND tenantId = ? AND deletedAt IS NULL ORDER BY timestamp ASC`,
       [patientId, tenantId]
     );
   }
@@ -35,7 +35,7 @@ class ClinicalTeamRepository {
       `UPDATE ClinicalTeam
        SET role = ?, name = ?, registrationNo = ?, qualification = ?,
            clinicalRemarks = ?, remarksDate = ?
-       WHERE id = ? AND tenantId = ?`,
+       WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
       [
         data.role,
         data.name,
@@ -52,7 +52,7 @@ class ClinicalTeamRepository {
 
   async delete(id, tenantId) {
     return dbAdapter.run(
-      `DELETE FROM ClinicalTeam WHERE id = ? AND tenantId = ?`,
+      `UPDATE ClinicalTeam SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
       [id, tenantId]
     );
   }

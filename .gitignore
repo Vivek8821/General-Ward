@@ -1,3 +1,9 @@
+# Environment files — contain real secrets, never commit
+.env
+ward-backend/.env
+ward-frontend/.env
+ward-frontend/.env.local
+
 # Runtime / local artifacts (do not commit)
 ward-backend/ward.db
 ward-backend/ward.db-shm

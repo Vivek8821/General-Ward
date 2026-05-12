@@ -122,12 +122,16 @@ class PatientRepository {
     return { ...patientData, status: 'active' };
   }
 
-  async findAll(tenantId) {
+  async findAll(tenantId, { limit = 500 } = {}) {
     const tenant = tenantId || 'tenant-default';
-    return dbAdapter.all(
-      `SELECT * FROM Patients WHERE tenantId = ? AND status IN ('active', 'escalated')`,
-      [tenant]
+    const rows = await dbAdapter.all(
+      `SELECT * FROM Patients WHERE tenantId = ? AND status IN ('active', 'escalated') LIMIT ?`,
+      [tenant, limit]
     );
+    if (rows.length === limit) {
+      console.warn(`[PatientRepository.findAll] result set hit limit=${limit} for tenant=${tenant} — consider pagination`);
+    }
+    return rows;
   }
 
   async findArchived(tenantId) {

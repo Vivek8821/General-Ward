@@ -4,6 +4,7 @@ const teamRepo = require('../repositories/ClinicalTeamRepository');
 const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
+const { clinicalWriteLimiter } = require('../middleware/rateLimiters');
 
 function validate(body) {
   if (!body.role || typeof body.role !== 'string') return 'role is required';
@@ -24,7 +25,7 @@ router.get('/:id/team',
 );
 
 router.post('/:id/team',
-  authenticateToken, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
@@ -43,7 +44,7 @@ router.post('/:id/team',
 );
 
 router.put('/:id/team/:memberId',
-  authenticateToken, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'),
   async (req, res, next) => {
     const error = validate(req.body);
     if (error) return res.status(400).json({ error });
@@ -59,7 +60,7 @@ router.put('/:id/team/:memberId',
 );
 
 router.delete('/:id/team/:memberId',
-  authenticateToken, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'),
+  authenticateToken, clinicalWriteLimiter, authorize(PERMISSIONS.DISCHARGE_PATIENT), requireTenantPatient('id'),
   async (req, res, next) => {
     try {
       const tenantId = req.user.tenantId || 'tenant-default';

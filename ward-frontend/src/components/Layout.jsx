@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Outlet, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck, Archive, BarChart3 } from 'lucide-react';
+import { LogOut, MonitorX, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck, Archive, BarChart3, KeyRound } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import ChangePasswordModal from './ChangePasswordModal';
 
 export const ProtectedLayout = ({ allowedRoles }) => {
-  const { user, logout, setTheme, theme } = useAuth();
+  const { user, logout, logoutAll, setTheme, theme } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -17,8 +20,13 @@ export const ProtectedLayout = ({ allowedRoles }) => {
   }
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    logout().finally(() => navigate('/login'));
+  };
+
+  const handleLogoutAll = () => {
+    logoutAll()
+      .then(() => toast.success('All other sessions have been signed out.'))
+      .catch(() => toast.error('Could not sign out everywhere. Please try again.'));
   };
 
   const toggleTheme = () => {
@@ -84,8 +92,26 @@ export const ProtectedLayout = ({ allowedRoles }) => {
               <span className="font-medium">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
             </button>
             
-            <button 
-              onClick={handleLogout} 
+            <button
+              type="button"
+              onClick={() => setShowChangePassword(true)}
+              className="nav-link w-full border border-transparent"
+            >
+              <KeyRound className="w-5 h-5" />
+              <span className="font-medium">Change Password</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogoutAll}
+              className="nav-link w-full text-text-muted hover:bg-danger/5 hover:text-danger/80"
+            >
+              <MonitorX className="w-5 h-5" />
+              <span className="font-medium">Sign Out Everywhere</span>
+            </button>
+
+            <button
+              onClick={handleLogout}
               className="nav-link w-full text-danger hover:bg-danger/10 hover:text-danger"
             >
               <LogOut className="w-5 h-5" />
@@ -102,6 +128,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
         </main>
       </div>
 
+      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
       <Toaster position="top-right" />
     </div>
   );

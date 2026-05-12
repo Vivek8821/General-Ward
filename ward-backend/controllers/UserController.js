@@ -5,9 +5,10 @@ const { PERMISSIONS, authorize } = require('../middleware/rbac');
 const authService = require('../services/AuthService');
 const dbAdapter = require('../db-adapter');
 const { validateUserPayload, bad } = require('../utils/validation');
+const { adminWriteLimiter } = require('../middleware/rateLimiters');
 
-// GET /api/admin/users — list all staff in tenant
-router.get('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res) => {
+// GET /api/admin/users
+router.get('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res, next) => {
   try {
     const tenantId = req.user.tenantId;
     const rows = await dbAdapter.all(
@@ -16,24 +17,18 @@ router.get('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (r
     );
     res.json({ users: rows });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-// POST /api/admin/users — create a doctor, nurse, or pharmacist
-router.post('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res) => {
+// POST /api/admin/users
+router.post('/', authenticateToken, adminWriteLimiter, authorize(PERMISSIONS.MANAGE_USERS), async (req, res, next) => {
   const errors = validateUserPayload(req.body || {});
   if (errors.length > 0) return bad(res, errors);
 
   try {
     const { name, role, email, password } = req.body || {};
-    const user = await authService.createStaffMember({
-      adminUser: req.user,
-      name,
-      role,
-      email,
-      password,
-    });
+    const user = await authService.createStaffMember({ adminUser: req.user, name, role, email, password });
     res.status(201).json({ user });
   } catch (err) {
     if (err.code === 'USER_EXISTS') return res.status(409).json({ error: err.message, code: 'USER_EXISTS' });
@@ -41,8 +36,8 @@ router.post('/', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (
   }
 });
 
-// DELETE /api/admin/users/:id — remove a staff member (cannot remove self or other admins)
-router.delete('/:id', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), async (req, res) => {
+// DELETE /api/admin/users/:id
+router.delete('/:id', authenticateToken, adminWriteLimiter, authorize(PERMISSIONS.MANAGE_USERS), async (req, res, next) => {
   try {
     const tenantId = req.user.tenantId;
     const { id } = req.params;
@@ -60,7 +55,7 @@ router.delete('/:id', authenticateToken, authorize(PERMISSIONS.MANAGE_USERS), as
     await dbAdapter.run(`DELETE FROM Users WHERE id = ? AND tenantId = ?`, [id, tenantId]);
     res.json({ message: 'User removed' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 

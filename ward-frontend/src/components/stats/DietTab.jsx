@@ -19,7 +19,13 @@ export default function DietTab({ patientId, readOnly }) {
   });
 
   useEffect(() => {
-    fetchDiets();
+    if (!patientId) return;
+    let ignore = false;
+    api.get(`/patients/${patientId}/stats?type=diet&limit=50`)
+      .then(data => { if (!ignore) setDiets(data); })
+      .catch(err => { if (!ignore) toast.error("Failed to load diet records: " + err.message); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [patientId]);
 
   const fetchDiets = async () => {
@@ -28,7 +34,6 @@ export default function DietTab({ patientId, readOnly }) {
       setDiets(data);
     } catch (err) {
       toast.error("Failed to load diet records: " + err.message);
-      console.error(err);
     } finally {
       setLoading(false);
     }

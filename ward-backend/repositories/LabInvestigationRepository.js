@@ -4,7 +4,7 @@ const dbAdapter = require('../db-adapter');
 class LabInvestigationRepository {
   async getByPatient(patientId, tenantId) {
     return dbAdapter.all(
-      `SELECT * FROM LabInvestigations WHERE patientId = ? AND tenantId = ? ORDER BY investigationDate ASC`,
+      `SELECT * FROM LabInvestigations WHERE patientId = ? AND tenantId = ? AND deletedAt IS NULL ORDER BY investigationDate ASC`,
       [patientId, tenantId]
     );
   }
@@ -32,7 +32,7 @@ class LabInvestigationRepository {
     await dbAdapter.run(
       `UPDATE LabInvestigations
        SET investigationDate = ?, dayLabel = ?, results = ?, recordedBy = ?
-       WHERE id = ? AND tenantId = ?`,
+       WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
       [
         data.investigationDate,
         data.dayLabel || null,
@@ -47,7 +47,7 @@ class LabInvestigationRepository {
 
   async delete(id, tenantId) {
     return dbAdapter.run(
-      `DELETE FROM LabInvestigations WHERE id = ? AND tenantId = ?`,
+      `UPDATE LabInvestigations SET deletedAt = CURRENT_TIMESTAMP WHERE id = ? AND tenantId = ? AND deletedAt IS NULL`,
       [id, tenantId]
     );
   }

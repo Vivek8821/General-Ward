@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -89,6 +90,9 @@ app.use(
 app.use(express.json({ limit: '512kb' }));
 app.use('/api', attachUserIfPresent);
 app.use('/api', verifyCsrfForMutations);
+const { detectAttackPatterns, submissionLimiter } = require('./middleware/abuseProtection');
+app.use('/api', detectAttackPatterns);
+app.use('/api', submissionLimiter);
 app.use(auditLog);
 app.use(requestLogger);
 

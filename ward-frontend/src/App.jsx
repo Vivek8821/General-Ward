@@ -5,6 +5,8 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedLayout } from './components/Layout';
 import Login from './views/Login';
 import Signup from './views/Signup';
+import ForgotPassword from './views/ForgotPassword';
+import ResetPassword from './views/ResetPassword';
 import DashboardView from './features/dashboard/DashboardView';
 import PatientDetail from './views/PatientDetail';
 import HospitalArchiveDetail from './views/HospitalArchiveDetail';
@@ -34,6 +36,8 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify" element={<VerifyReport />} />
             
             <Route element={<ProtectedLayout allowedRoles={['doctor', 'nurse', 'admin']} />}>
