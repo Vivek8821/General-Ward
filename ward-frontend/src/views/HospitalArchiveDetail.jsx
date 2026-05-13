@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../utils/api';
+import { fmtDateTime } from '../utils/dateFormat';
 import {
   Archive,
   ArrowLeft,
@@ -128,7 +129,7 @@ export default function HospitalArchiveDetail() {
             <p>
               <span className="text-text-muted">Archived</span>{' '}
               <span className="font-semibold text-text-primary">
-                {record.archivedAt ? new Date(record.archivedAt).toLocaleString() : '—'}
+                {fmtDateTime(record.archivedAt)}
               </span>
             </p>
             <p className="mt-1">

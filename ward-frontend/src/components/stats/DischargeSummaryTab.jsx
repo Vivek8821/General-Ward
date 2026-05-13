@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api, API_BASE, getCsrfHeaders } from '../../utils/api';
 import { Archive, HeartPulse, Pill, CalendarClock, Activity, FileText, Download, History, RefreshCcw } from 'lucide-react';
+import { fmtDateTime } from '../../utils/dateFormat';
 import toast from 'react-hot-toast';
 
 export default function DischargeSummaryTab({ patientId }) {
@@ -107,7 +108,7 @@ export default function DischargeSummaryTab({ patientId }) {
                                         {reports.map(r => (
                                             <tr key={r.id} className="hover:bg-bg-tertiary/50 transition-colors group">
                                                 <td className="px-4 py-3 font-medium text-text-primary">
-                                                    {new Date(r.generatedAt).toLocaleString()}
+                                                    {fmtDateTime(r.generatedAt)}
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className="badge badge-info text-[10px] uppercase">{r.reportType.replace('_', ' ')}</span>
@@ -142,7 +143,7 @@ export default function DischargeSummaryTab({ patientId }) {
                             <Archive className="w-5 h-5" /> Official Discharge Summary
                         </h3>
                         <p className="text-sm font-semibold text-text-primary">Discharged by: {summary.dischargedBy}</p>
-                        <p className="text-xs text-text-muted mt-1">Date: {new Date(summary.timestamp).toLocaleString()}</p>
+                        <p className="text-xs text-text-muted mt-1">Date: {fmtDateTime(summary.timestamp)}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

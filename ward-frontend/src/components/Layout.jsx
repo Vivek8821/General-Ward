@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, MonitorX, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck, Archive, BarChart3, KeyRound } from 'lucide-react';
+import { LogOut, MonitorX, Moon, Sun, Hospital, Package, Users, ClipboardList, ShieldCheck, Archive, BarChart3, KeyRound, Settings } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import ChangePasswordModal from './ChangePasswordModal';
 
@@ -10,6 +10,7 @@ export const ProtectedLayout = ({ allowedRoles }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -85,38 +86,51 @@ export const ProtectedLayout = ({ allowedRoles }) => {
           <div className="flex flex-col gap-2">
             <button
               type="button"
-              onClick={toggleTheme}
-              className="nav-link w-full border border-transparent"
+              onClick={() => setShowSettings(!showSettings)}
+              className={`nav-link w-full border border-transparent ${showSettings ? 'nav-link-active' : ''}`}
             >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              <span className="font-medium">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setShowChangePassword(true)}
-              className="nav-link w-full border border-transparent"
-            >
-              <KeyRound className="w-5 h-5" />
-              <span className="font-medium">Change Password</span>
+              <Settings className="w-5 h-5" />
+              <span className="font-medium">Settings</span>
             </button>
 
-            <button
-              type="button"
-              onClick={handleLogoutAll}
-              className="nav-link w-full text-text-muted hover:bg-danger/5 hover:text-danger/80"
-            >
-              <MonitorX className="w-5 h-5" />
-              <span className="font-medium">Sign Out Everywhere</span>
-            </button>
+            {showSettings && (
+              <div className="flex flex-col gap-1 mt-1 animate-in slide-in-from-top-2 fade-in duration-200">
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="nav-link w-full border border-transparent !py-2 !pl-6 text-sm"
+                >
+                  {theme === 'dark' ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+                  <span className="font-medium whitespace-nowrap text-left flex-1">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setShowChangePassword(true)}
+                  className="nav-link w-full border border-transparent !py-2 !pl-6 text-sm"
+                >
+                  <KeyRound className="w-4 h-4 shrink-0" />
+                  <span className="font-medium whitespace-nowrap text-left flex-1">Change Password</span>
+                </button>
 
-            <button
-              onClick={handleLogout}
-              className="nav-link w-full text-danger hover:bg-danger/10 hover:text-danger"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleLogoutAll}
+                  className="nav-link w-full text-text-muted hover:bg-danger/5 hover:text-danger/80 !py-2 !pl-6 text-sm"
+                >
+                  <MonitorX className="w-4 h-4 shrink-0" />
+                  <span className="font-medium whitespace-nowrap text-left flex-1 truncate" title="Sign Out Everywhere">Sign Out Everywhere</span>
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  className="nav-link w-full text-danger hover:bg-danger/10 hover:text-danger !py-2 !pl-6 text-sm"
+                >
+                  <LogOut className="w-4 h-4 shrink-0" />
+                  <span className="font-medium whitespace-nowrap text-left flex-1">Logout</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>

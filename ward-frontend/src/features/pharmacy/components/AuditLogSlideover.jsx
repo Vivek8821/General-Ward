@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRightLeft, X } from 'lucide-react';
+import { fmtDateTime } from '../../../utils/dateFormat';
 
 export default function AuditLogSlideover({ showHistory, setShowHistory, isHistoryLoading, history }) {
   if (!showHistory) return null;
@@ -37,7 +38,7 @@ export default function AuditLogSlideover({ showHistory, setShowHistory, isHisto
                     }`}>
                       {tx.type}
                     </span>
-                    <span className="text-[10px] text-text-muted font-black uppercase tracking-tighter">{new Date(tx.timestamp).toLocaleString()}</span>
+                    <span className="text-[10px] text-text-muted font-black uppercase tracking-tighter">{fmtDateTime(tx.timestamp)}</span>
                   </div>
                   <p className="text-xs font-black text-text-primary mt-1">{tx.notes || 'Manual stock adjustment'}</p>
                   <p className="text-[9px] text-text-muted uppercase font-black tracking-widest mt-2">Operator: <span className="text-primary">{tx.userName}</span></p>

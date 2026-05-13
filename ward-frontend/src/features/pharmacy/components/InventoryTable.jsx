@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Check, X, Layers, Edit3, History, Trash2, Plus } from 'lucide-react';
+import { fmtDate } from '../../../utils/dateFormat';
 
 const NOW = new Date();
 const THIRTY_DAYS_LATER = new Date(Date.now() + 30 * 86400000);
@@ -92,7 +93,7 @@ export default function InventoryTable({
                 <td className="p-4">
                   {item.nearestExpiry ? (
                     <div className={`text-xs font-black ${new Date(item.nearestExpiry) < NOW ? 'text-danger animate-pulse' : new Date(item.nearestExpiry) < THIRTY_DAYS_LATER ? 'text-warning' : 'text-text-secondary'}`}>
-                      {new Date(item.nearestExpiry).toLocaleDateString()}
+                      {fmtDate(item.nearestExpiry)}
                     </div>
                   ) : <span className="text-[10px] text-text-muted">N/A</span>}
                 </td>
@@ -122,7 +123,7 @@ export default function InventoryTable({
                         <tbody>{(item.batches || []).map(b => (
                           <tr key={b.id} className="border-t border-border/20 hover:bg-bg-tertiary/50">
                             <td className="p-2 font-bold text-text-primary">{b.batchNumber}</td>
-                            <td className={`p-2 font-bold ${new Date(b.expiryDate) < new Date() ? 'text-danger' : new Date(b.expiryDate) < new Date(Date.now()+30*86400000) ? 'text-warning' : 'text-text-secondary'}`}>{new Date(b.expiryDate).toLocaleDateString()}</td>
+                            <td className={`p-2 font-bold ${new Date(b.expiryDate) < new Date() ? 'text-danger' : new Date(b.expiryDate) < new Date(Date.now()+30*86400000) ? 'text-warning' : 'text-text-secondary'}`}>{fmtDate(b.expiryDate)}</td>
                             <td className="p-2 text-right font-black text-text-primary">{b.quantity}</td>
                             <td className="p-2 text-right text-text-muted">₹{Number(b.costPerUnit).toFixed(2)}</td>
                             <td className="p-2 text-text-muted">{b.manufacturer || '—'}</td>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { Moon, Plus, Save, AlertTriangle } from 'lucide-react';
+import { fmtDateTime } from '../../utils/dateFormat';
 import toast from 'react-hot-toast';
 
 export default function SleepTab({ patientId, readOnly }) {
@@ -59,7 +60,7 @@ export default function SleepTab({ patientId, readOnly }) {
 
   const renderSleepCard = (log) => {
     const d = log.data;
-    const date = new Date(log.timestamp).toLocaleString();
+    const date = fmtDateTime(log.timestamp);
     const poorSleep = parseFloat(d.hoursSlept) < 5 || d.quality === 'Poor';
 
     return (

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
+import { fmtDateTime } from '../utils/dateFormat';
 import { useAuth } from '../context/AuthContext';
 import { queryKeys } from '../utils/queryKeys';
 import toast from 'react-hot-toast';
@@ -86,8 +87,8 @@ export default function Tasks() {
           {tasks.map((t) => {
             const dueDate = t.dueAt ? new Date(t.dueAt) : null;
             const dueLabel = dueDate && !Number.isNaN(dueDate.getTime())
-              ? dueDate.toLocaleString()
-              : '--';
+              ? fmtDateTime(dueDate)
+              : '—';
 
             return (
               <div

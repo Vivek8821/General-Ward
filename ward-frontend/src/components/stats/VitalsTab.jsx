@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { Activity, Plus, Save } from 'lucide-react';
+import { fmtDateTime, fmtChartLabel } from '../../utils/dateFormat';
 import toast from 'react-hot-toast';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea
 } from 'recharts';
 
 export default function VitalsTab({ patientId, readOnly }) {
@@ -12,6 +13,7 @@ export default function VitalsTab({ patientId, readOnly }) {
   const [trends, setTrends] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [chartRange, setChartRange] = useState('7d');
   const { user } = useAuth();
   
   // Form State
@@ -72,7 +74,7 @@ export default function VitalsTab({ patientId, readOnly }) {
 
   const renderVitalCard = (vital) => {
     const d = vital.data;
-    const date = new Date(vital.timestamp).toLocaleString();
+    const date = fmtDateTime(vital.timestamp);
     
     // Simple logic for warning colors
     const isHighTemp = parseFloat(d.temp) > 100.4;
@@ -196,53 +198,101 @@ export default function VitalsTab({ patientId, readOnly }) {
               </h4>
               <div className="flex flex-wrap gap-3">
                 {trendRows.pulse && (
-                  <TrendPill label="Pulse" value={formatDelta(trendRows.pulse.delta)} direction={trendRows.pulse.direction} />
+                  <TrendPill label="Pulse" unit="bpm" vitalKey="pulse" row={trendRows.pulse} decimals={0} />
                 )}
                 {trendRows.temp && (
-                  <TrendPill label="Temp" value={formatDelta(trendRows.temp.delta, 1)} direction={trendRows.temp.direction} />
+                  <TrendPill label="Temp" unit="°C" vitalKey="temp" row={trendRows.temp} decimals={1} />
                 )}
                 {trendRows.systolic && (
-                  <TrendPill label="Systolic BP" value={formatDelta(trendRows.systolic.delta)} direction={trendRows.systolic.direction} />
+                  <TrendPill label="Systolic BP" unit="mmHg" vitalKey="systolic" row={trendRows.systolic} decimals={0} />
+                )}
+                {trendRows.diastolic && (
+                  <TrendPill label="Diastolic BP" unit="mmHg" vitalKey="diastolic" row={trendRows.diastolic} decimals={0} />
                 )}
                 {trendRows.spo2 && (
-                  <TrendPill label="SpO2" value={formatDelta(trendRows.spo2.delta)} direction={trendRows.spo2.direction} />
+                  <TrendPill label="SpO₂" unit="%" vitalKey="spo2" row={trendRows.spo2} decimals={0} />
                 )}
                 {trendRows.respRate && (
-                  <TrendPill label="Resp Rate" value={formatDelta(trendRows.respRate.delta)} direction={trendRows.respRate.direction} />
+                  <TrendPill label="Resp Rate" unit="/min" vitalKey="respRate" row={trendRows.respRate} decimals={0} />
                 )}
               </div>
             </div>
           )}
 
           {/* Graph Timeline View */}
-          <div className="bg-bg-tertiary p-6 rounded-xl border border-border">
-            <h4 className="font-bold text-text-secondary mb-6 flex items-center gap-2">
-               Recovery Trends
-            </h4>
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={[...vitals].reverse().map(v => ({
-                      time: new Date(v.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }),
-                      temp: parseFloat(v.data.temp),
-                      bpSystolic: parseInt(v.data.bpSystolic),
-                      bpDiastolic: parseInt(v.data.bpDiastolic)
-                  }))}
-                  margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-text-muted)" />
-                  <XAxis dataKey="time" stroke="var(--color-text-muted)" fontSize={12} tickMargin={10} />
-                  <YAxis yAxisId="left" stroke="var(--color-text-muted)" fontSize={12} domain={['dataMin - 10', 'dataMax + 10']} />
-                  <YAxis yAxisId="right" orientation="right" stroke="var(--color-text-muted)" fontSize={12} domain={['dataMin - 2', 'dataMax + 2']} />
-                  <Tooltip content={VitalsChartTooltip} />
-                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                  <Line yAxisId="left" type="monotone" dataKey="bpSystolic" name="BP Systolic" stroke="var(--color-danger)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  <Line yAxisId="left" type="monotone" dataKey="bpDiastolic" name="BP Diastolic" stroke="var(--color-info)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  <Line yAxisId="right" type="monotone" dataKey="temp" name="Temp (°F)" stroke="var(--color-warning)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          {(() => {
+            const rangeHours = { '24h': 24, '48h': 48, '7d': 168, 'all': Infinity };
+            const cutoffMs = chartRange === 'all' ? 0 : Date.now() - rangeHours[chartRange] * 3600 * 1000;
+            const chartData = [...vitals]
+              .filter(v => new Date(v.timestamp).getTime() >= cutoffMs)
+              .reverse()
+              .map(v => ({
+                time: fmtChartLabel(v.timestamp),
+                temp: v.data.temp != null ? parseFloat(v.data.temp) : null,
+                bpSystolic: v.data.bpSystolic != null ? parseInt(v.data.bpSystolic) : null,
+                bpDiastolic: v.data.bpDiastolic != null ? parseInt(v.data.bpDiastolic) : null,
+                spo2: v.data.spo2 != null ? parseFloat(v.data.spo2) : null,
+                respRate: v.data.respRate != null ? parseFloat(v.data.respRate) : null,
+              }));
+
+            return (
+              <div className="bg-bg-tertiary p-6 rounded-xl border border-border">
+                <div className="flex items-center justify-between mb-5">
+                  <h4 className="font-bold text-text-secondary flex items-center gap-2">Recovery Trends</h4>
+                  <div className="flex gap-1">
+                    {[['24h', '24h'], ['48h', '48h'], ['7d', '7d'], ['All', 'all']].map(([label, val]) => (
+                      <button
+                        key={val}
+                        onClick={() => setChartRange(val)}
+                        className={`px-2.5 py-1 text-xs rounded font-semibold border transition-colors ${
+                          chartRange === val
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-bg-secondary text-text-secondary border-border hover:bg-bg-primary'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {chartData.length === 0 ? (
+                  <div className="h-72 flex items-center justify-center text-text-muted text-sm">No vitals in this time window.</div>
+                ) : (
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData} margin={{ top: 5, right: 44, left: 0, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-text-muted)" opacity={0.2} />
+                        <XAxis dataKey="time" stroke="var(--color-text-muted)" fontSize={11} tickMargin={10} />
+
+                        {/* Left axis: BP (mmHg) */}
+                        <YAxis yAxisId="bp" orientation="left" stroke="var(--color-text-muted)" fontSize={11} domain={[40, 200]} tickFormatter={v => v} />
+                        {/* Right axis: Temp (°C) */}
+                        <YAxis yAxisId="temp" orientation="right" stroke="var(--color-text-muted)" fontSize={11} domain={[34, 42]} tickFormatter={v => `${v}°`} />
+                        {/* Scale-only axes — invisible but required for correct line positioning */}
+                        <YAxis yAxisId="spo2" orientation="right" domain={[85, 102]} axisLine={false} tick={false} width={0} />
+                        <YAxis yAxisId="rr"   orientation="right" domain={[0,  40]}  axisLine={false} tick={false} width={0} />
+
+                        {/* Normal range bands */}
+                        <ReferenceArea yAxisId="bp" y1={90} y2={140} fill="#22c55e" fillOpacity={0.08} stroke="#22c55e" strokeDasharray="4 3" strokeOpacity={0.35} label={{ value: 'Normal', position: 'insideTopLeft', fontSize: 9, fill: '#22c55e', opacity: 0.65 }} />
+                        <ReferenceArea yAxisId="bp" y1={60} y2={90} fill="#3b82f6" fillOpacity={0.08} stroke="#3b82f6" strokeDasharray="4 3" strokeOpacity={0.35} label={{ value: 'Normal', position: 'insideTopLeft', fontSize: 9, fill: '#3b82f6', opacity: 0.65 }} />
+                        <ReferenceArea yAxisId="temp" y1={36.1} y2={37.2} fill="#eab308" fillOpacity={0.08} stroke="#eab308" strokeDasharray="4 3" strokeOpacity={0.35} label={{ value: 'Normal', position: 'insideTopLeft', fontSize: 9, fill: '#eab308', opacity: 0.65 }} />
+
+                        <Tooltip content={VitalsChartTooltip} />
+                        <Legend wrapperStyle={{ paddingTop: '16px' }} />
+
+                        <Line yAxisId="bp" type="monotone" dataKey="bpSystolic" name="BP Systolic" stroke="var(--color-danger)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls />
+                        <Line yAxisId="bp" type="monotone" dataKey="bpDiastolic" name="BP Diastolic" stroke="var(--color-info)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls />
+                        <Line yAxisId="temp" type="monotone" dataKey="temp" name="Temp (°C)" stroke="var(--color-warning)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls />
+                        <Line yAxisId="spo2" type="monotone" dataKey="spo2" name="SpO₂ (%)" stroke="#22d3ee" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls />
+                        <Line yAxisId="rr" type="monotone" dataKey="respRate" name="Resp Rate" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* List View */}
           <div className="space-y-4 pt-4 border-t border-border">
@@ -257,19 +307,42 @@ export default function VitalsTab({ patientId, readOnly }) {
   );
 }
 
-function TrendPill({ label, value, direction }) {
-  const color =
-    direction === 'up'
-      ? 'text-warning border border-warning/20 bg-warning/10'
-      : direction === 'down'
-        ? 'text-success border border-success/20 bg-success/10'
-        : 'text-text-muted border border-border bg-bg-primary/30';
+const VITAL_NORMAL = {
+  pulse:    { min: 60,   max: 100  },
+  temp:     { min: 36.1, max: 37.2 },
+  systolic: { min: 90,   max: 140  },
+  diastolic:{ min: 60,   max: 90   },
+  spo2:     { min: 95,   max: 100  },
+  respRate: { min: 12,   max: 20   },
+};
+
+function trendImproving(vitalKey, latest, direction) {
+  const range = VITAL_NORMAL[vitalKey];
+  if (!range || latest == null) return null;
+  if (latest > range.max) return direction === 'down';
+  if (latest < range.min) return direction === 'up';
+  return null; // within normal — neutral
+}
+
+function TrendPill({ label, unit = '', vitalKey, row, decimals = 0 }) {
+  const { latest, previous, delta, direction } = row;
+  const improving = trendImproving(vitalKey, latest, direction);
+
+  const colorClass =
+    improving === true  ? 'text-green-500 border-green-500/30 bg-green-500/10'  :
+    improving === false ? 'text-red-500   border-red-500/30   bg-red-500/10'    :
+                          'text-text-muted border-border bg-bg-primary/30';
+
+  const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
+  const sign  = delta > 0 ? '+' : '';
+  const fmt   = (v) => Number(v).toFixed(decimals);
 
   return (
-    <div className={`text-xs px-3 py-2 rounded-lg font-bold flex items-center gap-2 ${color}`}>
-      <span className="uppercase tracking-widest">{label}</span>
-      <span className="font-black">{direction}</span>
-      <span className="font-black">{value}</span>
+    <div className={`text-xs px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 border ${colorClass}`}>
+      <span className="uppercase tracking-widest text-[10px] opacity-80">{label}</span>
+      <span className="font-black">{fmt(latest)}{unit}</span>
+      <span className="font-black">{arrow} {sign}{fmt(delta)}</span>
+      <span className="font-normal opacity-60 text-[10px]">from {fmt(previous)}</span>
     </div>
   );
 }

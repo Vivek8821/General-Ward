@@ -26,6 +26,8 @@ export default function DashboardView() {
   const viewMode = location.pathname === '/archives' ? 'archived' : 'active';
   
   const [isReviewingCases, setIsReviewingCases] = useState(false);
+  const [sortBy, setSortBy] = useState('ews');
+  const [ewsFilter, setEwsFilter] = useState('all');
   const [isAddingPatient, setIsAddingPatient] = useState(false);
   const [addingPatient, setAddingPatient] = useState(false);
   const [newPatient, setNewPatient] = useState({
@@ -140,6 +142,25 @@ export default function DashboardView() {
     );
   }
 
+  if (viewMode === 'active') {
+    if (ewsFilter !== 'all') {
+      filteredPatients = filteredPatients.filter(p => {
+        const s = p.ews?.score ?? -1;
+        if (ewsFilter === 'critical') return s >= 7;
+        if (ewsFilter === 'elevated') return s >= 3 && s <= 6;
+        if (ewsFilter === 'normal') return s >= 0 && s <= 2;
+        return true;
+      });
+    }
+    filteredPatients = [...filteredPatients].sort((a, b) => {
+      if (sortBy === 'ews') return (b.ews?.score ?? -1) - (a.ews?.score ?? -1);
+      if (sortBy === 'admission') return new Date(a.admittedAt || 0) - new Date(b.admittedAt || 0);
+      if (sortBy === 'bed') return (a.bedNumber || '').localeCompare(b.bedNumber || '', undefined, { numeric: true, sensitivity: 'base' });
+      if (sortBy === 'alpha') return (a.name || '').localeCompare(b.name || '');
+      return 0;
+    });
+  }
+
   const dismissWelcome = () => {
     setShowWelcome(false);
     try { localStorage.setItem(WELCOME_DISMISSED_KEY, '1'); } catch { /* ignore */ }
@@ -217,6 +238,75 @@ export default function DashboardView() {
           </div>
         </div>
 
+        {viewMode === 'active' && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4 text-xs">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-text-muted font-bold uppercase tracking-wide">Sort:</span>
+              {[
+                { key: 'ews', label: 'Risk (EWS ↓)' },
+                { key: 'admission', label: 'Admission Date' },
+                { key: 'bed', label: 'Bed Number' },
+                { key: 'alpha', label: 'Alphabetical' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setSortBy(key)}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-colors border ${
+                    sortBy === key
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-bg-tertiary text-text-secondary border-border hover:bg-bg-secondary'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <span className="hidden sm:block h-4 w-px bg-border" />
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-text-muted font-bold uppercase tracking-wide">Filter:</span>
+              {[
+                { key: 'all', label: 'All', active: 'bg-primary border-primary text-white' },
+                { key: 'critical', label: 'Critical (EWS ≥ 7)', active: 'bg-red-500 border-red-500 text-white' },
+                { key: 'elevated', label: 'Elevated (EWS 3–6)', active: 'bg-orange-500 border-orange-500 text-white' },
+                { key: 'normal', label: 'Normal (EWS 0–2)', active: 'bg-green-500 border-green-500 text-white' },
+              ].map(({ key, label, active }) => (
+                <button
+                  key={key}
+                  onClick={() => setEwsFilter(key)}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-colors border ${
+                    ewsFilter === key
+                      ? active
+                      : 'bg-bg-tertiary text-text-secondary border-border hover:bg-bg-secondary'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'active' && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-4 px-3 py-2 rounded-lg bg-bg-tertiary border border-border text-[11px] text-text-muted">
+            <span className="font-bold uppercase tracking-wide mr-1">EWS</span>
+            {[
+              { dot: 'bg-green-500',   label: '0–2', desc: 'Low Risk' },
+              { dot: 'bg-yellow-500', label: '3–4', desc: 'Low-Medium' },
+              { dot: 'bg-orange-500', label: '5–6', desc: 'Medium Risk' },
+              { dot: 'bg-red-500',    label: '7–8', desc: 'High Risk' },
+              { dot: 'bg-red-700',    label: '≥9',  desc: 'Urgent Review' },
+            ].map(({ dot, label, desc }) => (
+              <span key={label} className="flex items-center gap-1">
+                <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${dot}`} />
+                <span className="font-semibold">{label}</span>
+                <span className="opacity-70">{desc}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
         {isPatientsLoading ? (
           <div className="py-20 text-center text-text-muted text-sm">Loading patients…</div>
         ) : isPatientsError ? (
@@ -232,7 +322,7 @@ export default function DashboardView() {
             </p>
           </div>
         ) : (
-          <PatientGrid filteredPatients={filteredPatients} viewMode={viewMode} />
+          <PatientGrid filteredPatients={filteredPatients} viewMode={viewMode} highlightCritical={ewsFilter === 'critical'} />
         )}
       </div>
 

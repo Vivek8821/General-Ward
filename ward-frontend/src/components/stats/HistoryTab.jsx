@@ -2,13 +2,20 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { FileText, Save, Edit2 } from 'lucide-react';
+import { fmtDateTime } from '../../utils/dateFormat';
 import toast from 'react-hot-toast';
 
 export default function HistoryTab({ patientId, readOnly, admittedAt }) {
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [focusField, setFocusField] = useState(null);
   const { user } = useAuth();
+
+  const startEditFor = (field) => {
+    setFocusField(field);
+    setIsEditing(true);
+  };
   
   const [formData, setFormData] = useState({
     conditions: '',
@@ -72,6 +79,17 @@ export default function HistoryTab({ patientId, readOnly, admittedAt }) {
   };
 
   const isDoctor = user.role === 'doctor';
+  const canEdit = isDoctor && !readOnly;
+
+  const HISTORY_FIELDS = [
+    { key: 'conditions',    label: 'Pre-existing Conditions' },
+    { key: 'pastSurgeries', label: 'Past Surgeries' },
+    { key: 'familyHistory', label: 'Family History' },
+    { key: 'socialHistory', label: 'Social History' },
+  ];
+  const allFieldsEmpty = history
+    ? HISTORY_FIELDS.every(f => !history[f.key])
+    : false;
 
   return (
     <div className="animate-in fade-in pt-4">
@@ -99,19 +117,19 @@ export default function HistoryTab({ patientId, readOnly, admittedAt }) {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-bold mb-1 text-text-secondary">Pre-existing Conditions</label>
-              <textarea className="input-field min-h-[80px]" value={formData.conditions} onChange={e => setFormData({...formData, conditions: e.target.value})} placeholder="Asthma, Type 2 Diabetes..." />
+              <textarea autoFocus={focusField === 'conditions'} className="input-field min-h-[80px]" value={formData.conditions} onChange={e => setFormData({...formData, conditions: e.target.value})} placeholder="Asthma, Type 2 Diabetes..." />
             </div>
             <div>
               <label className="block text-sm font-bold mb-1 text-text-secondary">Past Surgeries / Operations</label>
-              <textarea className="input-field min-h-[80px]" value={formData.pastSurgeries} onChange={e => setFormData({...formData, pastSurgeries: e.target.value})} placeholder="Appendectomy (2015)..." />
+              <textarea autoFocus={focusField === 'pastSurgeries'} className="input-field min-h-[80px]" value={formData.pastSurgeries} onChange={e => setFormData({...formData, pastSurgeries: e.target.value})} placeholder="Appendectomy (2015)..." />
             </div>
             <div>
               <label className="block text-sm font-bold mb-1 text-text-secondary">Family Medical History</label>
-              <textarea className="input-field min-h-[80px]" value={formData.familyHistory} onChange={e => setFormData({...formData, familyHistory: e.target.value})} placeholder="Mother: Hypertension..." />
+              <textarea autoFocus={focusField === 'familyHistory'} className="input-field min-h-[80px]" value={formData.familyHistory} onChange={e => setFormData({...formData, familyHistory: e.target.value})} placeholder="Mother: Hypertension..." />
             </div>
             <div>
               <label className="block text-sm font-bold mb-1 text-text-secondary">Social History</label>
-              <textarea className="input-field min-h-[80px]" value={formData.socialHistory} onChange={e => setFormData({...formData, socialHistory: e.target.value})} placeholder="Smoker (1 pack/day), Occasional alcohol..." />
+              <textarea autoFocus={focusField === 'socialHistory'} className="input-field min-h-[80px]" value={formData.socialHistory} onChange={e => setFormData({...formData, socialHistory: e.target.value})} placeholder="Smoker (1 pack/day), Occasional alcohol..." />
             </div>
             <div>
               <label className="block text-sm font-bold mb-1 text-text-secondary">Doctor&apos;s Notes</label>
@@ -120,7 +138,7 @@ export default function HistoryTab({ patientId, readOnly, admittedAt }) {
           </div>
           
           <div className="flex gap-3 justify-end mt-6">
-            <button type="button" onClick={() => { setIsEditing(false); fetchHistory(); }} className="btn btn-secondary !py-2 !px-4">Cancel</button>
+            <button type="button" onClick={() => { setIsEditing(false); setFocusField(null); fetchHistory(); }} className="btn btn-secondary !py-2 !px-4">Cancel</button>
             <button type="submit" className="btn btn-primary !py-2 !px-4"><Save className="w-4 h-4"/> Save History</button>
           </div>
         </form>
@@ -140,45 +158,65 @@ export default function HistoryTab({ patientId, readOnly, admittedAt }) {
             </>
           )}
         </div>
+      ) : allFieldsEmpty ? (
+        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border p-10 text-center text-text-muted mt-2">
+          <FileText size={36} className="opacity-20 shrink-0" aria-hidden />
+          <p className="font-semibold text-text-secondary">📋 No medical history recorded yet</p>
+          {canEdit && (
+            <button type="button" onClick={() => setIsEditing(true)} className="btn btn-secondary !py-2 !px-5 text-sm">
+              + Add Medical History
+            </button>
+          )}
+        </div>
       ) : (
         <div className="card p-6 border-l-4 border-l-secondary">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             <div className="md:col-span-2 bg-primary/5 p-4 rounded-lg border border-primary/20 flex items-center justify-between">
-                <div>
-                   <h4 className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">Admission Timestamp</h4>
-                   <p className="text-sm font-bold text-text-primary">
-                      {new Date(admittedAt).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at {new Date(admittedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                   </p>
-                </div>
-                <div className="text-right">
-                   <h4 className="text-[10px] uppercase tracking-widest font-black text-text-muted mb-1">Current Stay</h4>
-                   <p className="text-sm font-bold text-text-secondary">
-                      Day {Math.ceil((new Date() - new Date(admittedAt)) / 86400000)}
-                   </p>
-                </div>
-             </div>
-             <div>
-                <h4 className="text-sm uppercase tracking-wider font-bold text-text-muted mb-2">Pre-existing Conditions</h4>
-                <p className="whitespace-pre-wrap">{history.conditions || 'None declared.'}</p>
-             </div>
-             <div>
-                <h4 className="text-sm uppercase tracking-wider font-bold text-text-muted mb-2">Past Surgeries</h4>
-                <p className="whitespace-pre-wrap">{history.pastSurgeries || 'None declared.'}</p>
-             </div>
-             <div>
-                <h4 className="text-sm uppercase tracking-wider font-bold text-text-muted mb-2">Family History</h4>
-                <p className="whitespace-pre-wrap">{history.familyHistory || 'None declared.'}</p>
-             </div>
-             <div>
-                <h4 className="text-sm uppercase tracking-wider font-bold text-text-muted mb-2">Social History</h4>
-                <p className="whitespace-pre-wrap">{history.socialHistory || 'None declared.'}</p>
-             </div>
-             {history.notes && (
-                 <div className="md:col-span-2 bg-warning/10 p-4 rounded-lg border border-warning/20">
-                    <h4 className="text-sm uppercase tracking-wider font-bold text-warning mb-2">Physician Notes</h4>
-                    <p className="whitespace-pre-wrap text-sm">{history.notes}</p>
-                 </div>
-             )}
+            <div className="md:col-span-2 bg-primary/5 p-4 rounded-lg border border-primary/20 flex items-center justify-between">
+              <div>
+                <h4 className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">Admission Timestamp</h4>
+                <p className="text-sm font-bold text-text-primary">
+                  {fmtDateTime(admittedAt)}
+                </p>
+              </div>
+              <div className="text-right">
+                <h4 className="text-[10px] uppercase tracking-widest font-black text-text-muted mb-1">Current Stay</h4>
+                <p className="text-sm font-bold text-text-secondary">
+                  Day {Math.ceil((new Date() - new Date(admittedAt)) / 86400000)}
+                </p>
+              </div>
+            </div>
+
+            {HISTORY_FIELDS.map(({ key, label }) => (
+              <div key={key}>
+                <h4 className="text-sm uppercase tracking-wider font-bold text-text-muted mb-2">{label}</h4>
+                {history[key] ? (
+                  <p className="whitespace-pre-wrap text-sm">{history[key]}</p>
+                ) : (
+                  <p className="text-sm text-text-muted italic">
+                    No history recorded
+                    {canEdit && (
+                      <>
+                        {' — '}
+                        <button
+                          type="button"
+                          onClick={() => startEditFor(key)}
+                          className="text-primary hover:underline font-semibold not-italic"
+                        >
+                          + Add
+                        </button>
+                      </>
+                    )}
+                  </p>
+                )}
+              </div>
+            ))}
+
+            {history.notes && (
+              <div className="md:col-span-2 bg-warning/10 p-4 rounded-lg border border-warning/20">
+                <h4 className="text-sm uppercase tracking-wider font-bold text-warning mb-2">Physician Notes</h4>
+                <p className="whitespace-pre-wrap text-sm">{history.notes}</p>
+              </div>
+            )}
           </div>
         </div>
       )}

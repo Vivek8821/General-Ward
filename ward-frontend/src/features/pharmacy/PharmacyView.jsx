@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../utils/api';
+import { fmtDate } from '../../utils/dateFormat';
 import { Package, Search, Plus, X, AlertCircle, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import BarcodeScanner from '../../components/BarcodeScanner';
 import toast from 'react-hot-toast';
@@ -303,7 +304,7 @@ export default function PharmacyView() {
                       <div>
                         <h4 className="font-bold text-lg">{scanResult.record.name}</h4>
                         <p className="text-sm text-text-secondary">
-                          {scanResult.matchType === 'BATCH' ? `Batch ${scanResult.record.batchNumber} • Expiry ${new Date(scanResult.record.expiryDate).toLocaleDateString()}` : 'Master Stock Record'}
+                          {scanResult.matchType === 'BATCH' ? `Batch ${scanResult.record.batchNumber} • Expiry ${fmtDate(scanResult.record.expiryDate)}` : 'Master Stock Record'}
                         </p>
                         <p className="text-xs font-bold text-primary mt-1">
                           Current Stock: {scanResult.matchType === 'BATCH' ? scanResult.record.quantity : scanResult.record.totalQuantity} {scanResult.record.itemUnit}

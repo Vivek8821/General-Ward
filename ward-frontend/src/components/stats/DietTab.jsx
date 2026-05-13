@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { Apple, Plus, Save } from 'lucide-react';
+import { fmtDateTime } from '../../utils/dateFormat';
 import toast from 'react-hot-toast';
 
 export default function DietTab({ patientId, readOnly }) {
@@ -58,7 +59,7 @@ export default function DietTab({ patientId, readOnly }) {
 
   const renderDietCard = (diet) => {
     const d = diet.data;
-    const date = new Date(diet.timestamp).toLocaleString();
+    const date = fmtDateTime(diet.timestamp);
     const isLowIntake = parseInt(d.consumedPercentage) <= 50;
 
     return (

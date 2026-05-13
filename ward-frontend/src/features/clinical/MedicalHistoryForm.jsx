@@ -4,6 +4,36 @@ import { api } from '../../utils/api';
 import { queryKeys } from '../../utils/queryKeys';
 import { toast } from 'react-hot-toast';
 
+function JsonOrText({ value }) {
+  let items = null;
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) items = parsed;
+  } catch {}
+
+  if (items) {
+    return (
+      <div className="flex flex-wrap gap-1.5 mt-1">
+        {items.map((item, i) => (
+          <span
+            key={i}
+            style={{
+              background: 'rgba(99,102,241,0.15)',
+              border: '1px solid rgba(99,102,241,0.4)',
+              borderRadius: '999px',
+              padding: '2px 10px',
+              fontSize: '13px',
+            }}
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    );
+  }
+  return <p className="text-sm mt-1 whitespace-pre-wrap">{value}</p>;
+}
+
 export default function MedicalHistoryForm({ patientId, readOnly = false }) {
   const qc = useQueryClient();
 
@@ -45,16 +75,16 @@ export default function MedicalHistoryForm({ patientId, readOnly = false }) {
           )}
         </div>
         {history.comorbidities && (
-          <div><span className="text-xs text-text-muted uppercase tracking-wide">Comorbidities</span><p className="text-sm mt-1 whitespace-pre-wrap">{history.comorbidities}</p></div>
+          <div><span className="text-xs text-text-muted uppercase tracking-wide">Comorbidities</span><JsonOrText value={history.comorbidities} /></div>
         )}
         {history.surgicalHistory && (
-          <div><span className="text-xs text-text-muted uppercase tracking-wide">Surgical History</span><p className="text-sm mt-1 whitespace-pre-wrap">{history.surgicalHistory}</p></div>
+          <div><span className="text-xs text-text-muted uppercase tracking-wide">Surgical History</span><JsonOrText value={history.surgicalHistory} /></div>
         )}
         {history.familyHistory && (
-          <div><span className="text-xs text-text-muted uppercase tracking-wide">Family History</span><p className="text-sm mt-1 whitespace-pre-wrap">{history.familyHistory}</p></div>
+          <div><span className="text-xs text-text-muted uppercase tracking-wide">Family History</span><JsonOrText value={history.familyHistory} /></div>
         )}
         {history.socialHistory && (
-          <div><span className="text-xs text-text-muted uppercase tracking-wide">Social History</span><p className="text-sm mt-1 whitespace-pre-wrap">{history.socialHistory}</p></div>
+          <div><span className="text-xs text-text-muted uppercase tracking-wide">Social History</span><JsonOrText value={history.socialHistory} /></div>
         )}
         {!history.comorbidities && !history.surgicalHistory && !history.familyHistory && !history.socialHistory && (
           <p className="text-text-muted text-sm">No medical history recorded.</p>

@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../utils/api';
 import { queryKeys } from '../../utils/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 import { ClipboardList, Plus, Save, Syringe, Trash2, CheckCircle, Clock, History, Ban, Edit2, X, AlertCircle, Layers } from 'lucide-react';
+import { fmtDate, fmtDateTime } from '../../utils/dateFormat';
 import BarcodeScanner from '../BarcodeScanner';
 import toast from 'react-hot-toast';
 
+
+const drugAllergyConflicts = {
+  sulphonylurea: ['sulphonylureas', 'sulphonylurea', 'glipizide', 'gliclazide', 'glibenclamide', 'glimepiride', 'tolbutamide'],
+  penicillin: ['penicillin', 'amoxicillin', 'ampicillin', 'flucloxacillin', 'co-amoxiclav'],
+};
 
 export default function MedsTab({ patientId, readOnly }) {
   const queryClient = useQueryClient();
@@ -44,6 +50,12 @@ export default function MedsTab({ patientId, readOnly }) {
   const { data: inventory = [] } = useQuery({
     queryKey: ['pharmacy', 'inventory'],
     queryFn: () => api.get('/pharmacy/inventory'),
+  });
+
+  const { data: allergies = [] } = useQuery({
+    queryKey: queryKeys.clinical.structuredAllergies(patientId),
+    queryFn: () => api.get(`/patients/${patientId}/allergies`),
+    enabled: !!patientId,
   });
 
   const loading = medsLoading || adminLoading;
@@ -147,6 +159,26 @@ export default function MedsTab({ patientId, readOnly }) {
   const activeMeds = medications.filter(m => m.status === 'active');
   const discMeds = medications.filter(m => m.status === 'discontinued');
 
+  const conflicts = useMemo(() => {
+    if (!allergies.length || !activeMeds.length) return [];
+    const found = [];
+    for (const med of activeMeds) {
+      const medNameL = med.name.toLowerCase();
+      for (const [drugClass, members] of Object.entries(drugAllergyConflicts)) {
+        const medInClass = members.some(m => medNameL.includes(m) || m.includes(medNameL));
+        if (!medInClass) continue;
+        const matchingAllergy = allergies.find(a => {
+          const allergenL = a.allergen.toLowerCase();
+          return members.some(m => allergenL.includes(m) || m.includes(allergenL));
+        });
+        if (matchingAllergy) {
+          found.push({ medId: med.id, medName: med.name, drugClass, allergen: matchingAllergy.allergen });
+        }
+      }
+    }
+    return found;
+  }, [activeMeds, allergies]);
+
   const getDoseCount = (frequency = '') => {
     const f = frequency.toLowerCase();
     if (f.includes('prn') || f.includes('as needed')) return 0; // 0 means unlimited/PRN
@@ -220,6 +252,22 @@ export default function MedsTab({ patientId, readOnly }) {
 
   return (
     <div className="animate-in fade-in pt-4">
+      {conflicts.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {conflicts.map((c, idx) => (
+            <div key={idx} className="w-full bg-red-500/10 border-2 border-red-500 rounded-xl p-4 flex items-start gap-3 text-red-500 dark:text-red-400 animate-in slide-in-from-top-2">
+              <span className="text-xl flex-shrink-0">⚠️</span>
+              <p className="font-bold text-sm leading-snug">
+                DRUG-ALLERGY CONFLICT DETECTED —{' '}
+                <span className="font-black">{c.medName}</span> belongs to the{' '}
+                <span className="font-black capitalize">{c.drugClass}</span> class. Patient has a documented allergy to{' '}
+                <span className="font-black">{c.allergen}</span>. Review immediately.
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Sub-navigation */}
       <div className="flex gap-4 mb-6 border-b border-border">
          <button onClick={() => setActiveSubTab('active')} className={`pb-2 px-1 text-sm font-bold transition-all ${activeSubTab === 'active' ? 'border-b-2 border-info text-info' : 'text-text-muted hover:text-text-primary'}`}>
@@ -285,7 +333,7 @@ export default function MedsTab({ patientId, readOnly }) {
                           </div>
                           {isExpired && (
                             <div className="text-[10px] text-danger font-black uppercase flex items-center gap-1">
-                              <AlertCircle className="w-3 h-3" /> EXPIRED ON {new Date(item.expiryDate).toLocaleDateString()}
+                              <AlertCircle className="w-3 h-3" /> EXPIRED ON {fmtDate(item.expiryDate)}
                             </div>
                           )}
                         </div>
@@ -330,7 +378,10 @@ export default function MedsTab({ patientId, readOnly }) {
           {activeSubTab === 'active' && (
             <>
               {activeMeds.length === 0 && <div className="text-center p-8 bg-bg-tertiary rounded-xl border border-dashed border-border text-text-muted">No active prescriptions.</div>}
-              {activeMeds.map(med => <MedCard key={med.id} med={med} isDoctor={isDoctor} readOnly={readOnly} onStop={() => updateMedStatus(med.id, 'discontinued')} />)}
+              {activeMeds.map(med => {
+                const conflict = conflicts.find(c => c.medId === med.id);
+                return <MedCard key={med.id} med={med} isDoctor={isDoctor} readOnly={readOnly} onStop={() => updateMedStatus(med.id, 'discontinued')} conflict={conflict} />;
+              })}
               
               {discMeds.length > 0 && (
                 <div className="mt-8">
@@ -502,7 +553,7 @@ export default function MedsTab({ patientId, readOnly }) {
                        ) : (
                           <div>
                              <p className="font-bold text-sm">{admin.medName} <span className="text-text-muted font-normal">({admin.dosage})</span></p>
-                             <p className="text-xs text-text-muted">{new Date(admin.timestamp).toLocaleString()} &bull; By {admin.administeredBy}</p>
+                             <p className="text-xs text-text-muted">{fmtDateTime(admin.timestamp)} &bull; By {admin.administeredBy}</p>
                           </div>
                        )}
                     </div>
@@ -537,36 +588,48 @@ export default function MedsTab({ patientId, readOnly }) {
   );
 }
 
-function MedCard({ med, isDoctor, onStop, readOnly }) {
+function MedCard({ med, isDoctor, onStop, readOnly, conflict }) {
   return (
-    <div className={`p-5 rounded-xl border flex items-center justify-between gap-4 bg-bg-tertiary border-border shadow-sm`}>
-      <div className="flex items-start gap-4 flex-1">
-         <div className={`p-3 rounded-full ${med.status === 'discontinued' ? 'bg-bg-secondary text-text-muted' : 'bg-info/10 text-info'}`}>
-            <Syringe className="w-6 h-6"/>
-         </div>
-         <div>
-            <h4 className={`font-bold text-lg ${med.status === 'discontinued' ? 'line-through text-text-muted' : ''}`}>{med.name}</h4>
-            <div className="flex flex-wrap gap-2 text-sm mt-1">
-                <span className="font-semibold text-text-secondary">{med.dosage}</span>
-                <span className="text-text-muted">&bull;</span>
-                <span className="text-text-secondary">{med.frequency}</span>
-            </div>
-            <div className="text-xs text-text-muted mt-2">
-               Prescribed by <strong>{med.prescribedBy}</strong> {med.timestamp && `on ${new Date(med.timestamp).toLocaleDateString()}`}
-            </div>
-         </div>
-      </div>
-      
-      <div className="flex flex-col items-end gap-3">
-         <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${med.status === 'active' ? 'bg-success/20 text-success border border-success/30' : 'bg-bg-secondary text-text-muted border border-border'}`}>
-            {med.status}
-         </span>
+    <div className="relative">
+      {conflict && (
+        <div className="absolute inset-0 rounded-xl ring-2 ring-red-500 animate-pulse pointer-events-none z-10" />
+      )}
+      <div className={`p-5 rounded-xl border flex items-center justify-between gap-4 bg-bg-tertiary shadow-sm ${conflict ? 'border-red-500 border-2' : 'border-border'}`}>
+        <div className="flex items-start gap-4 flex-1">
+           <div className={`p-3 rounded-full ${med.status === 'discontinued' ? 'bg-bg-secondary text-text-muted' : conflict ? 'bg-red-500/15 text-red-500' : 'bg-info/10 text-info'}`}>
+              <Syringe className="w-6 h-6"/>
+           </div>
+           <div>
+              <div className="flex items-center flex-wrap gap-2">
+                <h4 className={`font-bold text-lg ${med.status === 'discontinued' ? 'line-through text-text-muted' : ''}`}>{med.name}</h4>
+                {conflict && (
+                  <span className="text-[10px] font-black uppercase bg-red-500 text-white px-2 py-0.5 rounded flex items-center gap-1">
+                    ⚠ ALLERGY CONFLICT
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 text-sm mt-1">
+                  <span className="font-semibold text-text-secondary">{med.dosage}</span>
+                  <span className="text-text-muted">&bull;</span>
+                  <span className="text-text-secondary">{med.frequency}</span>
+              </div>
+              <div className="text-xs text-text-muted mt-2">
+                 Prescribed by <strong>{med.prescribedBy}</strong> {med.timestamp && `on ${fmtDate(med.timestamp)}`}
+              </div>
+           </div>
+        </div>
 
-         {isDoctor && med.status === 'active' && onStop && !readOnly && (
-             <button onClick={onStop} className="text-xs text-danger hover:underline font-semibold flex items-center gap-1">
-                <Trash2 className="w-3 h-3"/> Discontinue
-             </button>
-         )}
+        <div className="flex flex-col items-end gap-3">
+           <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${med.status === 'active' ? 'bg-success/20 text-success border border-success/30' : 'bg-bg-secondary text-text-muted border border-border'}`}>
+              {med.status}
+           </span>
+
+           {isDoctor && med.status === 'active' && onStop && !readOnly && (
+               <button onClick={onStop} className="text-xs text-danger hover:underline font-semibold flex items-center gap-1">
+                  <Trash2 className="w-3 h-3"/> Discontinue
+               </button>
+           )}
+        </div>
       </div>
     </div>
   );

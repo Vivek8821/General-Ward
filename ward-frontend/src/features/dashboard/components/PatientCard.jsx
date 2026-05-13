@@ -1,15 +1,90 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { isPatientCritical, isPatientWarning } from '../../../utils/clinicalUtils';
+import { fmtDate } from '../../../utils/dateFormat';
 
-export default function PatientCard({ patient, viewMode }) {
+function ewsHaloColors(score, viewMode) {
+  if (viewMode !== 'active' || score == null || score < 0)
+    return { color: 'rgba(107,114,128,0.18)', fade: 'rgba(107,114,128,0.05)' };
+  if (score >= 9) return { color: 'rgba(220,38,38,0.65)',  fade: 'rgba(220,38,38,0.22)'  };
+  if (score >= 7) return { color: 'rgba(239,68,68,0.55)',  fade: 'rgba(239,68,68,0.18)'  };
+  if (score >= 5) return { color: 'rgba(249,115,22,0.48)', fade: 'rgba(249,115,22,0.15)' };
+  if (score >= 3) return { color: 'rgba(234,179,8,0.48)',  fade: 'rgba(234,179,8,0.15)'  };
+  return           { color: 'rgba(34,197,94,0.32)',  fade: 'rgba(34,197,94,0.1)'   };
+}
+
+function ewsSolidColor(score) {
+  if (score == null || score < 0) return 'rgba(107,114,128,0.5)';
+  if (score >= 9) return '#dc2626';
+  if (score >= 7) return '#ef4444';
+  if (score >= 5) return '#f97316';
+  if (score >= 3) return '#eab308';
+  return '#22c55e';
+}
+
+function ewsBadgeClass(score) {
+  if (score == null || score < 0) return 'bg-zinc-500 text-white';
+  if (score >= 7) return 'bg-red-500 text-white';
+  if (score >= 5) return 'bg-orange-500 text-white';
+  if (score >= 3) return 'bg-yellow-500 text-white';
+  return 'bg-green-500 text-white';
+}
+
+function hrColor(hr) {
+  if (hr == null) return 'text-text-muted';
+  if (hr < 50 || hr > 100) return 'text-red-500';
+  if ((hr >= 50 && hr < 60) || (hr > 90 && hr <= 100)) return 'text-yellow-500';
+  return 'text-green-500';
+}
+
+function sbpColor(sbp) {
+  if (sbp == null) return 'text-text-muted';
+  if (sbp < 90 || sbp > 160) return 'text-red-500';
+  if ((sbp >= 90 && sbp < 100) || (sbp > 140 && sbp <= 160)) return 'text-yellow-500';
+  return 'text-green-500';
+}
+
+function spo2Color(spo2) {
+  if (spo2 == null) return 'text-text-muted';
+  if (spo2 < 92) return 'text-red-500';
+  if (spo2 < 95) return 'text-yellow-500';
+  return 'text-green-500';
+}
+
+export default function PatientCard({ patient, viewMode, highlightCritical = false }) {
+  const [hovered, setHovered] = useState(false);
   const ews = patient.ews;
+  const score = ews?.score ?? null;
   const critical = isPatientCritical(patient);
-  const warning = isPatientWarning(patient);
+  const isUrgent = score != null && score >= 9;
 
-  const borderColor = critical ? 'border-red-500/60' : warning ? 'border-amber-400/50' : 'border-border';
-  const ewsBg = critical ? 'bg-red-500 text-white' : warning ? 'bg-amber-400 text-white' : 'bg-emerald-500 text-white';
-  const statusDot = patient.status === 'escalated' ? 'bg-red-500' : critical ? 'bg-orange-400' : 'bg-emerald-400';
+  const halo = ewsHaloColors(score, viewMode);
+  const solid = ewsSolidColor(score);
+
+  const statusDotClass =
+    patient.status === 'escalated' ? 'bg-red-500' :
+    critical                       ? 'bg-orange-500' :
+                                     'bg-green-500';
+
+  const hasAbnormalVitals =
+    ews && (
+      (ews.heartRate  != null && (ews.heartRate  < 50 || ews.heartRate  > 100)) ||
+      (ews.systolicBP != null && (ews.systolicBP < 90 || ews.systolicBP > 160)) ||
+      (ews.spo2       != null && ews.spo2 < 92)
+    );
+
+  const cardStyle = hovered
+    ? {
+        '--halo-color': halo.color,
+        '--halo-fade':  halo.fade,
+        animation: 'none',
+        boxShadow: `0 0 0 1.5px ${solid}, 0 8px 28px 6px ${solid}44`,
+        backgroundColor: '#1e2235',
+      }
+    : {
+        '--halo-color': halo.color,
+        '--halo-fade':  halo.fade,
+      };
 
   return (
     <Link
@@ -18,65 +93,91 @@ export default function PatientCard({ patient, viewMode }) {
           ? `/archive/${patient.archiveId}`
           : `/patient/${patient.patientId || patient.id}`
       }
-      className={`group flex flex-col gap-3 rounded-2xl border ${borderColor} bg-bg-secondary/40 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-bg-secondary hover:shadow-md no-underline text-inherit`}
+      style={cardStyle}
+      className={`flex flex-col rounded-2xl border border-border/20 bg-bg-secondary/40 no-underline text-inherit min-h-[160px] transition-colors duration-200 ${isUrgent ? 'card-halo-urgent' : 'card-halo'}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="font-bold text-text-primary group-hover:text-primary transition-colors truncate leading-tight">
+      {/* Zone 1 — Identity */}
+      <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold text-sm text-text-primary truncate leading-tight">
             {patient.name}
           </h3>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="text-[10px] font-semibold text-text-muted bg-bg-tertiary border border-border px-1.5 py-0.5 rounded-md">
+          <p className="text-[11px] text-text-muted line-clamp-2 leading-relaxed mt-1.5">
+            {patient.diagnosis || <span className="italic opacity-50">No diagnosis</span>}
+          </p>
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            <span className="text-[10px] font-semibold text-text-muted bg-bg-tertiary border border-border px-1.5 py-0.5 rounded-md leading-none">
               Bed {patient.bedNumber}
             </span>
-            <span className="text-[10px] font-semibold text-text-muted">L{patient.careIntensity}</span>
+            <span className="text-[10px] font-semibold text-text-muted leading-none">
+              L{patient.careIntensity}
+            </span>
           </div>
         </div>
 
-        {viewMode === 'active' && ews && (
-          <div className={`shrink-0 w-9 h-9 rounded-xl flex flex-col items-center justify-center ${ewsBg}`}>
-            <span className="text-[8px] font-bold leading-none opacity-80">EWS</span>
-            <span className="text-sm font-black leading-tight">{ews.score}</span>
+        {viewMode === 'active' && ews && score != null && (
+          <div className={`shrink-0 w-10 h-10 rounded-xl flex flex-col items-center justify-center ${ewsBadgeClass(score)}`}>
+            <span className="text-[8px] font-bold leading-none opacity-80 uppercase tracking-wide">EWS</span>
+            <span className="text-sm font-black leading-tight tabular-nums">{score}</span>
           </div>
         )}
       </div>
 
-      {/* Meta */}
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] font-mono font-semibold text-text-muted">MRN {patient.mrn}</span>
-        {patient.admittedAt && (
-          <span className="text-[10px] text-text-muted">
-            {new Date(patient.admittedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-          </span>
-        )}
-      </div>
-
-      {/* Diagnosis */}
-      <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
-        {patient.diagnosis}
-      </p>
-
-      {/* Vitals */}
-      {viewMode === 'active' && ews && !ews.warnings?.includes('Respiration rate missing') && (
-        <div className="flex gap-3 text-[10px] font-semibold text-text-muted">
-          {ews.heartRate != null && <span>HR <span className="text-text-primary">{ews.heartRate}</span></span>}
-          {ews.systolicBP != null && <span>BP <span className="text-text-primary">{ews.systolicBP}</span></span>}
-          {ews.spo2 != null && <span>O₂ <span className="text-text-primary">{ews.spo2}%</span></span>}
+      {/* Zone 2 — Vitals Strip */}
+      {viewMode === 'active' && ews && (ews.heartRate != null || ews.systolicBP != null || ews.spo2 != null) && (
+        <div className="px-4 py-1.5 border-t border-border/30 flex items-center gap-5">
+          {ews.heartRate != null && (
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[9px] font-bold uppercase text-text-muted tracking-wide leading-none">HR</span>
+              <span className={`text-[26px] font-extrabold font-mono tabular-nums leading-none ${hrColor(ews.heartRate)}`}>
+                {ews.heartRate}
+              </span>
+            </div>
+          )}
+          {ews.systolicBP != null && (
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[9px] font-bold uppercase text-text-muted tracking-wide leading-none">SBP</span>
+              <span className={`text-[26px] font-extrabold font-mono tabular-nums leading-none ${sbpColor(ews.systolicBP)}`}>
+                {ews.systolicBP}
+              </span>
+            </div>
+          )}
+          {ews.spo2 != null && (
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[9px] font-bold uppercase text-text-muted tracking-wide leading-none">SpO₂</span>
+              <span className={`text-[26px] font-extrabold font-mono tabular-nums leading-none ${spo2Color(ews.spo2)}`}>
+                {ews.spo2}%
+              </span>
+            </div>
+          )}
+          {hasAbnormalVitals && (
+            <span className="ml-auto text-[9px] font-black uppercase tracking-widest text-red-500 border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 rounded leading-none">
+              ABNML
+            </span>
+          )}
         </div>
       )}
 
-      {/* Footer */}
-      <div className="mt-auto flex items-center justify-between pt-2 border-t border-border/40">
-        <div className="flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
-          <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
+      {/* Zone 3 — Footer */}
+      <div className="mt-auto px-4 pb-3 pt-2.5 border-t border-border/30 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass}`} />
+          <span className="text-[10px] font-mono font-semibold text-text-muted truncate">
             {viewMode === 'archived' && patient.archivedAt
-              ? new Date(patient.archivedAt).toLocaleDateString()
-              : patient.status}
+              ? fmtDate(patient.archivedAt)
+              : `MRN ${patient.mrn}`}
           </span>
         </div>
-        <span className="text-[10px] font-semibold text-text-muted group-hover:text-primary transition-colors">→</span>
+        <span
+          className="text-[11px] font-semibold shrink-0 transition-all duration-200"
+          style={hovered
+            ? { color: '#ffffff', transform: 'translateX(4px)' }
+            : { color: 'var(--color-text-muted, #9ca3af)' }}
+        >
+          →
+        </span>
       </div>
     </Link>
   );

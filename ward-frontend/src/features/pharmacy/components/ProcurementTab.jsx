@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShoppingCart, Truck, Package, AlertTriangle } from 'lucide-react';
+import { fmtDate } from '../../../utils/dateFormat';
 
 export default function ProcurementTab({ orders = [], updateStatus, replenishment = [] }) {
   return (
@@ -47,7 +48,7 @@ export default function ProcurementTab({ orders = [], updateStatus, replenishmen
                   <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                     <div className="text-right hidden md:block">
                       <div className="text-[9px] font-black uppercase text-text-muted tracking-widest">Generated On</div>
-                      <div className="text-xs font-bold text-text-primary">{new Date(order.generatedAt).toLocaleDateString()}</div>
+                      <div className="text-xs font-bold text-text-primary">{fmtDate(order.generatedAt)}</div>
                     </div>
 
                     <div className="flex gap-2">

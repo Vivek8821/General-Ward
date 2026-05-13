@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ClipboardX, Plus, Layers, AlertOctagon, CheckSquare, Check, History } from 'lucide-react';
+import { fmtDateTime } from '../../../utils/dateFormat';
 import BarcodeScanner from '../../../components/BarcodeScanner';
 
 export default function WasteTab({
@@ -180,7 +181,7 @@ export default function WasteTab({
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="bg-warning/20 text-warning text-[10px] px-2 py-0.5 rounded font-black uppercase">{record.reasonCode}</span>
-                      <span className="text-[10px] text-text-muted font-bold">{new Date(record.initiatedAt).toLocaleString()}</span>
+                      <span className="text-[10px] text-text-muted font-bold">{fmtDateTime(record.initiatedAt)}</span>
                     </div>
                     <h3 className="font-black text-text-primary text-base">{record.stockName}</h3>
                     <p className="text-xs font-bold text-text-secondary mt-1">
@@ -241,7 +242,7 @@ export default function WasteTab({
                   ) : (
                     wasteHistory.map(record => (
                       <tr key={record.id} className="hover:bg-bg-secondary/30 transition-colors">
-                        <td className="p-4 text-xs">{new Date(record.createdAt).toLocaleDateString()}<br/><span className="text-[9px] text-text-muted">{new Date(record.createdAt).toLocaleTimeString()}</span></td>
+                        <td className="p-4 text-xs">{fmtDateTime(record.createdAt)}</td>
                         <td className="p-4">
                           <span className="text-text-primary block">{record.stockName}</span>
                           {record.batchId && <span className="text-[10px] text-text-muted block">Batch: {record.batchId.slice(0,8)}</span>}

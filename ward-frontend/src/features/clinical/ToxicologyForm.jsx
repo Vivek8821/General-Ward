@@ -16,21 +16,20 @@ export default function ToxicologyForm({ patientId, readOnly = false }) {
 
   const startEdit = () => setForm({
     screenDate: tox?.screenDate || '',
-    bac: tox?.bac ? (typeof tox.bac === 'string' ? tox.bac : JSON.stringify(tox.bac, null, 2)) : '',
-    drugScreen: tox?.drugScreen ? (typeof tox.drugScreen === 'string' ? tox.drugScreen : JSON.stringify(tox.drugScreen, null, 2)) : '',
-    poisonScreen: tox?.poisonScreen ? (typeof tox.poisonScreen === 'string' ? tox.poisonScreen : JSON.stringify(tox.poisonScreen, null, 2)) : '',
-    heavyMetals: tox?.heavyMetals ? (typeof tox.heavyMetals === 'string' ? tox.heavyMetals : JSON.stringify(tox.heavyMetals, null, 2)) : '',
+    bac: tox?.bac || '',
+    drugScreen: tox?.drugScreen || '',
+    poisonScreen: tox?.poisonScreen || '',
+    heavyMetals: tox?.heavyMetals || '',
   });
 
   const mutation = useMutation({
     mutationFn: (body) => {
-      const parse = (v) => { if (!v) return undefined; try { return JSON.parse(v); } catch { return v; } };
       return api.put(`/patients/${patientId}/toxicology`, {
         screenDate: body.screenDate,
-        bac: parse(body.bac),
-        drugScreen: parse(body.drugScreen),
-        poisonScreen: parse(body.poisonScreen),
-        heavyMetals: parse(body.heavyMetals),
+        bac: body.bac,
+        drugScreen: body.drugScreen,
+        poisonScreen: body.poisonScreen,
+        heavyMetals: body.heavyMetals,
       });
     },
     onSuccess: () => {
@@ -53,10 +52,10 @@ export default function ToxicologyForm({ patientId, readOnly = false }) {
         {tox ? (
           <div className="space-y-2 text-sm">
             <div><span className="text-text-muted">Date: </span>{tox.screenDate}</div>
-            {tox.bac && <div><span className="text-text-muted">BAC: </span><pre className="inline text-xs">{typeof tox.bac === 'string' ? tox.bac : JSON.stringify(tox.bac)}</pre></div>}
-            {tox.drugScreen && <div><span className="text-text-muted">Drug Screen recorded.</span></div>}
-            {tox.poisonScreen && <div><span className="text-text-muted">Poison Screen recorded.</span></div>}
-            {tox.heavyMetals && <div><span className="text-text-muted">Heavy Metals panel recorded.</span></div>}
+            {tox.bac && <div><span className="text-text-muted">BAC: </span><pre className="inline text-xs font-sans whitespace-pre-wrap">{tox.bac}</pre></div>}
+            {tox.drugScreen && <div><span className="text-text-muted">Drug Screen: </span><pre className="inline text-xs font-sans whitespace-pre-wrap">{tox.drugScreen}</pre></div>}
+            {tox.poisonScreen && <div><span className="text-text-muted">Poison Screen: </span><pre className="inline text-xs font-sans whitespace-pre-wrap">{tox.poisonScreen}</pre></div>}
+            {tox.heavyMetals && <div><span className="text-text-muted">Heavy Metals: </span><pre className="inline text-xs font-sans whitespace-pre-wrap">{tox.heavyMetals}</pre></div>}
           </div>
         ) : (
           <p className="text-text-muted text-sm">No toxicology screen recorded (optional).</p>
@@ -73,15 +72,15 @@ export default function ToxicologyForm({ patientId, readOnly = false }) {
         <input type="date" className="input-field" required value={form.screenDate} onChange={e => setForm({ ...form, screenDate: e.target.value })} />
       </div>
       {[
-        ['bac', 'Blood Alcohol Content (BAC)', '{"venousBlood":{"result":"<LOD","method":"GC-HS"},"interpretation":"Negative"}'],
-        ['drugScreen', 'Drug Screen (JSON array)', '[{"substance":"Opioids","result":"Negative","method":"ELISA"}]'],
-        ['poisonScreen', 'Poison Screen (JSON array)', '[{"substance":"Organophosphate","result":"Not detected","status":"Normal"}]'],
-        ['heavyMetals', 'Heavy Metals Panel (JSON array)', '[{"element":"Lead","symbol":"Pb","result":"< 2","unit":"μg/dL","status":"Normal"}]'],
+        ['bac', 'Blood Alcohol Content (BAC)', 'e.g. Negative, or 0.08%'],
+        ['drugScreen', 'Drug Screen', 'e.g. Opioids: Negative, Cocaine: Positive'],
+        ['poisonScreen', 'Poison Screen', 'e.g. Organophosphates: Not detected'],
+        ['heavyMetals', 'Heavy Metals Panel', 'e.g. Lead: < 2 μg/dL'],
       ].map(([key, label, placeholder]) => (
         <div key={key}>
           <label className="block text-sm font-medium mb-1">{label} <span className="text-text-muted text-xs">(optional)</span></label>
           <textarea
-            className="input-field min-h-[80px] font-mono !text-xs"
+            className="input-field min-h-[80px]"
             placeholder={placeholder}
             value={form[key]}
             onChange={e => setForm({ ...form, [key]: e.target.value })}

@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
+import { fmtDateTime } from '../utils/dateFormat';
 import { queryKeys } from '../utils/queryKeys';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Apple, Moon, ClipboardList, AlertTriangle, FileText, Clock, CheckCircle } from 'lucide-react';
+import { Activity, Apple, Moon, Pill, Stethoscope, AlertTriangle, FileText, Clock, CheckCircle } from 'lucide-react';
 import HistoryTab from '../components/stats/HistoryTab';
 import HandoverNotesPanel from '../components/stats/HandoverNotesPanel';
 import VitalsTab from '../components/stats/VitalsTab';
@@ -16,8 +17,7 @@ import EscalateModal from '../components/modals/EscalateModal';
 import DischargeModal from '../components/modals/DischargeModal';
 import EditPatientModal from '../components/modals/EditPatientModal';
 import { Archive } from 'lucide-react';
-import { allergiesHasRisk, formatAllergiesMutedLabel } from '../utils/patientDisplay';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent, TabsDivider } from '../components/ui/tabs';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import MedicalHistoryForm from '../features/clinical/MedicalHistoryForm';
@@ -72,6 +72,12 @@ export default function PatientDetail() {
   const { data: patientTasks = [], refetch: refetchTasks } = useQuery({
     queryKey: queryKeys.patientTasks(id),
     queryFn: () => api.get(`/patients/${id}/tasks?status=open&limit=50`),
+    enabled: !!id,
+  });
+
+  const { data: structuredAllergies = [] } = useQuery({
+    queryKey: queryKeys.clinical.structuredAllergies(id),
+    queryFn: () => api.get(`/patients/${id}/allergies`),
     enabled: !!id,
   });
 
@@ -279,21 +285,29 @@ export default function PatientDetail() {
                     <span className="mx-2 text-slate-300 dark:text-slate-600" aria-hidden>
                       |
                     </span>
-                    <span className="text-slate-500 dark:text-slate-500">Admitted:</span> {new Date(patient.admittedAt).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    <span className="text-slate-500 dark:text-slate-500">Admitted:</span> {fmtDateTime(patient.admittedAt)}
                   </>
                 )}
               </span>
             </div>
-            <div className="mt-2 text-sm">
-              {allergiesHasRisk(patient.allergies) ? (
-                <span className="inline-flex items-center rounded-md border border-red-300 dark:border-red-800 bg-red-100 dark:bg-red-950/45 px-2.5 py-1 font-semibold text-red-800 dark:text-red-200">
-                  Allergies: {String(patient.allergies).trim()}
-                </span>
+            <div className="mt-2 text-sm flex flex-wrap items-center gap-1.5">
+              <span className="font-medium text-slate-500 dark:text-slate-500 shrink-0">Allergies:</span>
+              {structuredAllergies.length === 0 ? (
+                <span className="text-slate-500 dark:text-slate-500">None documented</span>
               ) : (
-                <p className="text-slate-600 dark:text-slate-400">
-                  <span className="font-medium text-slate-700 dark:text-slate-500">Allergies:</span>{' '}
-                  {formatAllergiesMutedLabel(patient.allergies)}
-                </p>
+                structuredAllergies.map((a) => {
+                  const s = a.severity?.toLowerCase();
+                  const colors = s === 'severe' || s === 'high'
+                    ? 'bg-red-100 dark:bg-red-950/45 border-red-300 dark:border-red-800 text-red-800 dark:text-red-200'
+                    : s === 'moderate'
+                    ? 'bg-orange-100 dark:bg-orange-950/45 border-orange-300 dark:border-orange-800 text-orange-800 dark:text-orange-200'
+                    : 'bg-yellow-100 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200';
+                  return (
+                    <span key={a.id} className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold text-xs ${colors}`}>
+                      {a.allergen}
+                    </span>
+                  );
+                })
               )}
             </div>
             <p className="mt-4 text-text-secondary">
@@ -339,7 +353,7 @@ export default function PatientDetail() {
               {patientTasks.map((t) => {
                 const dueDate = t.dueAt ? new Date(t.dueAt) : null;
                 const dueLabel =
-                  dueDate && !Number.isNaN(dueDate.getTime()) ? dueDate.toLocaleString() : '--';
+                  dueDate && !Number.isNaN(dueDate.getTime()) ? fmtDateTime(dueDate) : '—';
 
                 return (
                   <div key={t.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -401,27 +415,40 @@ export default function PatientDetail() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList aria-label="Patient chart sections">
             {patient.status === 'discharged' && (
-              <TabsTrigger value="discharge">
-                <Archive size={18} aria-hidden /> Discharge Summary
-              </TabsTrigger>
+              <>
+                <TabsTrigger value="discharge">
+                  <Archive size={16} aria-hidden /> Discharge Summary
+                </TabsTrigger>
+                <TabsDivider />
+              </>
             )}
+
+            {/* ── Tier 1: high-frequency clinical views ── */}
+            <TabsTrigger value="vitals" variant="primary">
+              <Activity size={16} aria-hidden /> Vitals &amp; Symptoms
+            </TabsTrigger>
+            <TabsTrigger value="meds" variant="primary">
+              <Pill size={16} aria-hidden /> Medications
+            </TabsTrigger>
+
+            <TabsDivider />
+
+            {/* ── Tier 2: standard-frequency reference views ── */}
             <TabsTrigger value="history">
-              <FileText size={18} aria-hidden /> Profile &amp; History
-            </TabsTrigger>
-            <TabsTrigger value="vitals">
-              <Activity size={18} aria-hidden /> Vitals &amp; Symptoms
-            </TabsTrigger>
-            <TabsTrigger value="diet">
-              <Apple size={18} aria-hidden /> Diet &amp; Nutrition
-            </TabsTrigger>
-            <TabsTrigger value="sleep">
-              <Moon size={18} aria-hidden /> Sleep Log
-            </TabsTrigger>
-            <TabsTrigger value="meds">
-              <ClipboardList size={18} aria-hidden /> Medications
+              <FileText size={16} aria-hidden /> Profile &amp; History
             </TabsTrigger>
             <TabsTrigger value="clinical">
-              <ClipboardList size={18} aria-hidden /> Clinical Records
+              <Stethoscope size={16} aria-hidden /> Clinical Records
+            </TabsTrigger>
+
+            <TabsDivider />
+
+            {/* ── Tier 3: low-frequency lifestyle logs ── */}
+            <TabsTrigger value="diet" variant="muted">
+              <Apple size={14} aria-hidden /> Diet &amp; Nutrition
+            </TabsTrigger>
+            <TabsTrigger value="sleep" variant="muted">
+              <Moon size={14} aria-hidden /> Sleep Log
             </TabsTrigger>
           </TabsList>
 
