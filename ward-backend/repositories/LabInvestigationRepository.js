@@ -52,6 +52,29 @@ class LabInvestigationRepository {
       [id, patientId, tenantId]
     );
   }
+
+  // Called from within a transaction (tx = wrapped client from dbAdapter.withTransaction).
+  async createFromHl7(tx, data) {
+    const id = crypto.randomUUID();
+    await tx.execute(
+      `INSERT INTO LabInvestigations
+         (id, patientId, tenantId, investigationDate, dayLabel, results, recordedBy, source, externalMsgId, isMachineGenerated)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        data.patientId,
+        data.tenantId,
+        data.investigationDate,
+        data.dayLabel || null,
+        typeof data.results === 'string' ? data.results : JSON.stringify(data.results),
+        data.recordedBy,
+        'hl7',
+        data.externalMsgId || null,
+        1,
+      ]
+    );
+    return tx.queryOne(`SELECT * FROM LabInvestigations WHERE id = ?`, [id]);
+  }
 }
 
 module.exports = new LabInvestigationRepository();

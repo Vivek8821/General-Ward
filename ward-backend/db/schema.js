@@ -879,6 +879,53 @@ const initDb = (db) => {
           });
         });
 
+        // Migration 026: HL7 MLLP integration tables
+        db.run(`
+          CREATE TABLE IF NOT EXISTS Hl7InboundMessages (
+            id              TEXT PRIMARY KEY,
+            tenantId        TEXT NOT NULL,
+            messageId       TEXT NOT NULL,
+            messageType     TEXT NOT NULL,
+            sendingApp      TEXT,
+            sendingFacility TEXT,
+            rawMessage      TEXT NOT NULL,
+            patientId       TEXT,
+            labRecordId     TEXT,
+            status          TEXT NOT NULL DEFAULT 'processed'
+                              CHECK (status IN ('processed','orphaned','duplicate')),
+            receivedAt      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            processedAt     DATETIME
+          )
+        `);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS uniq_hl7_tenant_msgid ON Hl7InboundMessages(tenantId, messageId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_hl7_tenant_status ON Hl7InboundMessages(tenantId, status)`);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS Hl7OrphanedMessages (
+            id              TEXT PRIMARY KEY,
+            tenantId        TEXT NOT NULL,
+            inboundId       TEXT NOT NULL,
+            sendingApp      TEXT,
+            rawMrn          TEXT,
+            messageType     TEXT,
+            rawMessage      TEXT NOT NULL,
+            linkedPatientId TEXT,
+            linkedAt        DATETIME,
+            linkedBy        TEXT,
+            createdAt       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (inboundId) REFERENCES Hl7InboundMessages(id) ON DELETE CASCADE
+          )
+        `);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_hl7orphan_tenant_linked ON Hl7OrphanedMessages(tenantId, linkedPatientId)`);
+
+        runIgnoreDuplicateColumn(`ALTER TABLE LabInvestigations ADD COLUMN source TEXT DEFAULT 'manual'`);
+        runIgnoreDuplicateColumn(`ALTER TABLE LabInvestigations ADD COLUMN externalMsgId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE LabInvestigations ADD COLUMN isMachineGenerated INTEGER DEFAULT 0`);
+
+        runIgnoreDuplicateColumn(`ALTER TABLE ImagingReports ADD COLUMN source TEXT DEFAULT 'manual'`);
+        runIgnoreDuplicateColumn(`ALTER TABLE ImagingReports ADD COLUMN externalMsgId TEXT`);
+        runIgnoreDuplicateColumn(`ALTER TABLE ImagingReports ADD COLUMN isMachineGenerated INTEGER DEFAULT 0`);
+
         resolve();
       } catch (err) {
         reject(err);

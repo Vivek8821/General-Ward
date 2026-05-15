@@ -121,6 +121,7 @@ app.use('/api/patients', require('./controllers/ProceduresController'));
 app.use('/api/patients', require('./controllers/ClinicalTeamController'));
 app.use('/api/patients', require('./controllers/ToxicologyController'));
 app.use('/api/billing', require('./controllers/BillingController'));
+app.use('/api/hl7', require('./controllers/Hl7StatusController'));
 
 // Health check
 app.get('/', (req, res) => {
@@ -182,8 +183,13 @@ async function startServer() {
       }
     }
 
-    app.listen(PORT, () => {
+    app.listen(PORT, async () => {
       logger.info('Server started', { port: PORT, startupMode });
+      // Start HL7 MLLP service after HTTP server is up (only if HL7_ENABLED=true).
+      const hl7 = require('./services/hl7/index');
+      hl7.start().catch((err) => {
+        logger.warn('HL7 service failed to start', { error: err.message });
+      });
       logger.flush();
     });
   } catch (err) {
