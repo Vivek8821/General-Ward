@@ -7,6 +7,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { PERMISSIONS, authorize, authorizeAny } = require('../middleware/rbac');
 const { requireTenantPatient } = require('../middleware/tenant');
 const { clinicalWriteLimiter, adminWriteLimiter } = require('../middleware/rateLimiters');
+const { safeAccrueConsultation } = require('../services/billing/AccrualService');
 
 // POST /api/patients/:patientId/notes
 router.post('/notes', authenticateToken, clinicalWriteLimiter, authorizeAny([PERMISSIONS.WRITE_NOTES]), requireTenantPatient('patientId'), async (req, res, next) => {
@@ -16,6 +17,17 @@ router.post('/notes', authenticateToken, clinicalWriteLimiter, authorizeAny([PER
   try {
     const tenantId = req.tenantId;
     const result = await handoverNotesService.createNote(req.params.patientId, req.body, req.user.name, tenantId);
+
+    // Auto-charge consultation fee on a doctor's first note for this patient today.
+    // Idempotent on (doctorId, patientId, YYYY-MM-DD); subsequent same-day notes do nothing.
+    if (req.user.role === 'doctor') {
+      await safeAccrueConsultation({
+        patientId: req.params.patientId,
+        tenantId,
+        doctorId: req.user.id,
+      });
+    }
+
     res.status(201).json(result);
   } catch (error) {
     next(error);

@@ -7,6 +7,7 @@ const invoiceRepo = require('../repositories/billing/InvoiceRepository');
 const lineRepo = require('../repositories/billing/InvoiceLineRepository');
 const paymentRepo = require('../repositories/billing/PaymentRepository');
 const serviceRepo = require('../repositories/billing/ServiceCatalogRepository');
+const { safeAccrueForPatient } = require('../services/billing/AccrualService');
 
 const isReader = (req) => ['admin', 'doctor', 'nurse'].includes(req.user?.role);
 const isWriter = (req) => ['admin', 'doctor'].includes(req.user?.role);
@@ -62,6 +63,7 @@ router.get('/patients/:patientId/invoices',
   protect(isReader, { resource: 'billing.invoice' }),
   async (req, res, next) => {
     try {
+      await safeAccrueForPatient(req.params.patientId, req.tenantId);
       const invoices = await invoiceRepo.listByPatient(req.params.patientId, req.tenantId);
       res.json({ data: invoices });
     } catch (err) { next(err); }
@@ -90,8 +92,12 @@ router.get('/invoices/:id',
   protect(isReader, { resource: 'billing.invoice' }),
   async (req, res, next) => {
     try {
+      const first = await invoiceRepo.findById(req.params.id, req.tenantId);
+      if (!first) return res.status(404).json({ error: 'Invoice not found' });
+      if (first.status === 'open') {
+        await safeAccrueForPatient(first.patientId, req.tenantId);
+      }
       const invoice = await invoiceRepo.findWithDetails(req.params.id, req.tenantId);
-      if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
       res.json(invoice);
     } catch (err) { next(err); }
   }

@@ -774,6 +774,30 @@ const initDb = (db) => {
 
         ['ServiceCatalog', 'Invoices', 'InvoiceLines', 'Payments'].forEach(createDefaultTenantTrigger);
 
+        // Migration 024: WardRates + ConsultationRate (Private edition)
+        db.run(`
+          CREATE TABLE IF NOT EXISTS WardRates (
+            tenantId TEXT NOT NULL,
+            careIntensity INTEGER NOT NULL CHECK (careIntensity IN (1,2,3,4)),
+            dailyRate NUMERIC NOT NULL,
+            updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (tenantId, careIntensity)
+          )
+        `);
+        db.run(`INSERT OR IGNORE INTO WardRates (tenantId, careIntensity, dailyRate) VALUES (?, 1, 500)`, [DEFAULT_TENANT_ID]);
+        db.run(`INSERT OR IGNORE INTO WardRates (tenantId, careIntensity, dailyRate) VALUES (?, 2, 1000)`, [DEFAULT_TENANT_ID]);
+        db.run(`INSERT OR IGNORE INTO WardRates (tenantId, careIntensity, dailyRate) VALUES (?, 3, 2500)`, [DEFAULT_TENANT_ID]);
+        db.run(`INSERT OR IGNORE INTO WardRates (tenantId, careIntensity, dailyRate) VALUES (?, 4, 5000)`, [DEFAULT_TENANT_ID]);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ConsultationRate (
+            tenantId TEXT PRIMARY KEY,
+            fee NUMERIC NOT NULL,
+            updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        db.run(`INSERT OR IGNORE INTO ConsultationRate (tenantId, fee) VALUES (?, 500)`, [DEFAULT_TENANT_ID]);
+
         resolve();
       } catch (err) {
         reject(err);

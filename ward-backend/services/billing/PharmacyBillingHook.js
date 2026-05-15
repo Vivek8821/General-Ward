@@ -1,24 +1,10 @@
 const crypto = require('crypto');
-const invoiceRepo = require('../../repositories/billing/InvoiceRepository');
 const lineRepo = require('../../repositories/billing/InvoiceLineRepository');
 const logger = require('../../utils/logger');
+const { findOrCreateOpenInvoice } = require('./InvoiceHelpers');
 
 // Idempotent on (tenantId, 'pharmacy', sourceRef) via the unique index on InvoiceLines.
 // Designed to be best-effort: if billing throws, the clinical caller should swallow it.
-async function findOrCreateOpenInvoice(patientId, tenantId, createdBy) {
-  const existing = await invoiceRepo.findOpenForPatient(patientId, tenantId);
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  await invoiceRepo.create({
-    id,
-    tenantId,
-    patientId,
-    createdBy,
-    notes: 'Auto-created on first chargeable event',
-  });
-  return invoiceRepo.findById(id, tenantId);
-}
-
 async function recordDispenseCharge({ patientId, tenantId, sourceRef, description, quantity, unitPrice, createdBy }) {
   if (!patientId || !tenantId || !sourceRef) return null;
   const price = Number(unitPrice);
