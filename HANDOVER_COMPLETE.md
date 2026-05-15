@@ -1,6 +1,6 @@
 # General Ward — Comprehensive Handover Document
 
-> **Date**: 2026-05-12 | **Version**: 1.0.0  
+> **Date**: 2026-05-15 | **Version**: 2.0.0  
 > **Application**: General Ward Clinical Operations Platform  
 > **Stack**: Express 5 + SQLite/PostgreSQL | React 19 + Vite + TanStack Query v5
 
@@ -11,13 +11,15 @@
 1. [High-Level Architecture](#1-high-level-architecture)
 2. [Repository Root Structure](#2-repository-root-structure)
 3. [Backend Deep-Dive (ward-backend/)](#3-backend-deep-dive)
-4. [Frontend Deep-Dive (ward-frontend/)](#4-frontend-deep-dive) → PART2
-5. [Database Schema](#5-database-schema) → PART2
-6. [API Reference](#6-api-reference) → PART3
-7. [Security & Cybersecurity](#7-security) → PART3
-8. [Authentication & Login Flow](#8-authentication) → PART3
-9. [DPDPA Compliance](#9-dpdpa) → PART3
-10. [DevOps & Deployment](#10-devops) → PART3
+4. [Frontend Deep-Dive (ward-frontend/)](#4-frontend-deep-dive)
+5. [Database Schema](#5-database-schema)
+6. [API Reference](#6-api-reference)
+7. [Security & Cybersecurity](#7-security)
+8. [Authentication & Login Flow](#8-authentication)
+9. [DPDPA Compliance](#9-dpdpa)
+10. [DevOps & Deployment](#10-devops)
+11. [Key Integration Flows](#11-key-integration-flows)
+12. [Important Constraints & Gotchas](#12-important-constraints--gotchas)
 
 ---
 
@@ -49,6 +51,11 @@
 │                              │ db.js  │ │db-postgres.js│       │
 │                              │(SQLite)│ │  (pg Pool)   │       │
 │                              └────────┘ └──────────────┘       │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────┐           │
+│  │  TCP :2575 (MLLP)  ← HL7 v2.x from LIMS/PACS    │           │
+│  │  services/hl7/  (only when HL7_ENABLED=true)     │           │
+│  └──────────────────────────────────────────────────┘           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -57,6 +64,7 @@
 - **Dual-database**: SQLite for dev/low-resource, PostgreSQL for production
 - **Layered architecture**: Controller → Service → Repository → DB Adapter
 - **Clinical-first**: Medication administration never blocked by inventory errors
+- **Always-Accept HL7**: ACK is sent before domain processing; machines never see AE for business errors
 
 ---
 
@@ -75,12 +83,16 @@ General-Ward/
 ├── CODE_AUDIT.md                # Security audit findings
 ├── SECURITY_AUDIT.md            # Security hardening log
 ├── TEST_PROTOCOL.md             # Testing procedures
-├── handoff.md                   # Previous handoff notes
+├── handoff.md                   # Previous handoff notes (feature changelog)
+├── HANDOVER_COMPLETE.md         # This document
 ├── .env.example                 # Root env template
 ├── .gitignore                   # Ignores ward.db*, cookies, node_modules
 │
 ├── ward-backend/                # Express API (see §3)
 ├── ward-frontend/               # React SPA (see §4)
+│
+├── tests/
+│   └── hl7-mock-sender.js       # HL7 MLLP integration test (3 scenarios)
 │
 ├── nginx/
 │   ├── nginx.conf               # Reverse proxy: /api→backend, /→frontend
@@ -90,11 +102,6 @@ General-Ward/
 │   ├── COMPLIANCE.md            # DPDPA/regulatory compliance notes
 │   ├── SECURITY_LOGGING.md      # Security logging architecture
 │   ├── plans/                   # Implementation plans & progress trackers
-│   │   ├── enterprise-hardening-*.md
-│   │   ├── security-remediation-PROGRESS.md
-│   │   ├── signup-payment-*.md
-│   │   ├── legal-gdpr-mapping.md
-│   │   └── launch-monitoring-contingency-*.md
 │   └── runbooks/                # Operational runbooks
 │       ├── core-workflow-manual-test.md
 │       ├── multi-device-sync-validation.md
@@ -122,12 +129,14 @@ General-Ward/
 
 | File | Purpose |
 |------|---------|
-| `server.js` | **Entry point**. Sets up Express, middleware chain, route mounting, startup/migration logic. Exports `{ app }` for tests. |
-| `config.js` | Centralizes env parsing: `NODE_ENV`, `JWT_SECRET`, `CORS_ORIGIN`. Validates allowed environments. Throws on missing secrets. |
-| `db.js` | SQLite driver initialization. WAL mode, foreign keys, busy timeout. Global sequential transaction queue to prevent nested transactions. |
-| `db-postgres.js` | PostgreSQL `pg.Pool` setup. Connection pool (max 20), `withTransaction` using dedicated client. File-based migration runner via `SchemaMigrations` table. |
-| `db-adapter.js` | **Critical abstraction**. Translates `?` → `$n` for Postgres. Normalizes row shapes. Exposes `query()`, `queryOne()`, `execute()`, `withTransaction()`. All repo code MUST use this, never raw db.js. |
-| `schema.sql` | **Source of truth** for SQLite schema. 563 lines. Contains all CREATE TABLE, ALTER TABLE migrations, and indexes. MigratorService executes this at startup. |
+| `server.js` | **Entry point**. Express setup, middleware chain, route mounting, startup/migration, HL7 service init. Exports `{ app }` for tests. |
+| `config.js` | Centralizes env parsing: `NODE_ENV`, `JWT_SECRET`, `CORS_ORIGIN`. Throws on missing secrets in production. |
+| `db.js` | SQLite driver. WAL mode, foreign keys, busy timeout. Sequential transaction queue to prevent nesting. |
+| `db-postgres.js` | PostgreSQL `pg.Pool` (max 20). File-based migration runner via `SchemaMigrations` table. |
+| `db-adapter.js` | **Critical abstraction**. Translates `?`→`$n` for Postgres. Exposes `query()`, `queryOne()`, `execute()`, `withTransaction()`. All repo code MUST use this. |
+| `schema.sql` | **Source of truth** for SQLite schema. Contains all CREATE TABLE, ALTER TABLE migrations, and indexes. MigratorService executes this at startup. |
+| `db/schema.js` | JS-based SQLite migration runner. Handles `runIgnoreDuplicateColumn()` for safe `ALTER TABLE` on existing DBs. Used for HL7 and billing column additions. |
+| `db/billingCatalogSeed.js` | Seeds ServiceCatalog with default procedure/lab/imaging entries |
 | `package.json` | Dependencies: express, bcrypt, jsonwebtoken, pg, sqlite3, helmet, cors, express-rate-limit, dotenv, uuid |
 | `.env` / `.env.example` | Environment configuration (see §10) |
 
@@ -135,66 +144,110 @@ General-Ward/
 
 ```
 controllers/
-├── AuthController.js              # Login/signup/refresh/logout/password-reset (290 lines)
-├── PatientController.js           # CRUD patients, discharge, archives (178 lines)
+├── AuthController.js              # Login/signup/refresh/logout/password-reset
+├── PatientController.js           # CRUD patients, discharge, archives
 ├── MedicationController.js        # Prescribe, administer (MAR), manage medications
 ├── ObservationController.js       # Record vitals/symptoms/diet/sleep/history
-├── PharmacyController.js          # Full pharmacy: inventory, batches, waste, analytics, orders (343 lines)
+├── PharmacyController.js          # Pharmacy: inventory, batches, waste, analytics, orders
 ├── BarcodeController.js           # Barcode registration and lookup (GS1 parsing)
 ├── EscalationController.js        # Clinical escalation create/review
 ├── HandoverController.js          # Shift handover notes CRUD
 ├── TaskController.js              # Clinical task management
-├── StatisticsController.js        # Ward-level analytics (demographics, outcomes, admissions)
-├── UserController.js              # Admin: create staff members within tenant
+├── StatisticsController.js        # Ward-level analytics
+├── UserController.js              # Admin: create staff within tenant
 ├── ReportController.js            # Patient treatment report generation
 ├── MedicalHistoryController.js    # Past medical/surgical/family/social history
-├── AllergiesController.js         # Structured allergy records (drug/food/environmental)
-├── ClinicalPresentationController.js # HPI + physical exam findings
+├── AllergiesController.js         # Structured allergy records
+├── ClinicalPresentationController.js # HPI + physical exam
 ├── LabInvestigationsController.js # Lab results per investigation date
-├── ImagingController.js           # ECG/X-ray/USG/CT/MRI/PET/Echo/Spirometry reports
+├── ImagingController.js           # ECG/X-ray/USG/CT/MRI/PET/Echo/Spirometry
 ├── ProceduresController.js        # Clinical procedures log
-├── ClinicalTeamController.js      # Treating team members + remarks
-└── ToxicologyController.js        # BAC, drug screen, poison screen, heavy metals
+├── ClinicalTeamController.js      # Treating team + remarks
+├── ToxicologyController.js        # BAC, drug screen, poison screen, heavy metals
+├── BillingController.js           # Full billing/RCM: services, invoices, lines, payments
+└── Hl7StatusController.js         # HL7 server status, inbound messages, orphan queue
+
+routes/                            # Route files (NOT controllers — no business logic)
+├── adminAudit.js                  # Mounted at /api/admin — audit logs, DPDPA tools,
+│                                  # clinical-changes, breach report, purge
+└── reports.js                     # Mounted at /api/reports — generate, verify, history,
+                                   # clinical discharge report
 ```
 
-**Routing pattern**: Controllers are Express routers mounted in `server.js`:
-- `app.use('/api/auth', authRoutes)`
-- `app.use('/api/patients', patientRoutes)` — sub-routers for nested resources (medications, observations, etc.)
-- `app.use('/api/pharmacy', pharmacyRoutes)`
-- `app.use('/api/admin', adminAuditRoutes)`
+**Route mounting** (from `server.js`):
+
+| API prefix | Source |
+|-----------|--------|
+| `/api/auth` | `AuthController.js` |
+| `/api/patients` | `PatientController.js` — also sub-mounts Medications, Observations, Escalations, Handover, MedicalHistory, Allergies, ClinicalPresentation, Labs, Imaging, Procedures, ClinicalTeam, Toxicology |
+| `/api/escalations` | `EscalationController.js` — **dual-mounted**: also reachable at `/api/patients/:id/escalations` via PatientController sub-router |
+| `/api/tasks` | `TaskController.js` |
+| `/api/observations` | `ObservationController.js` |
+| `/api/pharmacy` | `PharmacyController.js` |
+| `/api/pharmacy/barcodes` | `BarcodeController.js` |
+| `/api/admin` | `routes/adminAudit.js` |
+| `/api/admin/users` | `UserController.js` |
+| `/api/reports` | `routes/reports.js` |
+| `/api/statistics` | `StatisticsController.js` |
+| `/api/billing` | `BillingController.js` |
+| `/api/hl7` | `Hl7StatusController.js` |
 
 ### 3.3 Services (Business Logic)
 
 ```
 services/
-├── AuthService.js                 # JWT pair generation, bcrypt verify, hospital registration, token rotation
-├── PatientService.js              # Patient CRUD orchestration, discharge workflow
-├── MedicationService.js           # Prescribe + administer with auto pharmacy deduction (FEFO)
-├── ObservationService.js          # Vital ingestion, NEWS2 scoring, trend computation
-├── ScoringService.js              # NEWS2 (National Early Warning Score 2) calculation engine
-├── ClinicalAuditService.js        # Domain-level audit trail (patient updates, med actions, reports)
-├── MigratorService.js             # Schema-first auto-migrations from schema.sql at startup
-├── PharmacyAnalyticsService.js    # 30-day consumption forecasting, financial valuation, replenishment
-├── PharmacyReorderService.js      # Automated PO generation for low-stock medications
-├── WasteService.js                # Clinical waste/spillage: initiate → witness → confirm/cancel
-├── StatisticsService.js           # Ward analytics: demographics, disease categories, outcomes (15K lines)
-├── StatisticsReportService.js     # Period-based statistical report generation
-├── ClinicalDischargeReportService.js # Full discharge report compilation (25K lines)
-├── PDFReportService.js            # PDF generation for treatment reports
-├── ReportDataService.js           # Aggregates all patient data for report generation
-├── ReportVerificationService.js   # HMAC-SHA256 report integrity verification
-├── BarcodeService.js              # Barcode registration + lookup
-├── DiseaseCategorizer.js          # ICD-style diagnosis categorization for statistics
-├── EscalationService.js           # Escalation workflow
-├── HandoverNotesService.js        # Handover CRUD
-├── TaskService.js                 # Task assignment and completion
-├── EmailService.js                # Password reset email delivery
-├── PasswordResetService.js        # Token-based password reset flow
+├── AuthService.js
+├── PatientService.js
+├── MedicationService.js           # MAR + auto pharmacy deduction (FEFO)
+├── ObservationService.js          # Vital ingestion, NEWS2 scoring
+├── ScoringService.js              # NEWS2 calculation engine
+├── ClinicalAuditService.js
+├── MigratorService.js             # schema.sql auto-migrations at startup
+├── PharmacyAnalyticsService.js    # 30-day consumption + replenishment forecasting
+├── PharmacyReorderService.js      # Automated PO generation
+├── WasteService.js                # Waste: initiate → witness → confirm/cancel
+├── StatisticsService.js
+├── StatisticsReportService.js
+├── ClinicalDischargeReportService.js
+├── PDFReportService.js
+├── ReportDataService.js
+├── ReportVerificationService.js   # HMAC-SHA256 report integrity
+├── BarcodeService.js
+├── DiseaseCategorizer.js
+├── EscalationService.js
+├── HandoverNotesService.js
+├── TaskService.js
+├── EmailService.js
+├── PasswordResetService.js
 │
-└── pharmacy/                      # Sub-domain services
-    ├── StockService.js            # EDL stock add/remove/update
-    ├── BatchService.js            # Batch/lot tracking, FEFO dispensing, recall + trace
-    └── TransactionService.js      # Immutable transaction audit trail, stock adjustment
+├── billing/
+│   ├── AccrualService.js          # Auto-charges: ward day fees, consultations,
+│   │                              # pharmacy dispenses, lab/imaging (idempotent)
+│   ├── InvoiceHelpers.js          # findOrCreateOpenInvoice() — shared by AccrualService
+│   │                              # and PharmacyBillingHook; auto-creates open invoice
+│   │                              # on first chargeable event for a patient
+│   ├── PharmacyBillingHook.js     # recordDispenseCharge() — called by MedicationService
+│   │                              # after each dispense. Best-effort: billing errors are
+│   │                              # swallowed so clinical flow is never blocked
+│   └── ServiceCatalogPresenter.js # Formats ServiceCatalog subtype detail rows for display.
+│                                  # SUBTYPE_FIELDS manifest drives skip-if-empty rendering
+│                                  # for ServiceLab/Imaging/Procedure/Consumable across
+│                                  # API, PDF, and print consumers
+│
+├── hl7/
+│   ├── Hl7Parser.js               # MLLP framing, UTF-8/latin-1 decode, segment
+│   │                              # parser (MSH/PID/OBR/OBX), ACK builder
+│   ├── MllpServer.js              # TCP server, partial-packet buffer reassembly,
+│   │                              # fire-and-forget AA, per-IP 60-min watchdog
+│   ├── Hl7MappingService.js       # Idempotency, fuzzy MRN match, lab ingest,
+│   │                              # orphan protocol, ClinicalChangeLog audit
+│   └── index.js                   # start()/stop()/getStatus() lifecycle,
+│                                  # Windows netsh firewall hint on win32
+│
+└── pharmacy/
+    ├── StockService.js
+    ├── BatchService.js
+    └── TransactionService.js
 ```
 
 **Key integration: MAR → Pharmacy Pipeline**
@@ -209,140 +262,146 @@ MedicationService.administerMedication()
   → Clinical administration ALWAYS recorded regardless of stock outcome
 ```
 
+**Billing Accrual Pipeline** (`AccrualService.safeAccrueForPatient`):
+- Called automatically when any invoice is opened or listed
+- Idempotency enforced via partial unique index on `InvoiceLines(tenantId, source, sourceRef) WHERE sourceRef IS NOT NULL`
+- Accrues: ward day fees (WardRates × careIntensity), consultation fee, pharmacy dispenses, lab results, imaging reports
+
+**HL7 MLLP Design:**
+- AA sent synchronously before `await processMessage()` — domain errors (unknown MRN, duplicate) never produce AE
+- Orphan protocol: unresolvable MRNs → `Hl7OrphanedMessages` table for admin linking
+- Idempotency guard: duplicate `controlId` (MSH-10) detected before transaction opens
+
 ### 3.4 Repositories (Data Access)
 
 ```
 repositories/
-├── AuthRepository.js              # User CRUD, tenant creation, refresh token management, tokenVersion
-├── AuthLockoutRepository.js       # Login attempt tracking, DB-backed lockout per username+IP
-├── PatientRepository.js           # Patient CRUD, archive snapshot collection, discharge transaction (381 lines)
-├── MedicationRepository.js        # Medications + MedicationAdministrations queries
-├── ObservationRepository.js       # DailyStats CRUD with cursor pagination
-├── EscalationRepository.js        # Escalation CRUD
-├── HandoverNotesRepository.js     # HandoverNotes CRUD
-├── TaskRepository.js              # Task CRUD with assignee queries
-├── BarcodeRepository.js           # BarcodeRegistrations + stock/batch barcode queries
-├── DpdpaRepository.js             # Correction requests, grievances, data sharing log, retention review
-├── ClinicalChangeLogRepository.js # ClinicalChangeLog inserts
-├── ReportRepository.js            # PatientReports metadata
-├── PurchaseOrderRepository.js     # PurchaseOrders CRUD
-├── WasteRepository.js             # WasteRecords lifecycle
-├── MedicalHistoryRepository.js    # MedicalHistory upsert/get
-├── StructuredAllergyRepository.js # StructuredAllergies CRUD (soft-delete)
-├── ClinicalPresentationRepository.js # ClinicalPresentation upsert/get
-├── LabInvestigationRepository.js  # LabInvestigations CRUD (soft-delete)
-├── ImagingReportRepository.js     # ImagingReports CRUD (soft-delete)
-├── ClinicalProcedureRepository.js # ClinicalProcedures CRUD (soft-delete)
-├── ClinicalTeamRepository.js      # ClinicalTeam CRUD (soft-delete)
-├── ToxicologyScreenRepository.js  # ToxicologyScreens upsert/get
-├── PasswordResetRepository.js     # PasswordResetTokens CRUD
+├── AuthRepository.js
+├── AuthLockoutRepository.js
+├── PatientRepository.js
+├── MedicationRepository.js
+├── ObservationRepository.js
+├── EscalationRepository.js
+├── HandoverNotesRepository.js
+├── TaskRepository.js
+├── BarcodeRepository.js
+├── DpdpaRepository.js
+├── ClinicalChangeLogRepository.js
+├── ReportRepository.js
+├── PurchaseOrderRepository.js
+├── WasteRepository.js
+├── MedicalHistoryRepository.js
+├── StructuredAllergyRepository.js
+├── ClinicalPresentationRepository.js
+├── LabInvestigationRepository.js  # Added createFromHl7(tx, data) for MLLP ingest
+├── ImagingReportRepository.js
+├── ClinicalProcedureRepository.js
+├── ClinicalTeamRepository.js
+├── ToxicologyScreenRepository.js
+├── PasswordResetRepository.js
+├── Hl7OrphanRepository.js         # listPending(), linkToPatient()
+│
+├── billing/
+│   ├── ServiceCatalogRepository.js  # CRUD + search(query, tenantId) ranked typeahead
+│   ├── InvoiceRepository.js         # create, listByPatient, findWithDetails,
+│   │                                # setDiscount, finalize, cancel
+│   ├── InvoiceLineRepository.js     # create (idempotent), delete
+│   └── PaymentRepository.js         # record, refund
 │
 └── pharmacy/
-    ├── StockRepository.js         # PharmacyStock queries
-    ├── BatchRepository.js         # PharmacyBatches with FEFO ordering
-    └── TransactionRepository.js   # PharmacyTransactions insert + history
+    ├── StockRepository.js
+    ├── BatchRepository.js
+    └── TransactionRepository.js
 ```
 
 **All repositories use `dbAdapter` — never raw `db.js`.**  
-**All queries include `tenantId` parameter for multi-tenant isolation.**
+**All queries include `tenantId` for multi-tenant isolation.**
 
 ### 3.5 Middleware Stack
-
-The middleware executes in this order (defined in `server.js`):
 
 ```
 1. trust proxy          → parseInt(TRUST_PROXY || '0')
 2. CORS                 → Dynamic origin in dev, explicit whitelist in prod
-3. Helmet               → CSP headers in production, disabled in dev
+3. Helmet               → CSP in production, disabled in dev
 4. express.json         → 512kb body limit
-5. attachUserIfPresent  → Parses JWT from cookie/header, sets req.user (non-blocking)
-6. resolveTenant        → Sets req.tenantId from req.user.tenantId or 'tenant-default'
-7. verifyCsrfForMutations → Double-submit CSRF on POST/PUT/PATCH/DELETE (cookie-auth only)
+5. attachUserIfPresent  → Parses JWT, sets req.user (non-blocking)
+6. resolveTenant        → Sets req.tenantId from JWT or 'tenant-default'
+7. verifyCsrfForMutations → Double-submit CSRF on POST/PUT/PATCH/DELETE
 8. detectAttackPatterns  → XSS/SQLi pattern scanner on request bodies
 9. submissionLimiter     → Per-user+IP+path rate limit (10/min for mutations)
-10. auditLog            → Records all authenticated requests to AuditLogs table
-11. requestLogger       → Structured request logging
+10. auditLog            → Records all authenticated requests to AuditLogs
+11. requestLogger       → Structured request/response logging
 ```
-
-**Individual middleware files:**
 
 | File | Purpose |
 |------|---------|
-| `auth.js` | `extractToken()` from cookie/header, `attachUserIfPresent()` (soft), `authenticateToken()` (hard 401), `requireRole()` |
-| `rbac.js` | Defines 4 roles × 15 permissions. `authorize(PERMISSION)` and `authorizeAny([PERMS])` middleware factories |
-| `csrf.js` | Double-submit: JWT carries `csrf` claim, client sends `X-CSRF-Token` header. Allowlist for login/signup/refresh |
-| `tenant.js` | 7 tenant-scope guards: `requireTenantPatient`, `requireTenantTask`, `requireTenantMedication`, `requireTenantMedicationAdministration`, `requireTenantEscalation`, `requireTenantPharmacyStock`, `requireTenantPharmacyBatch` |
-| `protect.js` | Combined auth+RBAC+tenant in single middleware with structured denial logging |
-| `abuseProtection.js` | XSS/SQLi regex scanner (11 patterns), field length limits, honeypot validator, per-form rate limiter |
-| `audit.js` | Records every authenticated request: userId, role, action, resource, IP, statusCode, patientId |
-| `error.js` | Global error handler. Hides stack traces in production. Logs structured error payloads |
+| `auth.js` | `extractToken()`, `attachUserIfPresent()`, `authenticateToken()`, `requireRole()` |
+| `rbac.js` | 4 roles × 16 permissions. `authorize()` and `authorizeAny()` factories |
+| `csrf.js` | Double-submit: JWT `csrf` claim vs `X-CSRF-Token` header |
+| `tenant.js` | 7 tenant-scope guards for patient/task/medication/escalation/pharmacy resources |
+| `protect.js` | Combined auth+RBAC+tenant in one composable middleware with denial logging |
+| `abuseProtection.js` | XSS/SQLi scanner (11 patterns), field length limits, honeypot, per-form limiter |
+| `audit.js` | Every authenticated request: userId, role, action, resource, IP, statusCode, patientId |
+| `error.js` | Global error handler. Strips stack traces in production. Logs structured error payloads |
 | `requestLogger.js` | Request timing and metadata logging |
 | `rateLimiters.js` | Shared rate limiter configurations |
-| `resolveTenant.js` | Sets `req.tenantId = req.user?.tenantId || 'tenant-default'` |
+| `resolveTenant.js` | Sets `req.tenantId = req.user?.tenantId \|\| 'tenant-default'` |
 
 ### 3.6 Utils
 
 | File | Purpose |
 |------|---------|
-| `validation.js` | **365 lines**. Validators for: vitals (physiological ranges), patients, discharge, medications, inventory, waste, barcodes, clinical records, signup. `bad()` helper for 400 responses. |
-| `passwordSecurity.js` | Two-layer password check: (1) Local set of ~300 common passwords, (2) HIBP k-anonymity API. Graceful degradation if network unavailable. |
+| `validation.js` | 365 lines. Validators for vitals, patients, discharge, medications, inventory, waste, barcodes, clinical records, signup. |
+| `passwordSecurity.js` | Two-layer check: local ~300 common passwords + HIBP k-anonymity API (graceful degradation). |
 | `logger.js` | Buffered structured JSON logger. Flushes every 2s or 50 entries. SIGINT/SIGTERM flush handlers. |
 | `gs1Parser.js` | GS1/EAN-128 barcode parsing for pharmaceutical barcodes. |
 
-### 3.7 Scripts
-
-| File | Purpose |
-|------|---------|
-| `seed.js` | Seeds dev users with PIN-based auth (Dr. Smith/1234, etc.) |
-| `seed-test.js` | **76K lines**. Comprehensive test data seeder: 30 patients with full clinical data. Idempotent. |
-| `seed_clinical_part1-3.js` | Clinical data seeders (vitals, medications, labs, imaging) |
-| `seed_history.js` | Medical history seeder |
-| `seed_pharmacy.js` | Pharmacy inventory seeder |
-| `comprehensive_seeder.js` | Full demo dataset generator |
-| `stressEverything.js` | Concurrent load test harness (17K lines) |
-| `migrate-sqlite-to-postgres.js` | Data migration script |
-| `migratePostgres.js` | PostgreSQL schema migration runner |
-| `cleanup_test_patients.js` | Test data cleanup |
-| `check_*.js` | Diagnostic scripts (schema, users, lockouts) |
-
-### 3.8 Tests
+### 3.7 Tests
 
 ```
-tests/
-├── integration/                   # 18 integration test suites
-│   ├── auth.test.js               # Login flow
-│   ├── authCookie.test.js         # Cookie-based auth
-│   ├── signup.test.js             # Hospital registration
-│   ├── rbac.test.js               # Role-based access control
-│   ├── tenantIsolation.test.js    # Cross-tenant access prevention
-│   ├── patient_guard.test.js      # Patient access guards
-│   ├── medications.test.js        # Prescription + MAR flow
-│   ├── ingest.test.js             # Vital sign ingestion
-│   ├── history.test.js            # Observation history
-│   ├── stats.test.js              # Statistics endpoints
-│   ├── trends.test.js             # Clinical trend data
-│   ├── notes.test.js              # Handover notes
-│   ├── tasks.test.js              # Task management
-│   ├── audit.test.js              # Audit logging
-│   ├── adminAudit.test.js         # Admin audit endpoints
-│   ├── barcode.test.js            # Barcode operations
-│   ├── reorder.test.js            # Pharmacy reorder
-│   └── reports.test.js            # Report generation
+ward-backend/tests/
+├── integration/                   # 18 integration test suites (Jest, --runInBand)
+│   ├── auth.test.js, authCookie.test.js, signup.test.js
+│   ├── rbac.test.js, tenantIsolation.test.js, patient_guard.test.js
+│   ├── medications.test.js, ingest.test.js, history.test.js
+│   ├── stats.test.js, trends.test.js, notes.test.js, tasks.test.js
+│   ├── audit.test.js, adminAudit.test.js, barcode.test.js
+│   ├── reorder.test.js, reports.test.js
+│   └── (billing and HL7 tested via manual scripts — see §11)
 │
 └── services/
-    ├── ScoringService.test.js     # NEWS2 calculation
-    ├── scoring.test.js            # Additional scoring tests
-    ├── PatientService.test.js     # Patient service logic
-    ├── postgresSmoke.test.js      # PostgreSQL connectivity
-    └── migratePostgres.test.js    # Migration script tests
+    ├── ScoringService.test.js, scoring.test.js
+    ├── PatientService.test.js
+    └── postgresSmoke.test.js, migratePostgres.test.js
+
+ward-backend/scripts/              # Utility and data scripts (not part of app startup)
+├── seed.js                        # Seeds dev users (Dr. Smith, Nurse Joy, etc.)
+├── seed-test.js                   # Comprehensive test data: 30 patients + full clinical data (idempotent)
+├── seed_clinical_part1-3.js       # Clinical data seeders (vitals, medications, labs, imaging)
+├── seed_history.js                # Medical history seeder
+├── seed_pharmacy.js               # Pharmacy inventory seeder
+├── comprehensive_seeder.js        # Full demo dataset generator
+├── stressEverything.js            # Concurrent load test harness
+├── stress_test.js                 # Additional stress/load tests
+├── migrate-sqlite-to-postgres.js  # One-time data migration: SQLite → PostgreSQL
+├── migratePostgres.js             # PostgreSQL schema migration runner
+├── cleanup_test_patients.js       # Test data cleanup
+├── check_schema.js                # Diagnostic: print live schema state
+├── check_users.js                 # Diagnostic: print user records
+├── check_lockouts.js              # Diagnostic: print active login lockouts
+├── adapter-test.js                # DB adapter smoke test
+├── test_gs1.js                    # GS1 barcode parser test
+├── verify_pw.js                   # Password hashing verification
+└── compareSqlitePostgresCounts.js # Cross-DB row count comparison
+
+# Root-level integration scripts
+tests/
+└── hl7-mock-sender.js             # 3 HL7 MLLP tests (requires running server)
 ```
 
-**Run**: `cd ward-backend && npm test` (Jest, `--runInBand --forceExit`)
+**Run backend tests**: `cd ward-backend && npm test`
 
 ---
-
-*Continued in HANDOVER_PART2.md*
-# General Ward — Handover Document (Part 2)
 
 ## 4. Frontend Deep-Dive (`ward-frontend/`)
 
@@ -375,6 +434,9 @@ src/
 │   ├── api.ts                     # Centralized fetch wrapper with CSRF + silent refresh
 │   ├── queryKeys.ts               # TanStack Query key factory (type-safe)
 │   ├── clinicalUtils.js           # Clinical display helpers (EWS colors, risk labels)
+│   ├── dateFormat.ts              # Date formatting helpers (en-IN locale). Used by
+│   │                              # PatientCard and clinical components to render
+│   │                              # DD-MM-YYYY strings consistently
 │   └── patientDisplay.ts          # Patient name/MRN formatting
 │
 ├── views/                         # Page-level route components
@@ -395,7 +457,10 @@ src/
 │   │   ├── DashboardView.jsx      # Ward overview: patient grid + stats + alerts
 │   │   └── components/
 │   │       ├── AddPatientModal.jsx # New patient admission form (11K)
-│   │       ├── PatientCard.jsx     # NEWS2 risk-stratified patient card
+│   │       ├── PatientCard.jsx     # NEWS2 risk-stratified patient card. EWS halo glow + vitals strip.
+│   │       │                       # Fixed: hover uses CSS animation (not animation:none),
+│   │       │                       # box-shadow uses hex color (not rgba+44 suffix),
+│   │       │                       # background uses CSS var (not hardcoded dark value)
 │   │       ├── PatientGrid.jsx    # Responsive patient card grid
 │   │       ├── DashboardStats.jsx # Summary statistics banner
 │   │       └── DashboardAlerts.jsx # Active alerts panel
@@ -443,6 +508,11 @@ src/
 │   │   ├── DischargeModal.jsx     # Discharge workflow form
 │   │   ├── EditPatientModal.jsx   # Patient details editor
 │   │   └── EscalateModal.jsx     # Clinical escalation form
+│   ├── billing/
+│   │   └── BillingTab.jsx         # Invoice view, line items, payments, discount,
+│   │                              # finalize/cancel. AddLineForm has 280ms debounced
+│   │                              # catalog typeahead (30s cache, onMouseDown to
+│   │                              # prevent blur race on dropdown selection).
 │   ├── stats/                     # Patient detail tab components
 │   │   ├── VitalsTab.jsx          # Vital signs entry + history table (14K)
 │   │   ├── MedsTab.jsx           # Prescription + MAR — largest component (33K)
@@ -460,7 +530,9 @@ src/
 
 ### 4.3 State Management
 
-**TanStack Query v5** manages all server state. Query keys in `queryKeys.ts`:
+**TanStack Query v5** manages all server state (`staleTime: 30s`, `refetchOnWindowFocus: false`).
+
+Centralized keys in `utils/queryKeys.ts` (type-safe factories):
 
 | Key Pattern | Data |
 |-------------|------|
@@ -469,13 +541,19 @@ src/
 | `['patient', id, 'tasks']` | Patient's tasks |
 | `['tasks', 'my', {role, limit}]` | Current user's assigned tasks |
 | `['escalations']` | Active escalations |
-| `['statistics', type, period, filters]` | Analytics data (6 sub-types) |
+| `['statistics', 'summary'\|'diseases'\|'demographics'\|'medications'\|'admissions'\|'outcomes', period, filters]` | Analytics (6 named sub-types) |
 | `['clinical', patientId, recordType]` | Clinical records (8 sub-types) |
-| `['pharmacy', 'inventory']` | EDL stock (in PharmacyView) |
+
+Inline keys (pharmacy and billing components define their own):
+
+| Key Pattern | Data |
+|-------------|------|
+| `['billing', 'invoices', patientId]` | Patient invoices |
+| `['billing', 'invoice', invoiceId]` | Invoice detail with lines + payments |
+| `['billing', 'catalog-search', q]` | Service catalog typeahead (enabled ≥2 chars) |
+| `['pharmacy', 'inventory']` | EDL stock |
 | `['pharmacy', 'history']` | Transaction audit logs |
 | `['pharmacy', 'orders']` | Purchase orders |
-
-**Config**: `staleTime: 30s`, `refetchOnWindowFocus: false`
 
 ### 4.4 Auth Flow (Frontend)
 
@@ -513,19 +591,19 @@ AuthContext.jsx
 
 ### 5.1 Core Clinical Tables
 
-| Table | Rows | Purpose |
-|-------|------|---------|
+| Table | Purpose |
+|-------|---------|
 | `Users` | id, name, role, tenantId, passwordHash, email, employeeCode, tokenVersion | App users |
 | `Tenants` | id, name, code | Hospital/organization |
-| `Patients` | 33 columns | Patient demographics, clinical state, DPDPA fields, insurance |
+| `Patients` | 34 columns — demographics (name, MRN, DOB, gender, blood group, contact, UHID), clinical state (diagnosis, careIntensity, codeStatus), DPDPA fields (notice, guardian, nominee, retention), insurance (provider, policy, TPA) |
 | `DailyStats` | id, patientId, tenantId, type, data(JSON), recordedBy, timestamp | Vitals, symptoms, diet, sleep, history |
 | `Medications` | id, patientId, name, dosage, route, frequency, scheduledTimes, prn, status | Active prescriptions |
 | `MedicationAdministrations` | id, medicationId, patientId, status, notes, administeredBy, doseActuallyGiven | MAR records |
 | `Escalations` | id, patientId, reason, escalatedBy, status | Clinical escalations |
 | `Tasks` | id, patientId, type, dueAt, status, assignee, completedBy | Clinical tasks |
 | `HandoverNotes` | id, patientId, shift, note, tags, createdBy | Shift handover |
-| `DischargeSummaries` | 17 columns | Discharge data: diagnosis, vitals, prescriptions, follow-up |
-| `HospitalArchives` | id, patientId, snapshotJson | Full patient snapshot at discharge |
+| `DischargeSummaries` | 17 columns — discharge data: diagnosis, vitals, prescriptions, follow-up |
+| `HospitalArchives` | id, patientId, snapshotJson — full patient snapshot at discharge |
 
 ### 5.2 Clinical Record Tables (Migration 016)
 
@@ -534,8 +612,8 @@ AuthContext.jsx
 | `MedicalHistory` | Comorbidities, surgical/family/social history (1 per patient) |
 | `StructuredAllergies` | Drug/food/environmental allergies with severity (soft-delete) |
 | `ClinicalPresentation` | HPI + physical exam findings (1 per patient) |
-| `LabInvestigations` | Lab results per date with day labels (soft-delete) |
-| `ImagingReports` | Multi-modality: ECG/XRay/USG/CT/MRI/PET/Echo/Spirometry |
+| `LabInvestigations` | Lab results per date with day labels (soft-delete). Added: `source`, `externalMsgId`, `isMachineGenerated` |
+| `ImagingReports` | Multi-modality: ECG/XRay/USG/CT/MRI/PET/Echo/Spirometry (soft-delete). Added: `source`, `externalMsgId`, `isMachineGenerated` |
 | `ClinicalProcedures` | Procedures log with outcomes |
 | `ClinicalTeam` | Treating team with registration numbers + clinical remarks |
 | `ToxicologyScreens` | BAC, drug screen, poison screen, heavy metals |
@@ -559,7 +637,7 @@ AuthContext.jsx
 | `RefreshTokens` | Long-lived refresh tokens with IP/UA tracking |
 | `PasswordResetTokens` | One-time-use reset tokens with HMAC hash |
 | `AuditLogs` | Every authenticated request: user, action, resource, IP, status, patientId |
-| `ClinicalChangeLog` | Domain-level entity changes (patient updates, med actions) |
+| `ClinicalChangeLog` | Domain-level entity changes. HL7 ingests write here with `userId='HL7_SERVICE'`, `userRole='system'` |
 | `IdempotencyKeys` | Deduplication for critical mutations |
 | `PatientReports` | Report metadata + HMAC-SHA256 integrity hash |
 
@@ -581,6 +659,34 @@ The schema defines **40+ indexes** for performance:
 - Partial unique indexes for barcodes (`WHERE barcode IS NOT NULL`)
 - Patient-scoped indexes on all clinical tables
 - Timestamp-descending indexes for audit log queries
+
+### 5.7 Billing Tables (Migration 023–025)
+
+| Table | Purpose |
+|-------|---------|
+| `ServiceCatalog` | Chargeable services: code, name, category, unitPrice. Categories: consultation, ward, procedure, lab, imaging, misc |
+| `ServiceLab` | Lab service detail: specimenType, container, methodology, unitsOfMeasure, normalLow/High, turnaroundHours |
+| `ServiceImaging` | Imaging detail: modality, bodyRegion, contrast, durationMinutes, radiationDoseMsv |
+| `ServiceProcedure` | Procedure detail: anaesthesiaType, otRequired, durationMinutes, surgeonGrade, specialty |
+| `ServiceConsumable` | Consumable/misc detail: sku, size, sterile, singleUse, unit |
+| `WardRates` | Daily rate per careIntensity level (1–4) |
+| `ConsultationRate` | Per-tenant consultation fee |
+| `Invoices` | Invoice header: status (open/finalized/paid/cancelled), subtotal, discountTotal, taxTotal, grandTotal, paidTotal, balanceDue |
+| `InvoiceLines` | Line items: source (manual/pharmacy/ward/consultation/lab/imaging/procedure), sourceRef, quantity, unitPrice, lineTotal |
+| `Payments` | Payments: method (cash/card/upi/razorpay/bank_transfer/other), amount, reference, status (recorded/captured/refunded/failed) |
+
+**Money invariants:**
+- `subtotal = SUM(lineTotal)`
+- `grandTotal = subtotal − discountTotal + taxTotal`
+- `balanceDue = grandTotal − paidTotal`
+- Idempotency: `UNIQUE(tenantId, source, sourceRef) WHERE sourceRef IS NOT NULL`
+
+### 5.8 HL7 Integration Tables (Migration 026)
+
+| Table | Purpose |
+|-------|---------|
+| `Hl7InboundMessages` | All received HL7 messages. Columns: messageId (MSH-10), messageType, sendingApp, sendingFacility, rawMessage, patientId, labRecordId, status (processed/orphaned/duplicate). Unique index on `(tenantId, messageId)` for idempotency. |
+| `Hl7OrphanedMessages` | Messages where MRN could not be resolved. Columns: inboundId (FK), rawMrn, rawMessage, linkedPatientId, linkedBy, linkedAt. Admin links via API when patient is identified. |
 
 ---
 
@@ -605,37 +711,38 @@ The schema defines **40+ indexes** for performance:
 
 | Method | Endpoint | Permission | Purpose |
 |--------|----------|------------|---------|
-| GET | `/` | READ_PATIENT | List active patients (limit 500) |
+| GET | `/` | READ_PATIENT | List active patients |
 | POST | `/` | WRITE_PATIENT | Create patient |
 | GET | `/archives` | READ_PATIENT | List discharged patients |
 | GET | `/archives/:archiveId` | READ_PATIENT | Full discharge snapshot |
-| GET | `/:id` | READ_PATIENT + tenant | Get patient by ID |
+| GET | `/:id` | READ_PATIENT + tenant | Get patient |
 | PUT | `/:id` | WRITE_PATIENT + tenant | Update patient |
-| POST | `/:id/discharge` | DISCHARGE_PATIENT + tenant | Discharge with summary + archive |
-| GET | `/:id/discharge-summary` | READ_PATIENT + tenant | Get discharge summary |
+| POST | `/:id/discharge` | DISCHARGE_PATIENT + tenant | Discharge |
+| GET | `/:id/discharge-summary` | READ_PATIENT + tenant | Discharge summary |
 
-### 6.3 Clinical Records (nested under `/api/patients`)
+### 6.3 Clinical Records (`/api/patients/:id/...`)
 
-| Endpoint Pattern | Purpose |
-|-----------------|---------|
-| `/:patientId/medications` | Prescriptions CRUD |
-| `/:patientId/medications/:medId/administer` | Record medication administration |
-| `/:patientId/medications/:medId/administrations` | MAR history |
-| `/:patientId/history` | Observation history |
-| `/:patientId/stats` | Record vitals/symptoms/diet/sleep |
-| `/:patientId/escalations` | Escalation CRUD |
-| `/:patientId/handover-notes` | Handover notes CRUD |
-| `/:patientId/medical-history` | Medical history upsert/get |
-| `/:patientId/allergies` | Structured allergies CRUD |
-| `/:patientId/clinical-presentation` | HPI + physical exam |
-| `/:patientId/lab-investigations` | Lab results CRUD |
-| `/:patientId/imaging-reports` | Imaging reports CRUD |
-| `/:patientId/procedures` | Procedures log CRUD |
-| `/:patientId/clinical-team` | Clinical team CRUD |
-| `/:patientId/toxicology` | Toxicology screen upsert/get |
+| Endpoint | Purpose |
+|----------|---------|
+| `/medications` | Prescriptions CRUD |
+| `/medications/:medId/administer` | Record administration |
+| `/medications/:medId/administrations` | MAR history |
+| `/history`, `/stats` | Observation history + vitals recording |
+| `/escalations` | Escalation CRUD |
+| `/handover-notes` | Handover notes CRUD |
+| `/medical-history` | Medical history |
+| `/allergies` | Structured allergies |
+| `/clinical-presentation` | HPI + physical exam |
+| `/labs` | Lab results (GET/POST/PUT/DELETE with soft-delete) |
+| `/imaging-reports` | Imaging reports |
+| `/procedures` | Procedures log |
+| `/clinical-team` | Team members |
+| `/toxicology` | Toxicology screens |
 
 ### 6.4 Pharmacy (`/api/pharmacy`)
 
+| Method | Endpoint | Permission | Purpose |
+|--------|----------|------------|---------|
 | Method | Endpoint | Permission | Purpose |
 |--------|----------|------------|---------|
 | GET | `/inventory` | READ_PHARMACY | Full EDL stock list |
@@ -644,10 +751,10 @@ The schema defines **40+ indexes** for performance:
 | DELETE | `/inventory/:id` | MANAGE_PHARMACY + tenant | Remove medication |
 | GET | `/inventory/:stockId/batches` | READ_PHARMACY + tenant | Batch list for medication |
 | POST | `/inventory/:stockId/batches` | MANAGE_PHARMACY + tenant | Add batch/lot |
+| POST | `/inventory/:stockId/sync` | MANAGE_PHARMACY + tenant | Recalculate stock from batches |
 | POST | `/batches/:batchId/recall` | MANAGE_PHARMACY + tenant | Recall batch |
 | GET | `/recall-trace/:batchId` | MANAGE_PHARMACY + tenant | Trace patients affected by batch |
 | GET | `/batches/search?lotNumber=X` | READ_PHARMACY | Search batches by lot number |
-| POST | `/inventory/:stockId/sync` | MANAGE_PHARMACY + tenant | Recalculate stock from batches |
 | GET | `/history` | READ_PHARMACY | Transaction audit trail |
 | GET | `/analytics/consumption` | READ_PHARMACY | Consumption burn rates |
 | GET | `/analytics/financial` | MANAGE_PHARMACY or VIEW_AUDIT | Financial valuation |
@@ -666,24 +773,49 @@ The schema defines **40+ indexes** for performance:
 | Method | Endpoint | Permission | Purpose |
 |--------|----------|------------|---------|
 | GET | `/audit-logs` | VIEW_AUDIT | Paginated system audit logs |
-| GET | `/audit-logs/export.csv` | VIEW_AUDIT | CSV export of audit logs |
-| GET | `/audit-logs/patient/:patientId` | VIEW_AUDIT | Who accessed this patient's data |
-| POST | `/audit/purge` | PURGE_AUDIT | Delete old audit logs (with dryRun) |
+| GET | `/audit-logs/export.csv` | VIEW_AUDIT | CSV export |
+| GET | `/audit-logs/patient/:id` | VIEW_AUDIT | Per-patient access log |
+| POST | `/audit/purge` | PURGE_AUDIT | Delete old logs |
 | GET | `/clinical-changes` | VIEW_AUDIT | Domain-level change log |
-| GET | `/dpdpa/breach-report` | VIEW_AUDIT | DPDPA §8 breach notification report |
-| POST/GET/PUT | `/dpdpa/correction-requests` | VIEW_AUDIT | DPDPA §12 data correction requests |
-| POST/GET/PUT | `/dpdpa/grievances` | VIEW_AUDIT | DPDPA §13 grievance management |
-| POST/GET | `/dpdpa/data-sharing` | VIEW_AUDIT | DPDPA §11 data sharing log |
-| GET | `/dpdpa/retention-review` | VIEW_AUDIT | DPDPA Rule 8 retention review |
+| GET | `/dpdpa/breach-report` | VIEW_AUDIT | DPDPA §8 breach report |
+| POST/GET/PUT | `/dpdpa/correction-requests` | VIEW_AUDIT | §12 correction requests |
+| POST/GET/PUT | `/dpdpa/grievances` | VIEW_AUDIT | §13 grievances |
+| POST/GET | `/dpdpa/data-sharing` | VIEW_AUDIT | §11 data sharing log |
+| GET | `/dpdpa/retention-review` | VIEW_AUDIT | Rule 8 retention review |
+
+### 6.6 Billing (`/api/billing`)
+
+| Method | Endpoint | Roles | Purpose |
+|--------|----------|-------|---------|
+| GET | `/services` | admin, doctor, nurse | List service catalog (filter by `?category=`) |
+| GET | `/services/search?q=` | admin, doctor, nurse | Ranked typeahead (≥2 chars). Returns code-prefix matches first, then name-prefix, then contains. |
+| POST | `/services` | admin | Create service |
+| PUT | `/services/:id` | admin | Update service |
+| GET | `/patients/:patientId/invoices` | admin, doctor, nurse | List invoices (triggers auto-accrual) |
+| POST | `/patients/:patientId/invoices` | admin, doctor | Create invoice |
+| GET | `/invoices/:id` | admin, doctor, nurse | Invoice detail with lines + payments |
+| POST | `/invoices/:id/lines` | admin, doctor | Add line item |
+| DELETE | `/invoices/:id/lines/:lineId` | admin, doctor | Remove line item |
+| PUT | `/invoices/:id/discount` | admin, doctor | Set discount amount |
+| POST | `/invoices/:id/finalize` | admin, doctor | Lock invoice (no further line edits) |
+| POST | `/invoices/:id/cancel` | admin, doctor | Cancel invoice |
+| POST | `/invoices/:id/payments` | admin, doctor | Record payment |
+| POST | `/invoices/:id/payments/:paymentId/refund` | admin, doctor | Refund payment |
+
+### 6.7 HL7 Status (`/api/hl7`) — admin only
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/status` | MLLP server status, connected devices, silence timers |
+| GET | `/messages?limit=50` | Recent inbound HL7 messages (last 200) |
+| GET | `/orphans` | Messages waiting for patient linkage |
+| POST | `/orphans/:id/link` | Link orphan to a patient `{ patientId }` |
 
 ---
 
-*Continued in HANDOVER_PART3.md*
-# General Ward — Handover Document (Part 3)
-
 ## 7. Security & Cybersecurity
 
-### 7.1 Security Architecture Overview
+### 7.1 Security Architecture
 
 ```
 ┌──────────────────── DEFENSE IN DEPTH ────────────────────────┐
@@ -708,7 +840,7 @@ The schema defines **40+ indexes** for performance:
 │  └── Rate limiting on all auth endpoints                     │
 │                                                               │
 │  Layer 4: AUTHORIZATION                                       │
-│  ├── RBAC: 4 roles × 15 permissions                         │
+│  ├── RBAC: 4 roles × 16 permissions                         │
 │  ├── Tenant isolation on every data query                    │
 │  └── Resource-level guards (tenant.js middleware)            │
 │                                                               │
@@ -752,7 +884,7 @@ Two-layer check in `passwordSecurity.js`:
 1. **Local Set** (~300 common passwords): instant, works offline
 2. **HIBP API** (k-anonymity): Only first 5 hex chars of SHA-1 sent. Covers billions of breached passwords. 4-second timeout, graceful degradation if network unavailable.
 
-### 7.4 Rate Limiting Summary
+### 7.4 Rate Limiting
 
 | Endpoint | Window | Max Requests |
 |----------|--------|-------------|
@@ -762,6 +894,30 @@ Two-layer check in `passwordSecurity.js`:
 | Change Password | 1 min | 5 per IP |
 | Forgot Password | 1 hour | 3 per IP |
 | All mutations | 1 min | 10 per user+IP+path |
+
+### 7.5 RBAC Permission Matrix
+
+| Permission | Doctor | Nurse | Pharmacist | Admin |
+|-----------|--------|-------|------------|-------|
+| READ_PATIENT | ✅ | ✅ | ❌ | ✅ |
+| WRITE_PATIENT | ✅ | ❌ | ❌ | ❌ |
+| DISCHARGE_PATIENT | ✅ | ❌ | ❌ | ❌ |
+| WRITE_VITALS | ✅ | ✅ | ❌ | ❌ |
+| WRITE_MEDICATIONS | ✅ | ❌ | ❌ | ❌ |
+| ADMINISTER_MEDS | ✅ | ✅ | ❌ | ❌ |
+| WRITE_NOTES | ✅ | ✅ | ❌ | ❌ |
+| WRITE_TASKS | ✅ | ✅ | ❌ | ❌ |
+| READ_TASKS | ✅ | ✅ | ❌ | ✅ |
+| READ_PHARMACY | ✅ | ✅ | ✅ | ❌ |
+| MANAGE_PHARMACY | ❌ | ❌ | ✅ | ❌ |
+| WRITE_CLINICAL_RECORDS | ✅ | ✅ | ❌ | ❌ |
+| VIEW_STATISTICS | ✅ | ✅ | ❌ | ✅ |
+| VIEW_AUDIT | ❌ | ❌ | ❌ | ✅ |
+| PURGE_AUDIT | ❌ | ❌ | ❌ | ✅ |
+| MANAGE_USERS | ❌ | ❌ | ❌ | ✅ |
+
+Billing uses `protect()` with inline role checks: readers = admin+doctor+nurse, writers = admin+doctor, service catalog admin = admin only.  
+HL7 status endpoints: admin only.
 
 ---
 
@@ -782,10 +938,10 @@ Two-layer check in `passwordSecurity.js`:
 │  REFRESH TOKEN (Opaque UUID, 30 days)               │
 │  ├── Cookie: ward_refresh (httpOnly, path=/api/auth)│
 │  ├── Stored in RefreshTokens table with IP + UA     │
-│  ├── Rotated on every use (old deleted, new created) │
+│  ├── Rotated on every use (old deleted, new created)│
 │  └── Scoped path means only sent to /api/auth/*     │
 │                                                     │
-│  CSRF TOKEN                                          │
+│  CSRF TOKEN                                         │
 │  ├── 32-byte random hex embedded in JWT `csrf` claim│
 │  ├── Returned to client in login/refresh response   │
 │  ├── Client stores in sessionStorage                │
@@ -825,7 +981,7 @@ Client                          Server
 ```
 Client                          Server
   │                                │
-  ├─ API call returns 401 ─────────►│ (access token expired)
+  ├─ API call returns 401 ────────►│ (access token expired)
   │                                │
   ├─ POST /api/auth/refresh ───────►│ (ward_refresh cookie auto-sent)
   │                                │
@@ -846,11 +1002,11 @@ Client                          Server
 | Action | Mechanism |
 |--------|-----------|
 | Logout (single) | Delete refresh token + increment `tokenVersion` |
-| Logout All | Delete ALL refresh tokens for user + increment `tokenVersion` |
-| Change Password | New password hash + delete ALL refresh tokens + increment `tokenVersion` |
-| Password Reset | New password hash + delete ALL refresh tokens + increment `tokenVersion` |
+| Logout All | Delete ALL refresh tokens + increment `tokenVersion` |
+| Change Password | New hash + delete all tokens + increment `tokenVersion` |
+| Password Reset | New hash + delete all tokens + increment `tokenVersion` |
 
-`tokenVersion` in the JWT (`tv` claim) is checked against DB on every request. If mismatched → 401.
+`tokenVersion` is embedded in every JWT (`tv` claim) and checked against DB on every request. Mismatch → immediate 401.
 
 ---
 
@@ -911,17 +1067,20 @@ bash start-test-server.sh --fresh   # Wipes and reloads 30 patients
 
 | Variable | Required | Default | Purpose |
 |----------|----------|---------|---------|
-| `JWT_SECRET` | **Always** | (crashes if missing) | JWT signing key |
+| `JWT_SECRET` | **Always** | crashes if missing | JWT signing key |
 | `CORS_ORIGIN` | **Production** | auto in dev | Comma-separated allowed origins |
 | `NODE_ENV` | No | development | development/test/staging/production |
 | `PORT` | No | 3001 | API port |
 | `DB_DIALECT` | No | sqlite | `sqlite` or `postgres` |
-| `PG_HOST/PORT/DATABASE/USER/PASSWORD` | Postgres | — | PostgreSQL connection |
+| `PG_HOST/PORT/DATABASE/USER/PASSWORD` | Postgres only | — | PostgreSQL connection |
 | `DATABASE_URL` | No | — | Full Postgres connection string |
 | `PG_POOL_MAX` | No | 20 | Connection pool size |
 | `TRUST_PROXY` | No | 0 | Set 1 behind reverse proxy |
-| `STARTUP_MODE` | No | full | `full` (migrations) or `perf` (skip) |
-| `AUDIT_RETENTION_DAYS` | No | — | Default audit purge retention |
+| `STARTUP_MODE` | No | full | `full` (with migrations) or `perf` (skip) |
+| `AUDIT_RETENTION_DAYS` | No | — | Default audit purge retention period |
+| `HL7_ENABLED` | No | false | Set `true` to start the MLLP TCP listener |
+| `HL7_PORT` | No | 2575 | TCP port for MLLP. Standard is 2575; Windows Server requires `netsh advfirewall` to allow inbound TCP on this port (command logged at startup). |
+| `HL7_TENANT_ID` | If HL7_ENABLED | — | Which tenant receives HL7 messages |
 
 **Frontend (`ward-frontend/.env`)**:
 
@@ -956,30 +1115,7 @@ docker compose up -d         # Start all services
 
 **`.github/workflows/postgres-ci.yml`**: Postgres 16 service container smoke test
 
-### 10.6 RBAC Permission Matrix
-
-| Permission | Doctor | Nurse | Pharmacist | Admin |
-|-----------|--------|-------|------------|-------|
-| READ_PATIENT | ✅ | ✅ | ❌ | ✅ |
-| WRITE_PATIENT | ✅ | ❌ | ❌ | ❌ |
-| DISCHARGE_PATIENT | ✅ | ❌ | ❌ | ❌ |
-| WRITE_VITALS | ✅ | ✅ | ❌ | ❌ |
-| WRITE_MEDICATIONS | ✅ | ❌ | ❌ | ❌ |
-| ADMINISTER_MEDS | ✅ | ✅ | ❌ | ❌ |
-| WRITE_NOTES | ✅ | ✅ | ❌ | ❌ |
-| WRITE_TASKS | ✅ | ✅ | ❌ | ❌ |
-| READ_TASKS | ✅ | ✅ | ❌ | ✅ |
-| READ_PHARMACY | ✅ | ✅ | ✅ | ❌ |
-| MANAGE_PHARMACY | ❌ | ❌ | ✅ | ❌ |
-| WRITE_CLINICAL_RECORDS | ✅ | ✅ | ❌ | ❌ |
-| VIEW_STATISTICS | ✅ | ✅ | ❌ | ✅ |
-| VIEW_AUDIT | ❌ | ❌ | ❌ | ✅ |
-| PURGE_AUDIT | ❌ | ❌ | ❌ | ✅ |
-| MANAGE_USERS | ❌ | ❌ | ❌ | ✅ |
-
-### 10.7 NEWS2 Clinical Scoring
-
-The ScoringService implements the **National Early Warning Score 2** protocol:
+### 10.6 NEWS2 Scoring
 
 | Parameter | Score 3 | Score 2 | Score 1 | Score 0 | Score 1 | Score 2 | Score 3 |
 |-----------|---------|---------|---------|---------|---------|---------|---------|
@@ -987,11 +1123,11 @@ The ScoringService implements the **National Early Warning Score 2** protocol:
 | SpO₂ | ≤91 | 92-93 | 94-95 | ≥96 | — | — | — |
 | Systolic BP | ≤90 | 91-100 | 101-110 | 111-219 | — | — | ≥220 |
 | Heart Rate | ≤40 | — | 41-50 | 51-90 | 91-110 | 111-130 | ≥131 |
-| Temperature | ≤35.0 | — | 35.1-36.0 | 36.1-38.0 | 38.1-39.0 | — | ≥39.1 |
+| Temperature | ≤35.0 | — | 35.1-36.0 | 36.1-38.0 | 38.1-39.0 | ≥39.1 | — |
 | Consciousness | — | — | — | Alert | — | — | V/P/U |
-| On Oxygen | — | +2 if yes | — | Air | — | — | — |
+| On Oxygen | — | +2 if on O₂ | — | Air | — | — | — |
 
-**Risk Levels**: Score ≥7 → HIGH/critical, ≥5 → MEDIUM/warning, ≥1 → LOW/stable
+Risk: ≥7 → HIGH/critical, ≥5 → MEDIUM/warning, ≥1 → LOW/stable
 
 ---
 
@@ -1000,47 +1136,106 @@ The ScoringService implements the **National Early Warning Score 2** protocol:
 ### 11.1 Patient Discharge Pipeline
 
 ```
-1. Doctor clicks "Discharge" → DischargeModal form
-2. POST /api/patients/:id/discharge
-3. PatientRepository.discharge() in transaction:
+1. Doctor → DischargeModal → POST /api/patients/:id/discharge
+2. PatientRepository.discharge() in transaction:
    a. UPDATE Patients SET status='discharged'
-   b. INSERT DischargeSummaries (17 columns)
-   c. collectFullPatientSnapshot() — parallel queries across 15 tables
-   d. INSERT HospitalArchives (full JSON snapshot)
+   b. INSERT DischargeSummaries
+   c. collectFullPatientSnapshot() — 15 tables in parallel
+   d. INSERT HospitalArchives (full JSON)
    e. SET retention_due_at = now + 5 years
-4. Clinical audit log recorded
-5. Frontend invalidates patient queries → patient moves to Archives
+3. Clinical audit log
+4. Frontend invalidates queries → patient moves to Archives
 ```
 
 ### 11.2 Medication Administration → Pharmacy
 
 ```
-1. Nurse clicks "Give Dose" on MedsTab
-2. POST /api/patients/:id/medications/:medId/administer
-3. MedicationService.administerMedication():
-   a. Find medication record
-   b. If status='given':
-      - Find matching EDL stock by name
-      - FEFO: BatchService picks oldest-expiry batch
-      - Deduct 1 unit from batch → update stock totals
-      - Create PharmacyTransaction (type='dispense')
-      - If stock error → log but DON'T block administration
-   c. Create MedicationAdministrations record
-   d. Clinical audit log
+POST /api/patients/:id/medications/:medId/administer
+→ MedicationService.administerMedication()
+   If status='given':
+     → Find EDL stock by name
+     → FEFO: BatchService picks oldest-expiry batch
+     → Deduct 1 unit, create PharmacyTransaction('dispense')
+     → Stock error? Log it — DO NOT block administration
+   → Create MedicationAdministrations record
+   → Clinical audit log
 ```
 
 ### 11.3 Hospital Self-Registration
 
 ```
-1. Signup form: hospital name, code, admin name, email, password
-2. POST /api/auth/signup
-3. AuthService.registerHospital():
-   a. Validate all fields
-   b. checkPasswordSecurity() — local list + HIBP
-   c. Create Tenant (code = lowercase hospital code)
-   d. Create User (role='admin', tenantId=new tenant)
-   e. Generate token pair → auto-login
-4. New tenant is fully isolated — no data visible from other tenants
+POST /api/auth/signup
+→ AuthService.registerHospital()
+   → Validate fields + checkPasswordSecurity (local + HIBP)
+   → Create Tenant + admin User
+   → Generate token pair → auto-login
+   → New tenant fully isolated from all others
+```
+
+### 11.4 HL7 Lab Result Ingest (MLLP)
+
+```
+LIMS Analyzer  →  TCP :2575 (MLLP)
+                   │
+                   ├─ MLLP unwrap (VT body FS CR)
+                   ├─ UTF-8 decode (falls back to latin-1)
+                   ├─ Parse HL7 segments (MSH/PID/OBR/OBX)
+                   │
+                   ├─ AA sent synchronously ◄── fire-and-forget
+                   │
+                   └─ processOruR01() [async]
+                        │
+                        ├─ Idempotency: check Hl7InboundMessages(tenantId, controlId)
+                        │   Duplicate? → skip silently (AA already sent)
+                        │
+                        ├─ fuzzy MRN match:
+                        │   normalizeId() strips spaces/dashes/leading zeros
+                        │   LOWER(REPLACE(REPLACE(mrn, '-', ''), ' ', '')) = ?
+                        │
+                        ├─ Patient not found? → Hl7OrphanedMessages (admin links later)
+                        │
+                        └─ withTransaction():
+                             → labRepo.createFromHl7() → LabInvestigations row
+                               (source='hl7', isMachineGenerated=1, externalMsgId=controlId)
+                             → INSERT Hl7InboundMessages (status='processed')
+                             → INSERT ClinicalChangeLog
+                               (userId='HL7_SERVICE', action='HL7_INGEST')
+
+Date storage: parseHl7Date() parses full DTM including optional +HHMM/-HHMM
+  offset, converts to UTC, stores as DD-MM-YYYY.
+  No offset supplied → treated as UTC (configure analyzers to send UTC or include offset).
+```
+
+**Windows Server note**: Port 2575 requires a firewall rule. The server logs the exact command on startup when `HL7_ENABLED=true` and `process.platform === 'win32'`:
+```
+netsh advfirewall firewall add rule name="HL7 MLLP" dir=in action=allow protocol=TCP localport=2575
+```
+
+**Running HL7 tests**:
+```bash
+HL7_ENABLED=true HL7_PORT=2575 HL7_TENANT_ID=tenant-default \
+  node ward-backend/server.js &
+HL7_TENANT_ID=tenant-default node tests/hl7-mock-sender.js
+```
+Tests: (1) happy path with real patient MRN, (2) idempotency trap (duplicate message), (3) fuzzy orphan (malformed MRN).
+
+### 11.5 Billing Auto-Accrual
+
+```
+GET /api/billing/patients/:patientId/invoices
+  → safeAccrueForPatient(patientId, tenantId)
+     For the patient's open invoice:
+     1. Ward day charges: days since admission × WardRates[careIntensity]
+        sourceRef = 'ward:{date}' — idempotent per calendar day
+     2. Consultation fees: ConsultationRate × consultation count
+        sourceRef = 'consult:{count}' — idempotent
+     3. Pharmacy dispenses: each PharmacyTransaction (dispense, patient-linked)
+        sourceRef = 'pharmacy:{transactionId}' — idempotent
+     4. Lab investigations: each LabInvestigation row
+        sourceRef = 'lab:{labId}' — idempotent
+     5. Imaging reports: each ImagingReport row
+        sourceRef = 'imaging:{reportId}' — idempotent
+     → Partial unique index on InvoiceLines prevents double-charging
 ```
 
 ---
@@ -1048,16 +1243,21 @@ The ScoringService implements the **National Early Warning Score 2** protocol:
 ## 12. Important Constraints & Gotchas
 
 1. **JWT_SECRET and CORS_ORIGIN required in production** — server crashes at startup if missing
-2. **Stop the API before running tests** — SQLite file lock prevents concurrent access
-3. **Never commit** `ward.db*`, `cookies.txt`, or `*_cookies.txt` files
-4. **All repo queries must use db-adapter.js** — never raw db.js calls
-5. **Every DB query must scope by tenantId** — cross-tenant access returns 403
-6. **node_modules are committed** in both packages — run `npm install` only for new deps
+2. **Stop the API before running Jest tests** — SQLite file lock prevents concurrent access
+3. **Never commit** `ward.db*`, `cookies.txt`, or `*_cookies.txt`
+4. **All DB access via `db-adapter.js`** — never raw `db.js` calls directly
+5. **Every query must scope by `tenantId`** — cross-tenant returns 403
+6. **node_modules may be committed** in both packages — run `npm install` only for new deps
 7. **Frontend requires Node ≥ 24.0.0**
 8. **TRUST_PROXY must be 0** unless behind a controlled reverse proxy
 9. **Clinical priority**: Medication administration is never blocked by inventory errors
-10. **Token version**: Any password change or logout-all immediately invalidates all existing tokens
+10. **tokenVersion**: Any password change or logout-all immediately invalidates all existing tokens
+11. **HL7 is off by default** — set `HL7_ENABLED=true` to start the MLLP listener; `HL7_TENANT_ID` is mandatory alongside it
+12. **HL7 dates stored as DD-MM-YYYY** — consistent with the rest of clinical date fields in the schema
+13. **Billing accrual is idempotent** — calling it multiple times (on every invoice fetch) is safe; the partial unique index on `InvoiceLines.sourceRef` is the hard guard
+14. **PatientCard hover**: uses CSS animation (`card-halo` / `card-halo-urgent`) for the halo effect. The hover state adds only `boxShadow` and `backgroundColor` as inline styles — never `animation: none`, which would cancel the `slideUpFade` animation and make the card invisible
+15. **Billing service search**: minimum 2 characters required; results are ranked by code-prefix (0) → name-prefix (1) → contains (2) and capped at 20
 
 ---
 
-*End of Handover Document*
+*End of Handover Document — v2.0.0*
