@@ -3,6 +3,7 @@ const patientRepository = require('../repositories/PatientRepository');
 const stockRepo = require('../repositories/pharmacy/StockRepository');
 const txService = require('../services/pharmacy/TransactionService');
 const clinicalAuditService = require('../services/ClinicalAuditService');
+const { safeRecordDispenseCharge } = require('../services/billing/PharmacyBillingHook');
 const crypto = require('crypto');
 
 class MedicationService {
@@ -91,19 +92,30 @@ class MedicationService {
         const inventoryItem = await stockRepo.findByName(med.name, tenantId);
         if (inventoryItem) {
           const stockResult = await txService.adjustStock(
-            inventoryItem.id, 
-            tenantId, 
+            inventoryItem.id,
+            tenantId,
             -1, // Deduct 1 itemUnit (e.g. 1 tablet)
-            'dispense', 
-            user, 
-            { 
-              patientId, 
-              notes: `Dispensed for administration to ${patientId}. Medication record: ${medId}` 
+            'dispense',
+            user,
+            {
+              patientId,
+              notes: `Dispensed for administration to ${patientId}. Medication record: ${medId}`
             }
           );
           if (stockResult.batchId) {
             console.info(`[MedicationService] FEFO dispensed from batch ${stockResult.batchId} for med ${medId}`);
           }
+
+          // Auto-bill the dispense. Best-effort: never blocks clinical action.
+          await safeRecordDispenseCharge({
+            patientId,
+            tenantId,
+            sourceRef: id, // administration id — one charge per administration
+            description: `${med.name} (${med.dosage})`,
+            quantity: 1,
+            unitPrice: Number(inventoryItem.costPerUnit) || 0,
+            createdBy: user.id || 'system',
+          });
         }
       } catch (err) {
         console.error('[MedicationService] Stock deduction failed:', err.message);
