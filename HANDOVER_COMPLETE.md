@@ -127,7 +127,8 @@ General-Ward/
 | `db.js` | SQLite driver initialization. WAL mode, foreign keys, busy timeout. Global sequential transaction queue to prevent nested transactions. |
 | `db-postgres.js` | PostgreSQL `pg.Pool` setup. Connection pool (max 20), `withTransaction` using dedicated client. File-based migration runner via `SchemaMigrations` table. |
 | `db-adapter.js` | **Critical abstraction**. Translates `?` → `$n` for Postgres. Normalizes row shapes. Exposes `query()`, `queryOne()`, `execute()`, `withTransaction()`. All repo code MUST use this, never raw db.js. |
-| `schema.sql` | **Source of truth** for SQLite schema. 563 lines. Contains all CREATE TABLE, ALTER TABLE migrations, and indexes. MigratorService executes this at startup. |
+| `schema.sql` | **Source of truth** for SQLite base schema. Contains all CREATE TABLE definitions, indexes, and initial ALTER TABLE migrations. MigratorService executes this at startup. |
+| `db/schema.js` | JS-based SQLite migration runner. Adds columns to existing DBs via `runIgnoreDuplicateColumn()` (safe ALTER TABLE wrapper). Handles all incremental Patients/clinical table additions. |
 | `package.json` | Dependencies: express, bcrypt, jsonwebtoken, pg, sqlite3, helmet, cors, express-rate-limit, dotenv, uuid |
 | `.env` / `.env.example` | Environment configuration (see §10) |
 
@@ -269,7 +270,7 @@ The middleware executes in this order (defined in `server.js`):
 | File | Purpose |
 |------|---------|
 | `auth.js` | `extractToken()` from cookie/header, `attachUserIfPresent()` (soft), `authenticateToken()` (hard 401), `requireRole()` |
-| `rbac.js` | Defines 4 roles × 15 permissions. `authorize(PERMISSION)` and `authorizeAny([PERMS])` middleware factories |
+| `rbac.js` | Defines 4 roles × 16 permissions. `authorize(PERMISSION)` and `authorizeAny([PERMS])` middleware factories |
 | `csrf.js` | Double-submit: JWT carries `csrf` claim, client sends `X-CSRF-Token` header. Allowlist for login/signup/refresh |
 | `tenant.js` | 7 tenant-scope guards: `requireTenantPatient`, `requireTenantTask`, `requireTenantMedication`, `requireTenantMedicationAdministration`, `requireTenantEscalation`, `requireTenantPharmacyStock`, `requireTenantPharmacyBatch` |
 | `protect.js` | Combined auth+RBAC+tenant in single middleware with structured denial logging |
@@ -303,7 +304,12 @@ The middleware executes in this order (defined in `server.js`):
 | `migrate-sqlite-to-postgres.js` | Data migration script |
 | `migratePostgres.js` | PostgreSQL schema migration runner |
 | `cleanup_test_patients.js` | Test data cleanup |
-| `check_*.js` | Diagnostic scripts (schema, users, lockouts) |
+| `check_lockouts.js` / `check_schema.js` / `check_users.js` | Diagnostic scripts (schema, users, lockouts) |
+| `stress_test.js` | Lightweight stress test |
+| `adapter-test.js` | db-adapter dialect compatibility check |
+| `compareSqlitePostgresCounts.js` | Row-count parity check between SQLite and Postgres |
+| `test_gs1.js` | GS1 barcode parser smoke test |
+| `verify_pw.js` | Password security checker REPL |
 
 ### 3.8 Tests
 
@@ -517,7 +523,7 @@ AuthContext.jsx
 |-------|------|---------|
 | `Users` | id, name, role, tenantId, passwordHash, email, employeeCode, tokenVersion | App users |
 | `Tenants` | id, name, code | Hospital/organization |
-| `Patients` | 33 columns | Patient demographics, clinical state, DPDPA fields, insurance |
+| `Patients` | 34 columns | Patient demographics, clinical state, DPDPA fields, insurance |
 | `DailyStats` | id, patientId, tenantId, type, data(JSON), recordedBy, timestamp | Vitals, symptoms, diet, sleep, history |
 | `Medications` | id, patientId, name, dosage, route, frequency, scheduledTimes, prn, status | Active prescriptions |
 | `MedicationAdministrations` | id, medicationId, patientId, status, notes, administeredBy, doseActuallyGiven | MAR records |
@@ -708,7 +714,7 @@ The schema defines **40+ indexes** for performance:
 │  └── Rate limiting on all auth endpoints                     │
 │                                                               │
 │  Layer 4: AUTHORIZATION                                       │
-│  ├── RBAC: 4 roles × 15 permissions                         │
+│  ├── RBAC: 4 roles × 16 permissions                         │
 │  ├── Tenant isolation on every data query                    │
 │  └── Resource-level guards (tenant.js middleware)            │
 │                                                               │
@@ -987,7 +993,7 @@ The ScoringService implements the **National Early Warning Score 2** protocol:
 | SpO₂ | ≤91 | 92-93 | 94-95 | ≥96 | — | — | — |
 | Systolic BP | ≤90 | 91-100 | 101-110 | 111-219 | — | — | ≥220 |
 | Heart Rate | ≤40 | — | 41-50 | 51-90 | 91-110 | 111-130 | ≥131 |
-| Temperature | ≤35.0 | — | 35.1-36.0 | 36.1-38.0 | 38.1-39.0 | — | ≥39.1 |
+| Temperature | ≤35.0 | — | 35.1-36.0 | 36.1-38.0 | 38.1-39.0 | ≥39.1 | — |
 | Consciousness | — | — | — | Alert | — | — | V/P/U |
 | On Oxygen | — | +2 if yes | — | Air | — | — | — |
 
