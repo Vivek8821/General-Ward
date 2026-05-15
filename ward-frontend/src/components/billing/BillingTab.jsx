@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { api } from '../../utils/api';
@@ -280,9 +280,32 @@ function Totals({ label, value, negative, danger, strong }) {
 }
 
 function AddLineForm({ invoiceId, onDone }) {
-  const [description, setDescription] = useState('');
-  const [quantity, setQuantity] = useState('1');
-  const [unitPrice, setUnitPrice] = useState('');
+  const [searchQ, setSearchQ]             = useState('');
+  const [debouncedQ, setDebouncedQ]       = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [description, setDescription]     = useState('');
+  const [quantity, setQuantity]           = useState('1');
+  const [unitPrice, setUnitPrice]         = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(searchQ), 280);
+    return () => clearTimeout(t);
+  }, [searchQ]);
+
+  const { data: suggestionsData } = useQuery({
+    queryKey: ['billing', 'catalog-search', debouncedQ],
+    queryFn: () => api.get(`/billing/services/search?q=${encodeURIComponent(debouncedQ)}`).then((r) => r?.data ?? []),
+    enabled: debouncedQ.length >= 2,
+    staleTime: 30_000,
+  });
+  const suggestions = suggestionsData ?? [];
+
+  function pickService(svc) {
+    setDescription(svc.name);
+    setUnitPrice(String(svc.unitPrice));
+    setSearchQ('');
+    setShowSuggestions(false);
+  }
 
   const addLine = useMutation({
     mutationFn: () => api.post(`/billing/invoices/${invoiceId}/lines`, {
@@ -298,23 +321,63 @@ function AddLineForm({ invoiceId, onDone }) {
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); if (description && Number(unitPrice) >= 0) addLine.mutate(); }}
-      className="mb-3 p-3 border border-border rounded grid grid-cols-1 sm:grid-cols-[1fr_80px_120px_auto] gap-2 items-end"
+      className="mb-3 p-3 border border-border rounded space-y-2"
     >
-      <div>
-        <label htmlFor="line-desc" className="block text-xs uppercase tracking-wider text-text-muted mb-1">Description</label>
-        <input id="line-desc" type="text" value={description} onChange={(e) => setDescription(e.target.value)} required className="w-full px-2 py-1.5 border border-border rounded bg-bg-primary text-sm" />
+      <div className="relative">
+        <label className="block text-xs uppercase tracking-wider text-text-muted mb-1">Search catalog</label>
+        <input
+          type="text"
+          value={searchQ}
+          onChange={(e) => { setSearchQ(e.target.value); setShowSuggestions(true); }}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          onFocus={() => { if (searchQ.length >= 2) setShowSuggestions(true); }}
+          placeholder="e.g. CBC, chest X-ray, appendectomy, gloves…"
+          className="w-full px-2 py-1.5 border border-border rounded bg-bg-primary text-sm"
+        />
+        {showSuggestions && suggestions.length > 0 && (
+          <ul className="absolute z-50 left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-bg-primary border border-border rounded shadow-lg">
+            {suggestions.map((svc) => (
+              <li key={svc.id}>
+                <button
+                  type="button"
+                  onMouseDown={() => pickService(svc)}
+                  className="w-full text-left px-3 py-2 hover:bg-primary/10 text-sm flex items-baseline justify-between gap-3"
+                >
+                  <span>
+                    <span className="font-mono text-[11px] text-text-muted mr-2">{svc.code}</span>
+                    {svc.name}
+                    <span className="ml-2 text-[11px] text-text-muted">[{svc.category}]</span>
+                  </span>
+                  <span className="shrink-0 text-xs font-semibold">₹{Number(svc.unitPrice).toLocaleString('en-IN')}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-      <div>
-        <label htmlFor="line-qty" className="block text-xs uppercase tracking-wider text-text-muted mb-1">Qty</label>
-        <input id="line-qty" type="number" step="0.001" min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} required className="w-full px-2 py-1.5 border border-border rounded bg-bg-primary text-sm" />
+
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_80px_120px_auto] gap-2 items-end">
+        <div>
+          <label htmlFor="line-desc" className="block text-xs uppercase tracking-wider text-text-muted mb-1">Description</label>
+          <input id="line-desc" type="text" value={description} onChange={(e) => setDescription(e.target.value)} required
+            placeholder="Line item description"
+            className="w-full px-2 py-1.5 border border-border rounded bg-bg-primary text-sm" />
+        </div>
+        <div>
+          <label htmlFor="line-qty" className="block text-xs uppercase tracking-wider text-text-muted mb-1">Qty</label>
+          <input id="line-qty" type="number" step="0.001" min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} required
+            className="w-full px-2 py-1.5 border border-border rounded bg-bg-primary text-sm" />
+        </div>
+        <div>
+          <label htmlFor="line-price" className="block text-xs uppercase tracking-wider text-text-muted mb-1">Unit price (₹)</label>
+          <input id="line-price" type="number" step="0.01" min="0" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} required
+            className="w-full px-2 py-1.5 border border-border rounded bg-bg-primary text-sm" />
+        </div>
+        <button type="submit" disabled={addLine.isPending}
+          className="px-3 py-1.5 text-sm font-bold uppercase tracking-wider rounded bg-primary text-white disabled:opacity-50">
+          Add
+        </button>
       </div>
-      <div>
-        <label htmlFor="line-price" className="block text-xs uppercase tracking-wider text-text-muted mb-1">Unit price (₹)</label>
-        <input id="line-price" type="number" step="0.01" min="0" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} required className="w-full px-2 py-1.5 border border-border rounded bg-bg-primary text-sm" />
-      </div>
-      <button type="submit" disabled={addLine.isPending} className="px-3 py-1.5 text-sm font-bold uppercase tracking-wider rounded bg-primary text-white disabled:opacity-50">
-        Add
-      </button>
     </form>
   );
 }

@@ -49,6 +49,30 @@ class ServiceCatalogRepository {
     return { subtype: table, row };
   }
 
+  // Full-text style search across code, name, description.
+  // Returns up to 20 results ranked: exact-code > prefix-name > contains-anything.
+  async search(query, tenantId) {
+    if (!query || query.trim().length < 2) return [];
+    const q = query.trim();
+    const likeAny   = `%${q}%`;
+    const likeStart = `${q}%`;
+    return dbAdapter.all(
+      `SELECT id, code, name, category, unitPrice, description
+         FROM ServiceCatalog
+        WHERE tenantId = ? AND active = 1
+          AND (code LIKE ? OR name LIKE ? OR description LIKE ?)
+        ORDER BY
+          CASE
+            WHEN code  LIKE ? THEN 0
+            WHEN name  LIKE ? THEN 1
+            ELSE 2
+          END,
+          name
+        LIMIT 20`,
+      [tenantId, likeAny, likeAny, likeAny, likeStart, likeStart]
+    );
+  }
+
   async create({ id, tenantId, code, name, description, category, unitPrice }) {
     await dbAdapter.run(
       `INSERT INTO ServiceCatalog (id, tenantId, code, name, description, category, unitPrice)

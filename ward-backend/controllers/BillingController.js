@@ -15,6 +15,18 @@ const isAdmin  = (req) => req.user?.role === 'admin';
 
 // ── Service catalog ──────────────────────────────────────────────────────────
 
+router.get('/services/search',
+  protect(isReader, { resource: 'billing.service' }),
+  async (req, res, next) => {
+    try {
+      const q = String(req.query.q ?? '').trim();
+      if (q.length < 2) return res.json({ data: [] });
+      const results = await serviceRepo.search(q, req.tenantId);
+      res.json({ data: results });
+    } catch (err) { next(err); }
+  }
+);
+
 router.get('/services',
   protect(isReader, { resource: 'billing.service' }),
   async (req, res, next) => {
