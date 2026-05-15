@@ -695,6 +695,9 @@ const initDb = (db) => {
         ].forEach(createDefaultTenantTrigger);
 
         // Migration 023: Billing (Private edition) — ServiceCatalog, Invoices, InvoiceLines, Payments
+        // SQLite keeps the existing 6-value CHECK; consumables/medications use category='misc'
+        // and are discriminated by which Service* subtype table holds the matching row
+        // (see migration 025 below). Postgres has the tighter CHECK enforced in 025_service_subtypes.sql.
         db.run(`
           CREATE TABLE IF NOT EXISTS ServiceCatalog (
             id TEXT PRIMARY KEY,
@@ -797,6 +800,84 @@ const initDb = (db) => {
           )
         `);
         db.run(`INSERT OR IGNORE INTO ConsultationRate (tenantId, fee) VALUES (?, 500)`, [DEFAULT_TENANT_ID]);
+
+        // Migration 025: ServiceCatalog subtype tables (Private edition)
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ServiceLab (
+            serviceId       TEXT PRIMARY KEY,
+            specimenType    TEXT,
+            container       TEXT,
+            methodology     TEXT,
+            unitsOfMeasure  TEXT,
+            normalLow       NUMERIC,
+            normalHigh      NUMERIC,
+            turnaroundHours INTEGER,
+            fastingRequired INTEGER,
+            FOREIGN KEY (serviceId) REFERENCES ServiceCatalog(id) ON DELETE CASCADE
+          )
+        `);
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ServiceImaging (
+            serviceId        TEXT PRIMARY KEY,
+            modality         TEXT,
+            bodyRegion       TEXT,
+            contrast         TEXT,
+            durationMinutes  INTEGER,
+            prepInstructions TEXT,
+            radiationDoseMsv NUMERIC,
+            FOREIGN KEY (serviceId) REFERENCES ServiceCatalog(id) ON DELETE CASCADE
+          )
+        `);
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ServiceProcedure (
+            serviceId        TEXT PRIMARY KEY,
+            anaesthesiaType  TEXT,
+            otRequired       INTEGER,
+            durationMinutes  INTEGER,
+            postOpStayDays   INTEGER,
+            surgeonGrade     TEXT,
+            specialty        TEXT,
+            FOREIGN KEY (serviceId) REFERENCES ServiceCatalog(id) ON DELETE CASCADE
+          )
+        `);
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ServiceConsumable (
+            serviceId  TEXT PRIMARY KEY,
+            sku        TEXT,
+            size       TEXT,
+            sterile    INTEGER,
+            singleUse  INTEGER,
+            unit       TEXT,
+            FOREIGN KEY (serviceId) REFERENCES ServiceCatalog(id) ON DELETE CASCADE
+          )
+        `);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_servicelab_methodology  ON ServiceLab(methodology)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_serviceimaging_modality ON ServiceImaging(modality)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_serviceprocedure_spec   ON ServiceProcedure(specialty)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_serviceconsumable_sku   ON ServiceConsumable(sku)`);
+
+        // Seed the catalog if empty (idempotent — re-runs do nothing).
+        const seedCatalog = require('./billingCatalogSeed');
+        const cryptoNode = require('crypto');
+        db.get(`SELECT COUNT(*) AS n FROM ServiceCatalog WHERE tenantId = ?`, [DEFAULT_TENANT_ID], (err, row) => {
+          if (err || !row || row.n > 0) return;
+          db.serialize(() => {
+            for (const item of seedCatalog) {
+              const id = cryptoNode.randomUUID();
+              db.run(
+                `INSERT INTO ServiceCatalog (id, tenantId, code, name, description, category, unitPrice) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [id, DEFAULT_TENANT_ID, item.code, item.name, item.description || null, item.category, item.unitPrice]
+              );
+              if (item.subtype) {
+                const { table, ...fields } = item.subtype;
+                const cols = ['serviceId', ...Object.keys(fields)];
+                const placeholders = cols.map(() => '?').join(', ');
+                const values = [id, ...Object.values(fields).map((v) => (typeof v === 'boolean' ? (v ? 1 : 0) : v))];
+                db.run(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`, values);
+              }
+            }
+          });
+        });
 
         resolve();
       } catch (err) {
