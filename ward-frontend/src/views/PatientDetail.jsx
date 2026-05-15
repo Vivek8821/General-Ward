@@ -5,7 +5,7 @@ import { api } from '../utils/api';
 import { fmtDateTime } from '../utils/dateFormat';
 import { queryKeys } from '../utils/queryKeys';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Apple, Moon, Pill, Stethoscope, AlertTriangle, FileText, Clock, CheckCircle } from 'lucide-react';
+import { Activity, Apple, Moon, Pill, Stethoscope, AlertTriangle, FileText, Clock, CheckCircle, Receipt } from 'lucide-react';
 import HistoryTab from '../components/stats/HistoryTab';
 import HandoverNotesPanel from '../components/stats/HandoverNotesPanel';
 import VitalsTab from '../components/stats/VitalsTab';
@@ -13,6 +13,7 @@ import DietTab from '../components/stats/DietTab';
 import SleepTab from '../components/stats/SleepTab';
 import MedsTab from '../components/stats/MedsTab';
 import DischargeSummaryTab from '../components/stats/DischargeSummaryTab';
+import BillingTab from '../components/billing/BillingTab';
 import EscalateModal from '../components/modals/EscalateModal';
 import DischargeModal from '../components/modals/DischargeModal';
 import EditPatientModal from '../components/modals/EditPatientModal';
@@ -450,6 +451,12 @@ export default function PatientDetail() {
             <TabsTrigger value="sleep" variant="muted">
               <Moon size={14} aria-hidden /> Sleep Log
             </TabsTrigger>
+
+            <TabsDivider />
+
+            <TabsTrigger value="billing">
+              <Receipt size={16} aria-hidden /> Billing
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="discharge">
@@ -477,6 +484,9 @@ export default function PatientDetail() {
           </TabsContent>
           <TabsContent value="meds">
             <MedsTab patientId={id} readOnly={patient.status === 'discharged'} />
+          </TabsContent>
+          <TabsContent value="billing">
+            <BillingTab patientId={id} readOnly={patient.status === 'discharged'} />
           </TabsContent>
           <TabsContent value="clinical">
             <div className="divide-y divide-border">

@@ -120,6 +120,7 @@ app.use('/api/patients', require('./controllers/ImagingController'));
 app.use('/api/patients', require('./controllers/ProceduresController'));
 app.use('/api/patients', require('./controllers/ClinicalTeamController'));
 app.use('/api/patients', require('./controllers/ToxicologyController'));
+app.use('/api/billing', require('./controllers/BillingController'));
 
 // Health check
 app.get('/', (req, res) => {

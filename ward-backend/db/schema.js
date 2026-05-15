@@ -694,6 +694,86 @@ const initDb = (db) => {
           'ClinicalTeam', 'ToxicologyScreens'
         ].forEach(createDefaultTenantTrigger);
 
+        // Migration 023: Billing (Private edition) — ServiceCatalog, Invoices, InvoiceLines, Payments
+        db.run(`
+          CREATE TABLE IF NOT EXISTS ServiceCatalog (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            code TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            category TEXT NOT NULL CHECK (category IN ('consultation','ward','procedure','lab','imaging','misc')),
+            unitPrice NUMERIC NOT NULL DEFAULT 0,
+            active INTEGER NOT NULL DEFAULT 1,
+            createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(tenantId, code)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS Invoices (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            patientId TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','finalized','paid','cancelled')),
+            subtotal NUMERIC NOT NULL DEFAULT 0,
+            discountTotal NUMERIC NOT NULL DEFAULT 0,
+            taxTotal NUMERIC NOT NULL DEFAULT 0,
+            grandTotal NUMERIC NOT NULL DEFAULT 0,
+            paidTotal NUMERIC NOT NULL DEFAULT 0,
+            balanceDue NUMERIC NOT NULL DEFAULT 0,
+            notes TEXT,
+            createdBy TEXT NOT NULL,
+            createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            finalizedAt DATETIME,
+            paidAt DATETIME,
+            FOREIGN KEY (patientId) REFERENCES Patients(id)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS InvoiceLines (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            invoiceId TEXT NOT NULL,
+            source TEXT NOT NULL CHECK (source IN ('manual','pharmacy','ward','consultation','lab','imaging','procedure')),
+            sourceRef TEXT,
+            description TEXT NOT NULL,
+            quantity NUMERIC NOT NULL DEFAULT 1,
+            unitPrice NUMERIC NOT NULL DEFAULT 0,
+            lineTotal NUMERIC NOT NULL DEFAULT 0,
+            createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (invoiceId) REFERENCES Invoices(id) ON DELETE CASCADE
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS Payments (
+            id TEXT PRIMARY KEY,
+            tenantId TEXT NOT NULL,
+            invoiceId TEXT NOT NULL,
+            method TEXT NOT NULL CHECK (method IN ('cash','card','upi','razorpay','bank_transfer','other')),
+            amount NUMERIC NOT NULL,
+            reference TEXT,
+            status TEXT NOT NULL DEFAULT 'recorded' CHECK (status IN ('recorded','captured','refunded','failed')),
+            capturedAt DATETIME,
+            refundedAt DATETIME,
+            recordedBy TEXT NOT NULL,
+            createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (invoiceId) REFERENCES Invoices(id)
+          )
+        `);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_servicecatalog_tenant_category ON ServiceCatalog(tenantId, category)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invoices_tenant_patient ON Invoices(tenantId, patientId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invoices_tenant_status ON Invoices(tenantId, status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_invoicelines_invoice ON InvoiceLines(invoiceId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payments_invoice ON Payments(invoiceId)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_payments_tenant_status ON Payments(tenantId, status)`);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS uniq_invoicelines_source_ref ON InvoiceLines(tenantId, source, sourceRef) WHERE sourceRef IS NOT NULL`);
+
+        ['ServiceCatalog', 'Invoices', 'InvoiceLines', 'Payments'].forEach(createDefaultTenantTrigger);
+
         resolve();
       } catch (err) {
         reject(err);
