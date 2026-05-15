@@ -14,7 +14,7 @@ function ewsHaloColors(score, viewMode) {
 }
 
 function ewsSolidColor(score) {
-  if (score == null || score < 0) return 'rgba(107,114,128,0.5)';
+  if (score == null || score < 0) return '#6b7280';
   if (score >= 9) return '#dc2626';
   if (score >= 7) return '#ef4444';
   if (score >= 5) return '#f97316';
@@ -77,9 +77,8 @@ export default function PatientCard({ patient, viewMode, highlightCritical = fal
     ? {
         '--halo-color': halo.color,
         '--halo-fade':  halo.fade,
-        animation: 'none',
         boxShadow: `0 0 0 1.5px ${solid}, 0 8px 28px 6px ${solid}44`,
-        backgroundColor: '#1e2235',
+        backgroundColor: 'var(--color-bg-secondary)',
       }
     : {
         '--halo-color': halo.color,
