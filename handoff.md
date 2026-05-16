@@ -1,4 +1,15 @@
-# General Ward — Audit Handoff
+# General Ward — Handoff (Government / Main Branch)
+
+## Repo Identity
+
+- **Repo**: `github.com/Vivek8821/General-Ward.git`
+- **Branch**: `main` — government hospital build
+- **Local path**: `/home/vn/Documents/General-Ward`
+- **Private counterpart**: `/home/vn/Documents/General-Ward-Private` on branch `general-ward-private`
+
+**Scope of this branch**: Core clinical operations only. Billing/RCM and HL7 MLLP integration are **private-hospital features** and live exclusively on the `general-ward-private` branch. Do not add billing or HL7 code here.
+
+---
 
 ## Goal
 
