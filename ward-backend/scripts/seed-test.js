@@ -28,9 +28,9 @@ const get = (sql, p = []) =>
 const TENANT = 'tenant-default';
 
 // ─── FIXED REFERENCE DATE ────────────────────────────────────────────────────
-// All timestamps are anchored to this snapshot date so the dataset remains
-// historically consistent regardless of when the seed is run.
-const SNAPSHOT_DATE = '2026-05-07';
+// SNAPSHOT_DATE is always today so time-windowed charts (24h, 48h, 7d) always
+// have data regardless of when the seeder is run.
+const SNAPSHOT_DATE = new Date().toISOString().slice(0, 10);
 
 /** Build an ISO timestamp string for a given date + UTC hour + minute. */
 const ts = (dateStr, hour = 0, minute = 0) =>
@@ -53,16 +53,17 @@ const stableId = (...parts) => {
 };
 
 // Admission dates derived from each patient's clinical context
-// (e.g. "Post-Op Day 3" on 2026-05-07 → admitted 2026-05-04)
+// All patients admitted at least 7 days ago so every chart window (24h, 48h,
+// 7d) has data. daysSinceAdmission caps the generated range at 7 days anyway.
 const ADMITTED = {
-  p01:'2026-05-02', p02:'2026-05-05', p03:'2026-05-04', p04:'2026-05-05',
-  p05:'2026-05-04', p06:'2026-05-05', p07:'2026-05-04', p08:'2026-05-06',
-  p09:'2026-05-03', p10:'2026-05-05', p11:'2026-05-03', p12:'2026-05-06',
-  p13:'2026-05-06', p14:'2026-05-05', p15:'2026-05-04', p16:'2026-05-05',
-  p17:'2026-05-05', p18:'2026-05-05', p19:'2026-05-03', p20:'2026-05-05',
-  p21:'2026-05-06', p22:'2026-05-05', p23:'2026-05-06', p24:'2026-05-06',
-  p25:'2026-04-28', p26:'2026-05-04', p27:'2026-05-05', p28:'2026-05-06',
-  p29:'2026-05-03', p30:'2026-05-04',
+  p01:daysAgo(11), p02:daysAgo(8),  p03:daysAgo(9),  p04:daysAgo(8),
+  p05:daysAgo(9),  p06:daysAgo(8),  p07:daysAgo(9),  p08:daysAgo(7),
+  p09:daysAgo(10), p10:daysAgo(8),  p11:daysAgo(10), p12:daysAgo(7),
+  p13:daysAgo(7),  p14:daysAgo(8),  p15:daysAgo(9),  p16:daysAgo(8),
+  p17:daysAgo(8),  p18:daysAgo(8),  p19:daysAgo(10), p20:daysAgo(8),
+  p21:daysAgo(7),  p22:daysAgo(8),  p23:daysAgo(7),  p24:daysAgo(7),
+  p25:daysAgo(15), p26:daysAgo(9),  p27:daysAgo(8),  p28:daysAgo(7),
+  p29:daysAgo(10), p30:daysAgo(9),
 };
 
 // ─── PATIENTS ────────────────────────────────────────────────────────────────
